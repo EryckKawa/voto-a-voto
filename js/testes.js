@@ -1,0 +1,303 @@
+/* Voto a voto — testes do site, rodando dentro do próprio navegador (abra index.html#/testes ou testes.html).
+   Quatro grupos: velocidade, funcionamento, acessibilidade (axe-core) e conferência dos dados com números oficiais do TSE.
+   Os testes esperam a página ficar pronta (evento "vav:pronto" do roteador) em vez de esperar um tempo fixo. */
+(function () {
+  "use strict";
+  const V = window.V;
+
+  /* ---------- coleta de erros desde o carregamento da página ---------- */
+  const ERROS = [];
+  addEventListener("error", (e) => ERROS.push(e.message || String(e)));
+  addEventListener("unhandledrejection", (e) => ERROS.push(String(e.reason && e.reason.message ? e.reason.message : e.reason)));
+  const errOriginal = console.error;
+  console.error = function (...a) { ERROS.push(a.map((x) => (x && x.message) || String(x)).join(" ")); errOriginal.apply(console, a); };
+
+  /* ---------- tarefas longas (travadas de mais de 50 ms), quando o navegador informa ---------- */
+  const LONGAS = [];
+  let temLongas = false;
+  try { new PerformanceObserver((l) => l.getEntries().forEach((e) => LONGAS.push([e.startTime, e.duration]))).observe({ type: "longtask", buffered: true }); temLongas = true; } catch (e) {}
+  const travouEntre = (t0, t1) => LONGAS.filter(([s]) => s >= t0 && s <= t1).reduce((a, [, d]) => a + d, 0);
+
+  /* ---------- utilidades ---------- */
+  const quadros = (n = 2) => new Promise((ok) => { const f = () => (--n <= 0 ? ok() : requestAnimationFrame(f)); requestAnimationFrame(f); });
+  const ate = (cond, limite = 8000) => new Promise((ok, falha) => {
+    const t0 = performance.now();
+    (function olha() { let r; try { r = cond(); } catch (e) {} if (r) return ok(r); if (performance.now() - t0 > limite) return falha(new Error("não aconteceu em " + limite / 1000 + " s")); setTimeout(olha, 16); })();
+  });
+  const irPara = (h, limite = 15000) => new Promise((ok, falha) => {
+    const t = setTimeout(() => { removeEventListener("vav:pronto", fim); falha(new Error("a página não terminou de abrir")); }, limite);
+    function fim() { clearTimeout(t); removeEventListener("vav:pronto", fim); ok(); }
+    addEventListener("vav:pronto", fim);
+    if (location.hash === h) V.ir(h); else location.hash = h;
+  });
+  const q = (s) => document.querySelector(s), qq = (s) => [...document.querySelectorAll(s)];
+  const txt = (s) => (q(s) ? q(s).textContent.replace(/\s+/g, " ").trim() : "");
+  const ms = (v) => V.int(Math.round(v)) + " ms";
+  const carregarAxe = () => (window.axe ? Promise.resolve() : new Promise((ok, falha) => { const s = document.createElement("script"); s.src = "vendor/axe.min.js"; s.onload = ok; s.onerror = () => falha(new Error("vendor/axe.min.js não encontrado")); document.head.appendChild(s); }));
+
+  /* resultado de um teste: ok (passou), aviso (passou com ressalva) ou falha */
+  const R = (ok, medido, esperado, nota) => ({ st: ok === true ? "ok" : ok === "aviso" ? "aviso" : "falha", medido, esperado, nota });
+
+  /* mede o tempo até a página ficar pronta e a condição aparecer, e quanto o navegador travou nesse meio-tempo */
+  async function medirPagina(h, pronta, limiteMs, limiteTrava) {
+    const t0 = performance.now();
+    await irPara(h); await ate(pronta, 15000); await quadros(2);
+    const t = performance.now() - t0;
+    await new Promise((r) => setTimeout(r, 400));      // tarefas que ainda rodam logo depois de abrir
+    const trava = travouEntre(t0, performance.now());
+    if (q("main").dataset.erro) return R(false, "erro ao abrir", "abrir sem erro", txt("main .aviso"));
+    const ok = t <= limiteMs && (!temLongas || trava <= limiteTrava);
+    const quase = t <= limiteMs * 1.6;
+    return R(ok ? true : quase ? "aviso" : false, ms(t) + (temLongas ? " · travou " + ms(trava) : ""), "até " + ms(limiteMs) + (temLongas ? " · travar até " + ms(limiteTrava) : ""));
+  }
+
+  /* ---------- os testes ---------- */
+  const T = [];
+  const teste = (grupo, nome, rodar) => T.push({ grupo, nome, rodar });
+
+  // VELOCIDADE (a primeira visita a cada página: os dados ainda não estão na memória)
+  teste("Velocidade", "Página inicial (Ninguém) abre", () => medirPagina("#/", () => /Ninguém/.test(txt("main h1")), 1500, 300));
+  teste("Velocidade", "O que o voto revela abre", () => medirPagina("#/revela", () => qq(".achado").length >= 5, 1200, 300));
+  teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
+  teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
+  teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
+  teste("Velocidade", "12 perguntas abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 12, 1500, 400));
+  teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
+  teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
+  teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
+    await irPara("#/mapa");
+    const atual = V.regua(), outra = atual === "voto" ? "harvard" : "voto";
+    const t0 = performance.now();
+    q(`[data-regua="${outra}"]`).click();
+    await ate(() => V.regua() === outra && q(`[data-regua="${outra}"]`).getAttribute("aria-pressed") === "true"); await quadros(2);
+    const t = performance.now() - t0;
+    q(`[data-regua="${atual}"]`).click(); await ate(() => V.regua() === atual);
+    return R(t <= 700 ? true : t <= 1200 ? "aviso" : false, ms(t), "até 700 ms");
+  });
+  teste("Velocidade", "Zoom do mapa fluido", async () => {
+    await irPara("#/mapa"); await quadros(3);
+    let n = 0, rodando = true; const conta = () => { n++; if (rodando) requestAnimationFrame(conta); }; requestAnimationFrame(conta);
+    const t0 = performance.now(); q("#z-mais").click();
+    await new Promise((r) => setTimeout(r, 900)); rodando = false;
+    const fps = n / ((performance.now() - t0) / 1000);
+    q("#z-br").click(); await new Promise((r) => setTimeout(r, 900));
+    return R(fps >= 40 ? true : fps >= 24 ? "aviso" : false, Math.round(fps) + " quadros/s", "40 ou mais", fps < 40 ? "Abaixo de 40 o zoom parece engasgar. Em computador sem placa de vídeo é comum ficar entre 25 e 40." : "");
+  });
+  teste("Velocidade", "Memória usada", async () => {
+    const m = performance.memory;
+    if (!m) return R("aviso", "este navegador não informa", "até 120 MB", "Só o Chrome e o Edge informam a memória.");
+    const mb = m.usedJSHeapSize / 1e6;
+    return R(mb <= 120 ? true : mb <= 200 ? "aviso" : false, V.int(Math.round(mb)) + " MB", "até 120 MB");
+  });
+
+  // FUNCIONAMENTO
+  teste("Funcionamento", "Menu com as cinco seções (sem Disputas apertadas)", async () => {
+    const ls = qq(".nav a").map((a) => a.textContent.trim());
+    return R(ls.length === 5 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos");
+  });
+  teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
+    location.hash = "#/apertadas";
+    await ate(() => location.hash.startsWith("#/mapa") && q("#mapa-br"), 8000);
+    return R(true, location.hash, "#/mapa");
+  });
+  teste("Funcionamento", "Busca acha Campinas e abre a cidade", async () => {
+    await irPara("#/");
+    const inp = q("#busca"); inp.value = "campinas"; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    const li = await ate(() => qq("#busca-lista li[data-h]").find((l) => /Campinas/.test(l.textContent)), 6000);
+    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
+    await pronto; await ate(() => /Campinas/.test(txt("#manchete")), 8000);
+    return R(true, txt("#manchete").slice(0, 70) + "…", "título fala de Campinas");
+  });
+  teste("Funcionamento", "Clicar numa cidade do mapa aproxima o estado", async () => {
+    await irPara("#/mapa"); await quadros(2);
+    const el = qq("#mapa-br path.mun").find((p) => p.__data__ && p.__data__.id === "3509502");   // Campinas, SP
+    el.dispatchEvent(new MouseEvent("click", { bubbles: true }));
+    await ate(() => location.hash.includes("/br/SP"), 6000); await ate(() => /São Paulo/.test(txt("#manchete")), 6000);
+    return R(true, location.hash, "#/mapa/br/SP");
+  });
+  teste("Funcionamento", "▶ Passar os anos avança sozinho", async () => {
+    await irPara("#/mapa"); await quadros(2);
+    q("#tocar").click();
+    await ate(() => /\/e\/PREF(1996|2000)/.test(location.hash), 4000);
+    const ano = location.hash; q("#tocar") && q("#tocar").click(); await new Promise((r) => setTimeout(r, 300));
+    return R(true, ano, "passa para os anos anteriores");
+  });
+  teste("Funcionamento", "Histórico da cidade tem os quatro cargos", async () => {
+    await irPara("#/mapa/br/PI/c/2211001"); const n = await ate(() => qq("#hist .linha-tempo").length, 8000);
+    const anos = qq("#hist .linha-tempo__anos li").length;
+    return R(n === 4 && anos >= 30, n + " cargos, " + anos + " eleições", "4 cargos, 30 ou mais eleições");
+  });
+  teste("Funcionamento", "12 perguntas: recorte, Gráfico | Tabela e SQL", async () => {
+    await irPara("#/perguntas/q2"); await quadros(2);
+    if (q("[data-modo='graf']")) q("[data-modo='graf']").click();
+    const antes = txt("#pq-graf"); q("[data-vista='3']").click(); await quadros(1);
+    const trocou = antes !== txt("#pq-graf");
+    q("[data-modo='tab']").click(); await quadros(1);
+    const linhasTab = qq("#pq-graf tbody tr").length; q("[data-modo='graf']").click();
+    const sql = /SELECT/.test(txt("#sql-q2"));
+    return R(trocou && linhasTab === 5 && sql, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · SQL ${sql ? "presente" : "ausente"}`, "troca o gráfico; tabela com 5 grupos; SQL na página");
+  });
+  teste("Funcionamento", "Régua: o PT não aparece como extremo", async () => {
+    const BR = await V.baseBR(), pt = BR.ideoV.partidos.PT.nota, psol = BR.ideoV.partidos.PSOL.nota;
+    return R(pt > -0.8 && psol > -0.9 && V.nome5(pt) === "esquerda", "PT " + pt.toFixed(2).replace(".", ",") + " (" + V.nome5(pt) + ") · PSOL " + psol.toFixed(2).replace(".", ","), "nenhum partido perto de −1");
+  });
+
+  // ACESSIBILIDADE
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "12 perguntas"], ["#/perguntas/q3", "Uma pergunta (Q3)"], ["#/partidos", "Partidos"]];
+  for (const [h, nome] of PAGS_A11Y) {
+    teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
+      await carregarAxe(); await irPara(h); await quadros(3);
+      const r = await window.axe.run(document, { exclude: [["#testes-painel"]], resultTypes: ["violations"] });
+      const v = r.violations;
+      return R(v.length === 0, v.length ? v.map((x) => `${x.id} (${x.nodes.length})`).join(", ") : "nenhum problema", "nenhum problema", v.length ? v[0].help : "");
+    });
+    teste("Acessibilidade", `${nome}: áreas de clique grandes o bastante`, async () => {
+      if (location.hash !== h) { await irPara(h); await quadros(2); }
+      // WCAG 2.5.8: alvo de pelo menos 24 × 24 px; links dentro de um parágrafo de texto são exceção
+      const peq = qq("a[href], button, input, select, [role=button], [tabindex='0']").filter((e) => {
+        if (e.closest("#testes-painel") || e.closest("p, small, .fonte")) return false;
+        const b = e.getBoundingClientRect(); if (!b.width || !b.height || getComputedStyle(e).visibility === "hidden") return false;
+        return b.width < 24 || b.height < 24;
+      });
+      return R(peq.length === 0, peq.length ? peq.length + ": " + peq.slice(0, 4).map((e) => (e.textContent.trim() || e.getAttribute("aria-label") || e.tagName).slice(0, 24)).join(" · ") : "todas", "todas com 24 × 24 px ou mais");
+    });
+  }
+
+  // DADOS: o site bate com os números oficiais do TSE?
+  const perto = (a, b, tol) => Math.abs(a - b) <= tol;
+  teste("Dados", "Presidente 2022, 2º turno: Lula 60.345.999 × Bolsonaro 58.206.354", async () => {
+    const r = await V.dados("br/resumo/PRES2022"), t2 = r.BR.t2;
+    const voto = (nome) => { const x = t2.find(([sq]) => r.c[sq] && new RegExp(nome, "i").test(r.c[sq][0])); return x ? x[1] : 0; };
+    const l = voto("LULA"), b = voto("BOLSONARO");
+    return R(l === 60345999 && b === 58206354, V.int(l) + " × " + V.int(b), "60.345.999 × 58.206.354 (TSE)");
+  });
+  teste("Dados", "O mapa tem as 5.570 cidades do Brasil", async () => {
+    const BR = await V.baseBR();
+    return R(BR.lista.length === 5570, V.int(BR.lista.length) + " cidades", "5.570 (IBGE)");
+  });
+  teste("Dados", "Abstenção no 1º turno de 2022: 20,9%", async () => {
+    const s = (await V.dados("br/serie_comp")).find((x) => x[0] === 2022), v = (100 * s[4]) / s[2];
+    return R(perto(v, 20.95, 0.3), V.pct(v), "20,9% (TSE), tolerância de 0,3 ponto");
+  });
+  teste("Dados", "Branco e nulo para presidente em 1994: 18,8%", async () => {
+    const s = (await V.dados("br/serie_comp")).find((x) => x[0] === 1994), v = (100 * (s[5] + s[6])) / s[3];
+    return R(perto(v, 18.8, 0.3), V.pct(v), "18,8% (TSE)");
+  });
+  teste("Dados", "Prefeitos eleitos em 2008: PMDB 1.201, PSDB 791, PT 558", async () => {
+    const w = await V.dados("br/venc/PREF2008"), c = {};
+    for (const x of Object.values(w)) if (x[9]) c[x[2]] = (c[x[2]] || 0) + 1;
+    return R(perto(c.PMDB, 1201, 2) && perto(c.PSDB, 791, 2) && perto(c.PT, 558, 2), `PMDB ${c.PMDB}, PSDB ${c.PSDB}, PT ${c.PT}`, "1.201, 791, 558 (TSE), tolerância de 2", "Diferenças de 1 vêm de eleições refeitas depois.");
+  });
+  teste("Dados", "Ninguém em 2024: 42,6 milhões de eleitores", async () => {
+    const c = await V.dados("br/comp/2024"); let s = 0;   // mesma fonte do título da página inicial: todas as cidades, 1º turno
+    for (const o of Object.values(c)) if (o.t1) s += o.t1[2] + o.t1[3] + o.t1[4];
+    return R(perto(s / 1e6, 42.6, 0.1), V.int(s), "42,6 milhões (TSE: faltas + brancos + nulos)");
+  });
+  teste("Dados", "Achado da virada: PT melhor nas ricas em 2002 e nas pobres de 2006 em diante", async () => {
+    const A = await V.dados("br/achados"), r = (a) => A.pt_renda.find((x) => x.ano === a).pt;
+    const ok = r(2002)[0] < r(2002)[4] && A.pt_renda.filter((x) => x.ano >= 2006).every((x) => x.pt[0] > x.pt[4]);
+    return R(ok, `2002: ${V.pct(r(2002)[0], 0)} × ${V.pct(r(2002)[4], 0)} · 2006: ${V.pct(r(2006)[0], 0)} × ${V.pct(r(2006)[4], 0)}`, "mais pobres < mais ricas em 2002; > de 2006 em diante");
+  });
+  teste("Dados", "Achado das cidades de um lado só: vantagem de 2022 bate com o resultado oficial", async () => {
+    const A = await V.dados("br/achados"), u = A.um_lado.find((x) => x.ano === 2022);
+    // TSE: Lula 50,90% × Bolsonaro 49,10% dos válidos no 2º turno de 2022
+    return R(Math.abs(u.margem_brasil - 1.8) < 0.05 && u.acima70 > 0 && u.acima70 < u.cidades, `vantagem ${String(u.margem_brasil).replace(".", ",")} ponto · ${V.int(u.acima70)} cidades acima de 70%`, "1,8 ponto (TSE)");
+  });
+  teste("Dados", "Achado dos prefeitos: conta de reeleitos bate com o arquivo de 2024", async () => {
+    const A = await V.dados("br/achados"), p = A.prefeitos[A.prefeitos.length - 1], w = await V.dados("br/venc/PREF2024");
+    const eleitos = Object.values(w).filter((x) => x[9]).length;
+    return R(p.reeleitos <= eleitos && p.trocaram <= p.reeleitos && p.reeleitos > 1500, `${V.int(p.trocaram)} de ${V.int(p.reeleitos)} reeleitos (de ${V.int(eleitos)} eleitos)`, "números coerentes entre si");
+  });
+  teste("Dados", "Banco nacional: 513 deputados federais e 1.035 estaduais eleitos em 2022", async () => {
+    const P = await V.dados("br/perguntas"), c = P.consultas.find((x) => x.id === "q1b"), i = c.colunas.indexOf("qt_cadeiras");
+    const n = (cg) => (c.linhas.find((l) => l[0] === 2022 && l[1] === cg) || [])[i];
+    return R(n("DEPUTADO FEDERAL") === 513 && n("DEPUTADO ESTADUAL") === 1035, `${n("DEPUTADO FEDERAL")} e ${n("DEPUTADO ESTADUAL")}`, "513 e 1.035 cadeiras (fora as 24 do DF)");
+  });
+  teste("Dados", "Banco nacional: doação de empresas some depois da proibição de 2015", async () => {
+    const P = await V.dados("br/perguntas"), c = P.consultas.find((x) => x.id === "q8"), i = c.colunas.indexOf("pc_pj");
+    const v = (a) => (c.linhas.find((l) => l[0] === a) || [])[i];
+    return R(v(2014) > 15 && v(2018) < 1, `2014: ${V.pct(v(2014))} · 2018: ${V.pct(v(2018))}`, "mais de 15% em 2014; menos de 1% em 2018");
+  });
+  teste("Dados", "Banco nacional: o mapa e a consulta contam as mesmas 5.570 cidades", async () => {
+    const P = await V.dados("br/perguntas"), c = P.consultas.find((x) => x.id === "q9"), i = c.colunas.indexOf("qt_municipios");
+    const mx = Math.max(...c.linhas.map((l) => l[i]));
+    return R(P.tamanho.municipios === 5570 && mx <= 5570, `${V.int(P.tamanho.municipios)} no banco; até ${V.int(mx)} por eleição`, "5.570, sem o voto no exterior");
+  });
+  teste("Dados", "Os três estudos concordam entre si (correlação de 0,9 ou mais)", async () => {
+    const D = await V.dados("br/partidos_notas"), ps = Object.entries(D.pares).filter(([k, p]) => p && !k.includes("CAM"));
+    return R(ps.length === 3 && ps.every(([, p]) => p.r >= 0.9), ps.map(([k, p]) => `${k} ${p.r.toFixed(2).replace(".", ",")} (n=${p.n})`).join(" · "), "0,90 ou mais nos três pares");
+  });
+  teste("Dados", "Consenso: PT à esquerda, PSDB do centro (1994) à centro-direita (2014)", async () => {
+    const P = (await V.dados("br/partidos_notas")).partidos, c = (k, a) => P[k].serie[a].c;
+    const ok = c("PT", 2022) < -0.5 && c("PSDB", 1994) > -0.25 && c("PSDB", 1994) <= 0.25 && c("PSDB", 2014) > 0.25 && c("PL", 2022) > 0.25;
+    return R(ok, `PT 2022 ${c("PT", 2022).toFixed(2)} · PSDB 1994 ${c("PSDB", 1994).toFixed(2)}, 2014 ${c("PSDB", 2014).toFixed(2)} · PL 2022 ${c("PL", 2022).toFixed(2)}`, "PT < −0,5; PSDB centro em 1994 e > +0,25 em 2014; PL > +0,25");
+  });
+  teste("Dados", "Notas recentes: PL de 2026 na direita, todas entre −1 e +1", async () => {
+    const P = (await V.dados("br/partidos_notas")).partidos;
+    const todas = Object.values(P).flatMap((p) => Object.values(p.serie).map((s) => s.c)), fora = todas.filter((c) => c < -1 || c > 1).length;
+    const pl = P.PL.serie[2026].c, novo = P.NOVO.serie[2026].c;
+    return R(pl > 0.5 && novo > 0.5 && fora === 0, `PL 2026 ${pl.toFixed(2)} · Novo ${novo.toFixed(2)} · ${fora} fora da escala`, "PL e Novo acima de +0,5; nenhuma nota fora de −1 a +1");
+  });
+  teste("Dados", "Régua pelo voto concorda com a de Harvard", async () => {
+    const BR = await V.baseBR(), c = BR.ideoV.calibracao;
+    return R(c && c.r >= 0.9, "correlação de " + c.r.toFixed(2).replace(".", ",") + " em " + c.n + " partidos", "0,90 ou mais");
+  });
+
+  // por último: nada quebrou durante todos os testes acima
+  teste("Funcionamento", "Nenhum erro de JavaScript durante os testes", async () => R(ERROS.length === 0, ERROS.length ? ERROS.length + ": " + ERROS[0].slice(0, 90) : "nenhum", "nenhum"));
+
+  /* ---------- execução e relatório ---------- */
+  const GRUPOS = ["Velocidade", "Funcionamento", "Acessibilidade", "Dados"];
+  const ICONE = { ok: "✓", aviso: "!", falha: "✗" };
+  let ultimo = null;
+
+  function painel() {
+    let p = document.getElementById("testes-painel");
+    if (!p) { p = document.createElement("div"); p.id = "testes-painel"; p.className = "testes-painel"; p.setAttribute("role", "status"); p.setAttribute("aria-live", "polite"); document.body.appendChild(p); }
+    return p;
+  }
+
+  async function rodar() {
+    const memo = {};
+    try { for (const k of ["vav-urna", "vav-apurou"]) { memo[k] = sessionStorage.getItem(k); sessionStorage.setItem(k, "1"); } } catch (e) {}   // sem animações de abertura
+    const p = painel(), res = [], t0 = performance.now();
+    for (let i = 0; i < T.length; i++) {
+      const t = T[i];
+      p.innerHTML = `<b>Testando ${i + 1} de ${T.length}</b><span>${V.esc(t.grupo)} · ${V.esc(t.nome)}</span><i style="width:${(100 * i) / T.length}%"></i>`;
+      let r;
+      try { r = await t.rodar(); } catch (e) { r = R(false, e.message, "—"); }
+      res.push({ grupo: t.grupo, nome: t.nome, ...r });
+    }
+    try { for (const k in memo) if (memo[k] == null) sessionStorage.removeItem(k); else sessionStorage.setItem(k, memo[k]); } catch (e) {}
+    p.remove();
+    ultimo = { quando: new Date(), duracao: performance.now() - t0, largura: innerWidth, navegador: navigator.userAgent, res };
+    window.__testes = { fim: true, ...ultimo };
+    location.hash = "#/testes";
+  }
+
+  function relatorioTexto(u) {
+    const l = [`Voto a voto · testes do site`, `${u.quando.toLocaleString("pt-BR")} · tela de ${u.largura}px · ${u.navegador}`, ""];
+    for (const g of GRUPOS) { l.push(g.toUpperCase()); for (const r of u.res.filter((x) => x.grupo === g)) l.push(`  [${r.st === "ok" ? "OK" : r.st === "aviso" ? "AVISO" : "FALHOU"}] ${r.nome}: ${r.medido} (esperado: ${r.esperado})${r.nota ? " — " + r.nota : ""}`); l.push(""); }
+    const c = contar(u.res); l.push(`${c.ok} passaram, ${c.aviso} com aviso, ${c.falha} falharam.`);
+    return l.join("\n");
+  }
+  const contar = (res) => ({ ok: res.filter((r) => r.st === "ok").length, aviso: res.filter((r) => r.st === "aviso").length, falha: res.filter((r) => r.st === "falha").length });
+
+  V.rota(/^\/testes(\/auto)?$/, async function (main, auto) {
+    document.title = "Testes do site · Voto a voto";
+    if (auto && !ultimo) { main.innerHTML = '<div class="pagina"><p>Rodando os testes…</p></div>'; setTimeout(rodar, 50); return; }
+    const u = ultimo, c = u ? contar(u.res) : null;
+    main.innerHTML = `<div class="pagina testes">
+      <header><h1 class="titulo-grande">${u ? (c.falha ? `${c.falha} ${c.falha === 1 ? "teste falhou" : "testes falharam"} de ${u.res.length}` : `Os ${u.res.length} testes passaram${c.aviso ? `, ${c.aviso} com aviso` : ""}`) : "Testes do site"}</h1>
+        <p class="lead">${u ? `Rodados agora neste navegador, numa tela de ${u.largura} px, em ${V.int(Math.round(u.duracao / 1000))} segundos.` : `${T.length} testes em quatro grupos: velocidade, funcionamento, acessibilidade e conferência dos dados com os números oficiais do TSE. Eles abrem as páginas sozinhos; leva menos de um minuto. Para testar o celular, abra esta página numa janela estreita ou no próprio celular.`}</p>
+        <p class="testes__acoes"><button type="button" class="btn btn--confirma" id="testes-rodar">${u ? "Rodar de novo" : "Rodar os testes"}</button>${u ? ' <button type="button" class="btn" id="testes-baixar">Baixar relatório (.txt)</button>' : ""}</p></header>
+      ${u ? GRUPOS.map((g) => { const rs = u.res.filter((r) => r.grupo === g), cc = contar(rs); return `<section class="testes__grupo"><h2 class="secao__titulo">${g} <small>${cc.ok} de ${rs.length}</small></h2>
+        <table class="testes__tabela"><thead><tr><th scope="col"><span class="visualmente-oculto">Resultado</span></th><th scope="col">Teste</th><th scope="col">Medido</th><th scope="col">Esperado</th></tr></thead><tbody>
+        ${rs.map((r) => `<tr class="t--${r.st}"><td><span class="testes__st" aria-label="${r.st === "ok" ? "passou" : r.st === "aviso" ? "aviso" : "falhou"}">${ICONE[r.st]}</span></td><td>${V.esc(r.nome)}${r.nota ? `<small>${V.esc(r.nota)}</small>` : ""}</td><td>${V.esc(r.medido)}</td><td>${V.esc(r.esperado)}</td></tr>`).join("")}</tbody></table></section>`; }).join("") : ""}
+    </div>`;
+    q("#testes-rodar").onclick = rodar;
+    if (q("#testes-baixar")) q("#testes-baixar").onclick = () => { const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([relatorioTexto(u)], { type: "text/plain;charset=utf-8" })); a.download = "testes-voto-a-voto.txt"; a.click(); setTimeout(() => URL.revokeObjectURL(a.href), 1000); };
+  });
+  V.testes = { rodar, lista: T };
+})();

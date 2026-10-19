@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Voto a voto · o que o voto revela sobre o Brasil</title>
+<meta name="description" content="Como votou cada uma das 5.570 cidades do Brasil, de 1994 a 2026, com os partidos na régua ideológica de Zucco e Power (Harvard Dataverse).">
+<link rel="stylesheet" href="css/estilo.css">
+</head>
+<body>
+<a class="pular" href="#conteudo">Pular para o conteúdo</a>
+<header class="topo">
+  <a class="marca" href="#/" aria-label="Voto a voto, página inicial">
+    <span class="marca__tecla" aria-hidden="true"></span>
+    <span class="marca__nome">Voto a voto</span><span class="marca__lema">o que o voto revela sobre o Brasil</span>
+  </a>
+  <nav class="nav" aria-label="Seções">
+    <a href="#/" data-nav="inicio">Ninguém</a>
+    <a href="#/mapa" data-nav="mapa">Mapa</a>
+    <a href="#/revela" data-nav="revela"><span class="nav__longo">O que o voto </span>revela</a>
+    <a href="#/perguntas" data-nav="perguntas"><span class="nav__longo">12 </span>perguntas</a>
+    <a href="#/partidos" data-nav="partidos">Partidos</a>
+  </nav>
+  <div class="busca" role="search">
+    <label class="visualmente-oculto" for="busca">Buscar cidade ou candidato</label>
+    <input id="busca" type="search" role="combobox" aria-autocomplete="list" autocomplete="off" placeholder="Procure sua cidade ou um candidato" aria-controls="busca-lista" aria-expanded="false">
+    <ul id="busca-lista" class="busca__lista" role="listbox" hidden></ul>
+  </div>
+</header>
+<main id="conteudo" tabindex="-1"></main>
+<div id="dica" class="dica" role="tooltip" hidden></div>
+<footer class="rodape">
+  <p>Dados: Tribunal Superior Eleitoral (TSE) e IBGE. Trabalho de Banco de Dados Relacional, UFPI, Grupo 6. <a href="#/testes">Testes do site</a></p>
+</footer>
+<script src="vendor/d3.min.js"></script>
+<script src="vendor/topojson-client.min.js"></script>
+<script src="js/base.js"></script>
+<script src="js/brasil.js"></script>
+<script src="js/mapa.js"></script>
+<script src="js/cidade.js"></script>
+<script src="js/candidato.js"></script>
+<script src="js/revela.js"></script>
+<script src="js/perguntas.js"></script>
+<script src="js/partidos.js"></script>
+<script src="js/ninguem.js"></script>
+<script src="js/testes.js"></script>
+<script src="js/app.js"></script>
+</body>
+</html>
