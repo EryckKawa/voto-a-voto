@@ -1,0 +1,21 @@
+{
+ "r_deixa_um_fora": -0.247,
+ "rho_deixa_um_fora": -0.28,
+ "n_referencias": 13,
+ "n_palavras": 5692,
+ "referencias": {
+  "DC": 0.518,
+  "MDB": 0.283,
+  "NOVO": 0.522,
+  "PATRIOTA": 0.611,
+  "PDT": -0.376,
+  "PODE": 0.332,
+  "PPL": 0.338,
+  "PSDB": 0.304,
+  "PSL": 0.518,
+  "PSOL": -0.939,
+  "PSTU": -1,
+  "PT": -0.579,
+  "REDE": -0.195
+ }
+}

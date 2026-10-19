@@ -1,0 +1,75 @@
+year,v2paenname,v2pashname,v2pariglef,v2pariglef_codelow,v2pariglef_codehigh,v2paseatshare,v2pavote
+1990,Brazilian Social Democracy Party,PSDB,-0.281,-0.593,-0.006,7.4,8.7
+1994,Brazilian Social Democracy Party,PSDB,0.386,0.057,0.642,12.1,13.9
+1998,Brazilian Social Democracy Party,PSDB,0.932,0.619,1.217,19.3,17.5
+2002,Brazilian Social Democracy Party,PSDB,0.871,0.565,1.154,14.0,14.1
+2006,Brazilian Social Democracy Party,PSDB,1.09,0.778,1.385,12.7,13.6
+2010,Brazilian Social Democracy Party,PSDB,1.09,0.778,1.385,10.3,11.9
+2014,Brazilian Social Democracy Party,PSDB,1.521,1.226,1.833,10.5,11.4
+2018,Brazilian Social Democracy Party,PSDB,1.431,1.06,1.683,5.7,6.0
+2006,Socialist People's Party,PPS,-0.435,-0.727,-0.118,4.5,4.4
+1990,Workers' Party,PT,-2.448,-2.796,-2.122,7.0,10.2
+1994,Workers' Party,PT,-2.631,-2.983,-2.31,9.6,12.8
+1998,Workers' Party,PT,-2.242,-2.564,-1.911,11.3,13.2
+2002,Workers' Party,PT,-1.455,-1.808,-1.152,17.9,18.2
+2006,Workers' Party,PT,-1.455,-1.808,-1.152,16.2,15.0
+2010,Workers' Party,PT,-1.296,-1.657,-1.02,17.2,16.9
+2014,Workers' Party,PT,-1.46,-1.795,-1.17,13.3,13.9
+2018,Workers' Party,PT,-1.896,-2.212,-1.56,10.9,10.3
+1990,Brazilian Labour Party,PTB,0.969,0.675,1.305,6.8,5.6
+1994,Brazilian Labour Party,PTB,1.102,0.828,1.439,6.0,5.2
+1998,Brazilian Labour Party,PTB,1.102,0.828,1.439,6.0,5.7
+2002,Brazilian Labour Party,PTB,0.685,0.365,0.984,5.1,4.6
+2006,Brazilian Labour Party,PTB,0.915,0.555,1.166,4.3,4.7
+2010,Brazilian Labour Party,PTB,1.042,0.73,1.341,4.1,4.2
+2014,Brazilian Labour Party,PTB,1.042,0.73,1.341,4.9,4.0
+1990,Partido do Movimento Democrático Brasileiro,PMDB,0.02,-0.304,0.299,21.7,19.3
+1994,Partido do Movimento Democrático Brasileiro,PMDB,0.091,-0.156,0.416,20.9,20.3
+1998,Partido do Movimento Democrático Brasileiro,PMDB,0.569,0.266,0.873,16.2,15.2
+2002,Partido do Movimento Democrático Brasileiro,PMDB,0.569,0.266,0.873,14.6,13.2
+2006,Partido do Movimento Democrático Brasileiro,PMDB,0.319,0.002,0.582,17.3,14.6
+2010,Partido do Movimento Democrático Brasileiro,PMDB,0.433,0.105,0.7,15.4,13.0
+2014,Partido do Movimento Democrático Brasileiro,PMDB,0.668,0.393,0.993,12.9,11.1
+2018,Partido do Movimento Democrático Brasileiro,PMDB,0.792,0.497,1.094,,
+2002,Brazilian Socialist Party,PSB,-1.647,-1.993,-1.381,4.3,5.3
+2006,Brazilian Socialist Party,PSB,-1.453,-1.776,-1.163,5.3,6.2
+2010,Brazilian Socialist Party,PSB,-1.453,-1.776,-1.163,6.6,7.1
+2014,Brazilian Socialist Party,PSB,-1.144,-1.496,-0.876,6.6,6.4
+2018,Brazilian Socialist Party,PSB,-1.278,-1.616,-0.975,6.2,5.5
+1994,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.424,2.075,2.753,7.0,6.9
+1998,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.424,2.075,2.753,11.7,11.3
+2002,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.245,1.912,2.544,9.7,7.7
+2006,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.1,1.788,2.427,8.2,7.1
+2010,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.1,1.788,2.427,8.0,6.6
+2014,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.264,1.922,2.579,7.4,6.6
+2018,Progressive Party / Brazilian Progressive Party (PPB),PPB,2.256,1.934,2.593,7.2,5.6
+1990,Democratic Labour Party,PDT,-1.855,-2.147,-1.498,9.2,10.0
+1994,Democratic Labour Party,PDT,-1.19,-1.481,-0.855,6.6,7.2
+1998,Democratic Labour Party,PDT,-0.333,-0.635,-0.035,4.9,5.7
+2002,Democratic Labour Party,PDT,-1.192,-1.497,-0.871,4.1,5.1
+2006,Democratic Labour Party,PDT,-1.192,-1.497,-0.871,4.7,5.2
+2010,Democratic Labour Party,PDT,-1.192,-1.497,-0.871,5.5,5.0
+2014,Democratic Labour Party,PDT,-1.192,-1.497,-0.871,3.7,3.6
+2018,Democratic Labour Party,PDT,-1.175,-1.536,-0.875,5.5,4.6
+1990,Democratic Social Party,PDS,2.047,1.704,2.395,,
+1990,Liberal Front / Democrats,PFL,1.778,1.449,2.074,16.5,12.4
+1994,Liberal Front / Democrats,PFL,1.997,1.642,2.301,17.3,12.9
+1998,Liberal Front / Democrats,PFL,1.784,1.478,2.116,20.5,17.3
+2002,Liberal Front / Democrats,PFL,1.857,1.525,2.162,16.6,13.3
+2006,Liberal Front / Democrats,PFL,1.857,1.525,2.162,12.7,10.9
+2010,Liberal Front / Democrats,PFL,2.157,1.829,2.465,8.4,7.6
+2014,Liberal Front / Democrats,PFL,2.318,1.996,2.667,4.1,4.2
+2018,Liberal Front / Democrats,PFL,1.961,1.611,2.255,5.7,4.7
+1990,Liberal Party,PL,1.703,1.402,2.033,3.0,4.3
+2002,Liberal Party,PL,1.532,1.23,1.851,5.1,4.3
+1994,Reform Progressive Party,PPR,2.384,2.083,2.758,10.1,9.4
+1990,Christian Democratic Party,PDC,1.237,0.935,1.571,4.4,3.0
+2010,Party of the Republic / Liberal Party,PR / PL,1.306,0.976,1.593,8.0,7.6
+2014,Party of the Republic / Liberal Party,PR / PL,1.76,1.392,2.038,6.6,5.8
+2018,Party of the Republic / Liberal Party,PR / PL,1.74,1.41,2.047,6.4,5.3
+1990,National Reconstruction Party / Christian Labour Party,PRN,,,,8.2,8.3
+2014,Social Democratic Party,PSD,1.279,0.939,1.561,7.0,6.1
+2018,Social Democratic Party,PSD,1.406,1.067,1.702,6.6,5.9
+2018,Social Liberal Party,PSL,3.251,2.795,3.506,10.1,11.7
+2014,Brazilian Republican Party,PRB,1.604,1.311,1.92,4.1,4.6
+2018,Brazilian Republican Party,PRB,1.849,1.485,2.114,5.8,5.1
