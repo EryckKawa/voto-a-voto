@@ -32,6 +32,8 @@ geo_proj.js                   desenho do mapa já projetado → data/br/geo_proj
 regua_voto.py                 régua pelo voto na Câmara → data/br/ideologia_voto
 ideologia.py, ideologia_anos.py  régua de Harvard por ano → data/br/ideologia
 notas_estudos.py              nota de cada partido em cada eleição → partidos_notas, ideologia_consenso, partido_nota.csv
+primeira_eleicao.py           ano da primeira eleição de cada cidade → coluna nova em cidades (roda depois de nacional_venc.py)
+busca_brasil.py               índice da busca do Brasil inteiro → data/br/busca
 banco_brasil.py               banco nacional em DuckDB (abaixo)
 rodar_consultas.py            roda consultas_brasil.sql → data/br/perguntas
 empacotar.py                  .json → .js (para o site abrir sem servidor)
@@ -44,6 +46,7 @@ Cuidados que a carga trata:
 - **Presidente em 1998:** os votos só existem no arquivo nacional.
 - **Brancos e nulos antigos:** em anos antigos, o campo de total de nulos vem zerado, e o valor certo está em `QT_VOTOS_NULOS`.
 - **Cruzamento TSE × IBGE:** os códigos de município do TSE e do IBGE são cruzados por uma tabela de correspondência.
+- **Cidades que faltam no arquivo do TSE:** o arquivo de votação por município não traz algumas cidades em alguns anos, embora o arquivo de comparecimento traga. São 98 cidades para prefeito em 1996 (quase todas no Maranhão e no Pará), 3 no Pará em 1994 e até 8 nas eleições para prefeito de 2000 a 2024 (8 em 2024, entre elas Nossa Senhora do Socorro/SE e Iporá/GO). Em Pacujá/CE, em 2020, a eleição foi anulada e refeita depois. O site não inventa esses resultados: as cidades aparecem como "sem resultado oficial".
 
 Os scripts foram rodados num ambiente com as pastas fixas que aparecem no topo de cada um (`/tmp/claude-0/...`). Para rodar em outro computador, ajuste essas constantes.
 

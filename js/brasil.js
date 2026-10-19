@@ -53,7 +53,7 @@
     if (BR) return BR;
     // desenhos do mapa já projetados (scripts/geo_proj.js): o navegador não precisa calcular a projeção de 5.566 cidades
     const [cid, ideoH, ideoV, ideoC] = await Promise.all([V.dados("br/cidades"), V.dados("br/ideologia"), V.dados("br/ideologia_voto"), V.dados("br/ideologia_consenso")]);
-    const lista = cid.map((r) => ({ tse: r[0], ibge: r[1], nome: r[2], uf: r[3], capital: !!r[4], pop: r[5], pib: r[6], n: V.norm(r[2]) }));
+    const lista = cid.map((r) => ({ tse: r[0], ibge: r[1], nome: r[2], uf: r[3], capital: !!r[4], pop: r[5], pib: r[6], prim: r[7] || 1994, n: V.norm(r[2]) }));
     BR = { lista, porIbge: new Map(lista.map((c) => [c.ibge, c])), porTse: new Map(lista.map((c) => [c.tse, c])), ideoH, ideoV, ideoC, geo: null };
     // a régua pelo voto só mede partidos de 2019 em diante; para eleições antigas vale a de Harvard
     for (const a of Object.keys(ideoH.anos)) if (!ideoV.anos[a]) ideoV.anos[a] = ideoH.anos[a];
@@ -62,6 +62,25 @@
     return BR;
   }
   V.baseBR = base;
+
+  /* cidade sem vencedor no mapa: por quê. O mapa usa o desenho atual das cidades, então uma cidade criada depois
+     ainda não tem resultado próprio nos anos de antes (os eleitores dela votavam na cidade de origem). */
+  const SEM_PREF = { "5300108": "O Distrito Federal não tem prefeito: quem governa Brasília é o governador.", "2605459": "Fernando de Noronha é um distrito de Pernambuco, governado pelo estado, e não tem prefeito." };
+  function porQue(ib, w, ano, cargo) {
+    if (w) return w[9] ? "venc" : "indef";
+    const c = BR.porIbge.get(ib);
+    if (cargo === "PREF" && SEM_PREF[ib]) return "semPref";
+    if (c && c.prim > ano) return "novo";
+    return "semArq";
+  }
+  V.porQueBR = (ib, ano, cargo, w) => porQue(ib, w, ano, cargo);
+  const agora = () => BR.eleicao;   // a eleição na tela, gravada pela rota antes de desenhar o mapa
+  const textoPorQue = (k, c, ano, cargo) => ({
+    indef: [`${c.nome} ficou sem resultado oficial em ${ano}`, `O TSE não declarou ninguém eleito em ${c.nome} em ${ano}: a eleição foi anulada ou ficou em julgamento.`],
+    semPref: [`${c.nome} não elege prefeito`, SEM_PREF[c.ibge]],
+    novo: [`${c.nome} ainda não era município em ${ano}`, `Os eleitores de lá votavam na cidade de onde ela se separou. A primeira eleição de ${c.nome} foi em ${c.prim}.`],
+    semArq: [`${c.nome} ficou sem resultado oficial em ${ano}`, ano >= 2004 ? `O arquivo oficial do TSE não traz o resultado de ${c.nome} para ${NOME_CG[cargo]} em ${ano}. Em geral, isso acontece quando a Justiça Eleitoral anula a eleição da cidade ou ela ainda está em julgamento.` : `O arquivo oficial do TSE de ${ano} não traz o resultado de ${c.nome} para ${NOME_CG[cargo]}.`],
+  })[k];
   // o desenho do mapa (2 MB) só é carregado por quem desenha mapa
   let geoProm = null;
   V.geoBR = () => geoProm || (geoProm = (async () => {
@@ -92,6 +111,17 @@
     if (!m.has(chave)) m.set(chave, resumoCalc(venc, filtro));
     return m.get(chave);
   }
+  // cidades de hoje sem resultado nesta eleição, pelo motivo, no Brasil e em cada estado (uma passada só por eleição)
+  const memoFaltas = new WeakMap();
+  function faltas(venc) {
+    if (memoFaltas.has(venc)) return memoFaltas.get(venc);
+    const { ano, cargo } = BR.eleicao || {}, out = { BR: {} };
+    if (ano) for (const c of BR.lista) {
+      if (venc[c.ibge]) continue; const k = porQue(c.ibge, null, ano, cargo), u = out[c.uf] || (out[c.uf] = {});
+      u[k] = (u[k] || 0) + 1; out.BR[k] = (out.BR[k] || 0) + 1;
+    }
+    memoFaltas.set(venc, out); return out;
+  }
   function resumoCalc(venc, filtro) {
     const r = { esquerda: 0, centro: 0, direita: 0, pop: { esquerda: 0, centro: 0, direita: 0 }, indef: 0, semNota: 0, total: 0, partidos: new Map() };
     for (const ib in venc) {
@@ -102,6 +132,9 @@
       const p = r.partidos.get(w[2]) || { sg: w[2], n: 0, nota: w[8] }; p.n++; r.partidos.set(w[2], p);
     }
     r.todas = r.total + r.semNota;   // os títulos contam todas as cidades com resultado, inclusive as de partido sem nota
+    // as cidades de hoje que ficam sem vencedor nesta eleição, pelo motivo
+    const fx = faltas(venc)[filtro || "BR"] || {}; r.semArq = fx.semArq || 0; r.novo = fx.novo || 0; r.semPref = fx.semPref || 0;
+    r.semRes = r.indef + r.semArq;
     return r;
   }
   /* candidatos que mais venceram cidades no recorte, com a faixa de cada um */
@@ -136,7 +169,8 @@
   }
   /* manchete de uma cidade: quem venceu e por quanto */
   function mancheteCidade(c, w, U, ano, cargo) {
-    if (!w || !U || !U.r[c.tse]) return { tit: `${c.nome} não teve eleição ordinária para ${NOME_CG[cargo]} em ${ano}`, sub: "" };
+    if (!w) { const [t, s] = textoPorQue(porQue(c.ibge, null, ano, cargo), c, ano, cargo); return { tit: t, sub: s }; }
+    if (!U || !U.r[c.tse]) return { tit: `${c.nome}: sem resultado para ${NOME_CG[cargo]} em ${ano}`, sub: "" };
     const r = U.r[c.tse], t = r.t2 ? "t2" : "t1", rs = r[t], tot = rs.reduce((a, x) => a + x[1], 0);
     const k1 = U.c[w[0]], k2 = w[6] ? U.c[w[6]] : null, v1 = (rs.find((x) => x[0] === w[0]) || [0, 0])[1], v2 = w[6] ? (rs.find((x) => x[0] === w[6]) || [0, 0])[1] : 0;
     if (!w[9]) return { tit: `${c.nome} ficou sem prefeito definido em ${ano}`, sub: "O TSE não marcou nenhum candidato como eleito (eleição anulada ou em julgamento)." };
@@ -150,7 +184,13 @@
   const ORD = ["esquerda", "centro", "direita"];
   let ROT = null;
   // dentro da fatia só vão número e porcentagem (cabem sempre); os nomes ficam na legenda logo abaixo, sem cortar
-  const fatiaHtml = (f, n, tot) => { if (!n) return ""; const p = (100 * n) / (tot || 1); return p < 6 ? "" : `<b>${V.int(n)}</b>${p >= 11 ? `<span>${V.pct(p, 0)}</span>` : ""}`; };
+  // o número só entra se couber inteiro na largura da fatia (sem cortar "460" em "46")
+  let PLW = 480;
+  const fatiaHtml = (f, n, tot) => {
+    if (!n) return ""; const p = (100 * n) / (tot || 1), txt = V.int(n), larg = (p / 100) * PLW, dig = PLW < 420 ? 11 : 13.5;
+    if (larg < 26 + txt.length * dig) return "";
+    return `<b>${txt}</b>${p >= 11 && larg >= 64 ? `<span>${V.pct(p, 0)}</span>` : ""}`;
+  };
   const legendaPlacar = (r, rot) => `<p class="placar-nomes">${ORD.filter((f) => r[f]).map((f) => `<span><i class="placar-nomes__cor placar-nomes__cor--${f}"></i>${V.esc((rot && rot[f]) || FX[f].nome)}</span>`).join("")}</p>`;
   function placar(r, rot) {
     ROT = rot;
@@ -174,7 +214,7 @@
     const barra = document.getElementById("apu-barra"), pct = document.getElementById("apu-pct"), rot = document.getElementById("apu-rot");
     const sub = document.querySelector(".manchete__sub"); sub.classList.add("apuracao-esconde");
     document.getElementById("apu-rever").hidden = true; rot.textContent = "Apurando";
-    M.limpar(); const plc = document.querySelector(".placar"); if (plc) plc.classList.add("apurando");
+    M.limpar(venc); const plc = document.querySelector(".placar"); if (plc) plc.classList.add("apurando");
     const D = 3200, t0 = performance.now(); let feito = 0;
     function quadro(agora) {
       if (!barra.isConnected) return;   // a pessoa saiu do mapa no meio da apuração
@@ -241,7 +281,7 @@
     host.innerHTML = "";
     const svg = d3.select(host).append("svg").attr("class", "mapa-svg mapa-br__svg").attr("viewBox", [0, 0, W, H]).attr("role", "img")
       .attr("aria-label", "Mapa do Brasil com as cidades pintadas pela posição ideológica do partido que venceu");
-    svg.append("defs").html('<pattern id="hach" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#d9dce1"/><line x1="0" y1="0" x2="0" y2="6" stroke="#9aa0a8" stroke-width="2"/></pattern>');
+    svg.append("defs").html('<pattern id="hach" width="6" height="6" patternUnits="userSpaceOnUse" patternTransform="rotate(45)"><rect width="6" height="6" fill="#d9dce1"/><line x1="0" y1="0" x2="0" y2="6" stroke="#9aa0a8" stroke-width="2"/></pattern><pattern id="novo" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="4" fill="#e2e5e9"/><circle cx="2" cy="2" r=".95" fill="#7b818a"/></pattern>');
     const g = svg.append("g");
     const munG = g.append("g").attr("class", "muns").style("stroke-width", 0.35);
     const mun = munG.selectAll("path").data(BR.geo.mun).join("path").attr("class", "mun").attr("d", (f) => f.d);
@@ -262,22 +302,25 @@
     svg.call(zoom).on("dblclick.zoom", null);
     let aviso = null;
     svg.on("wheel", (ev) => { if (ev.ctrlKey || ev.metaKey) return; if (!aviso) { aviso = d3.select(host).append("div").attr("class", "mapa-aviso").text("Use Ctrl + rolagem (ou os botões +/−) para aproximar"); } aviso.classed("ver", true); clearTimeout(aviso._t); aviso._t = setTimeout(() => aviso.classed("ver", false), 1400); });
-    const corDe = (w) => (!w ? "#eceef1" : !w[9] ? "url(#hach)" : V.corNota(w[8]));
+    // cidade sem vencedor: hachurada quando a eleição houve mas não tem resultado oficial; pontilhada quando não houve eleição ali
+    const FUNDO = { indef: "url(#hach)", semArq: "url(#hach)", novo: "url(#novo)", semPref: "url(#novo)" };
+    const corDe = (w, id) => (w && w[9] ? V.corNota(w[8]) : FUNDO[porQue(id, w, agora().ano, agora().cargo)]);
+    const dicaSem = (c, w) => { const [t, s] = textoPorQue(porQue(c.ibge, w, agora().ano, agora().cargo), c, agora().ano, agora().cargo); return `<b>${V.esc(c.nome)} (${c.uf})</b>${V.esc(t.replace(c.nome + " ", "").replace(/^./, (x) => x.toUpperCase()))}.<br><small>${V.esc(s)}</small>`; };
     const elPor = new Map(); mun.each(function (f) { elPor.set(f.id, this); });
     // um único ouvinte para as 5.566 cidades (em vez de três por cidade)
     let aoMover = null;
     munG.on("mousemove", (ev) => { const f = ev.target.__data__; if (f && aoMover) aoMover(ev, f); }).on("mouseleave", () => V.dica(null, null))
       .on("click", (ev) => { const f = ev.target.__data__; if (!f) return; V.dica(null, null); aoClicar(f.id, k >= PERTO); });
     function colorirMetrica(valor, cor, dica) {
-      mun.attr("fill", (f) => { const v = valor(f.id); return v == null ? "#eceef1" : cor(v); });
+      mun.attr("fill", (f) => { const v = valor(f.id); return v != null ? cor(v) : BR.porIbge.get(f.id).prim > agora().ano ? "url(#novo)" : "url(#hach)"; });
       aoMover = (ev, f) => { const c = BR.porIbge.get(f.id); if (!c) return; V.dica(ev, dica(c) + (k < PERTO ? '<p class="dica__acao">Clique para aproximar ' + V.esc(UFN[c.uf]) + "</p>" : "")); };
     }
     function colorir(venc) {
-      mun.attr("fill", (f) => corDe(venc[f.id]));
+      mun.attr("fill", (f) => corDe(venc[f.id], f.id));
       aoMover = (ev, f) => {
         const c = BR.porIbge.get(f.id); if (!c) return; const w = venc[c.ibge];
-        if (k < PERTO) { V.dica(ev, (w ? V.linhasDica(c.nome + " (" + c.uf + ")", w[9] ? [["Venceu", V.titulo(w[1]) + " · " + w[2]], ["Votos válidos", V.pct(w[3])]] : [["Resultado", "sem prefeito definido"]]) : "<b>" + V.esc(c.nome) + "</b>") + '<p class="dica__acao">Clique para aproximar ' + V.esc(UFN[c.uf]) + "</p>"); return; }
-        V.dica(ev, w ? V.linhasDica(c.nome + " (" + c.uf + ")", w[9] ? [["Venceu", V.titulo(w[1]) + " · " + w[2]], ["Votos válidos", V.pct(w[3])], ["Vantagem sobre o 2º", V.int(w[5]) + " votos"], ["Nota do partido", fmtNota(w[8])]] : [["Resultado", "sem prefeito definido no arquivo do TSE"]]) : "<b>" + V.esc(c.nome) + "</b>Sem eleição neste ano");
+        if (k < PERTO) { V.dica(ev, (w && w[9] ? V.linhasDica(c.nome + " (" + c.uf + ")", [["Venceu", V.titulo(w[1]) + " · " + w[2]], ["Votos válidos", V.pct(w[3])]]) : dicaSem(c, w)) + '<p class="dica__acao">Clique para aproximar ' + V.esc(UFN[c.uf]) + "</p>"); return; }
+        V.dica(ev, w && w[9] ? V.linhasDica(c.nome + " (" + c.uf + ")", [["Venceu", V.titulo(w[1]) + " · " + w[2]], ["Votos válidos", V.pct(w[3])], ["Vantagem sobre o 2º", V.int(w[5]) + " votos"], ["Nota do partido", fmtNota(w[8])]]) : dicaSem(c, w));
       };
     }
     function para(feat, ms = 800, frac = 0.86, kmax = 40) {
@@ -290,8 +333,9 @@
     function realcar(pred) { mun.classed("mun--apagada", pred ? (f) => !pred(f.id) : false); }
     return {
       colorir, colorirMetrica, destacar, realcar, foco,
-      limpar: () => mun.attr("fill", "#eceef1"),
-      pintar: (ids, venc) => ids.forEach((ib) => { const el = elPor.get(ib); if (el) el.setAttribute("fill", corDe(venc[ib])); }),
+      // antes da apuração, as cidades que vão chegar ficam em branco; as que não têm resultado já aparecem com o motivo
+      limpar: (venc) => mun.attr("fill", (f) => (venc && !venc[f.id] ? corDe(null, f.id) : "#eceef1")),
+      pintar: (ids, venc) => ids.forEach((ib) => { const el = elPor.get(ib); if (el) el.setAttribute("fill", corDe(venc[ib], ib)); }),
       estado: (sg) => para(BR.geo.ufs.find((f) => f.sg === sg)),
       cidade: (ib) => { const f = BR.geo.porId.get(ib); if (f) para(f, 900, 0.14, 24); },
       brasil: () => svg.transition().duration(800).call(zoom.transform, d3.zoomIdentity),
@@ -306,7 +350,7 @@
     el.innerHTML = `<p class="lado__volta"><a href="${lk(c.uf)}">← ${UFN[c.uf]}</a></p><h2 class="lado__cidade">${V.esc(c.nome)}</h2>
       <p class="lado__fatos">${UFN[c.uf]}${c.capital ? " · capital" : ""} · ${V.int(c.pop)} moradores (Censo 2022)</p><div id="cid-corpo"><p class="vazio">Carregando…</p></div>`;
     let U; try { U = (await V.dados("br/ufx/" + cargo + ano))[c.uf]; if (!U) throw new Error("sem dados"); } catch (e) { document.getElementById("cid-corpo").innerHTML = '<p class="vazio">Sem dados desta eleição.</p>'; return; }
-    const r = U.r[c.tse]; if (!r) { document.getElementById("cid-corpo").innerHTML = '<p class="vazio">Não houve eleição ordinária aqui em ' + ano + ".</p>"; return; }
+    const r = U.r[c.tse]; if (!r) { document.getElementById("cid-corpo").innerHTML = '<p class="vazio">' + V.esc(textoPorQue(porQue(ib, null, ano, cargo), c, ano, cargo)[1]) + '</p><div id="hist"></div>'; document.getElementById("hist").innerHTML = await historicoHtml(ib); return; }
     const notas = BR.ideo.anos[ano] || {};
     const nt = (sg) => (notas[sg] ? notas[sg][0] : null);
     const turnos = r.t2 ? ["t1"] : ["t1"];
@@ -332,7 +376,9 @@
   /* ---------- o ato de votar: quem foi, quem faltou, quem anulou ou votou em branco ---------- */
   const legVenc = () => `<span class="mapa-leg__escala"><span>Esquerda</span><i></i><span>Direita</span></span>
       <a class="mapa-leg__regua" href="#/mapa" data-alvo="reguas">Régua ${REGUA === "voto" && H && H.ano < 2018 ? "de Harvard (para anos antes de 2019)" : NOME_REGUA[REGUA]}</a>
-      <span class="mapa-leg__item" id="leg-indef-box"><i class="mapa-leg__risco"></i><span>Sem resultado definido (<span id="leg-indef"></span>)</span></span>
+      <span class="mapa-leg__item" id="leg-indef-box" hidden><i class="mapa-leg__risco"></i><span>Sem resultado oficial (<span id="leg-indef"></span>)</span></span>
+      <span class="mapa-leg__item" id="leg-novo-box" hidden><i class="mapa-leg__novo"></i><span>Ainda não era município (<span id="leg-novo"></span>)</span></span>
+      <span class="mapa-leg__item" id="leg-pref-box" hidden><i class="mapa-leg__novo"></i><span>Brasília e Fernando de Noronha não têm prefeito</span></span>
       <span class="mapa-leg__item" id="leg-sem-box" hidden><i class="mapa-leg__sem"></i><span>Partido que os estudos não medem (<span id="leg-sem"></span>)</span></span>
       <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>`;
   const MET = {
@@ -350,7 +396,8 @@
     const dom = [d3.quantile(todos, 0.02), d3.quantile(todos, 0.98)];
     const esc = d3.scaleQuantize ? null : null;
     const cor = (v) => d3.interpolateRgbBasis(X.cores)(Math.max(0, Math.min(1, (v - dom[0]) / (dom[1] - dom[0]))));
-    const dica = (c) => { const o = comp[c.ibge]; if (!o || !o.t1) return "<b>" + V.esc(c.nome) + "</b>Sem dados"; const t = o.t1; return V.linhasDica(c.nome + " (" + c.uf + ")", cam === "abst" ? [["Não foram votar", V.pct((100 * t[2]) / t[0])], ["Eleitores", V.int(t[0])], ["Foram votar", V.int(t[1])]] : [["Brancos", V.pct((100 * t[3]) / t[1])], ["Nulos", V.pct((100 * t[4]) / t[1])], ["Foram votar", V.int(t[1])]]); };
+    const semComp = (c) => (c.prim > ano ? `ainda não era município em ${ano}` : `o TSE não traz o comparecimento de ${ano}`);
+    const dica = (c) => { const o = comp[c.ibge]; if (!o || !o.t1) return "<b>" + V.esc(c.nome) + "</b>" + V.esc(semComp(c)[0].toUpperCase() + semComp(c).slice(1)) + "."; const t = o.t1; return V.linhasDica(c.nome + " (" + c.uf + ")", cam === "abst" ? [["Não foram votar", V.pct((100 * t[2]) / t[0])], ["Eleitores", V.int(t[0])], ["Foram votar", V.int(t[1])]] : [["Brancos", V.pct((100 * t[3]) / t[1])], ["Nulos", V.pct((100 * t[4]) / t[1])], ["Foram votar", V.int(t[1])]]); };
     if (trocou) M.colorirMetrica(val, cor, dica);
     document.getElementById("mapa-leg").innerHTML = `<span class="mapa-leg__escala"><span>${V.pct(dom[0], 0)}</span><i style="background:linear-gradient(90deg,${X.cores.join(",")})"></i><span>${V.pct(dom[1], 0)} ou mais</span></span>
       <span class="mapa-leg__item">${X.rot}, 1º turno</span><span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade</span><span class="so-toque">Toque num estado, depois numa cidade</span></span>`;
@@ -363,13 +410,13 @@
     let tit, sub, barra, cid = ib ? BR.porIbge.get(ib) : null;
     const pc = cid && comp[ib] && comp[ib].t1 ? comp[ib].t1 : null;
     if (cam === "abst") {
-      if (cid) { tit = pc ? `Em ${cid.nome}, ${V.pct(X.valor(pc))} dos eleitores não foram votar em ${ano}` : `${cid.nome}: sem dados de comparecimento em ${ano}`; sub = pc ? `${V.int(pc[2])} de ${V.int(pc[0])} eleitores faltaram no 1º turno. ${NO_UF(cid.uf)[0].toUpperCase() + NO_UF(cid.uf).slice(1)}, foram ${V.pct(X.valor(soma(comp, cid.uf)))}; no Brasil, ${V.pct(pBR)}.` : ""; }
+      if (cid) { tit = pc ? `Em ${cid.nome}, ${V.pct(X.valor(pc))} dos eleitores não foram votar em ${ano}` : `${cid.nome}: ${semComp(cid)}`; sub = pc ? `${V.int(pc[2])} de ${V.int(pc[0])} eleitores faltaram no 1º turno. ${NO_UF(cid.uf)[0].toUpperCase() + NO_UF(cid.uf).slice(1)}, foram ${V.pct(X.valor(soma(comp, cid.uf)))}; no Brasil, ${V.pct(pBR)}.` : ""; }
       else { tit = `Em ${ano}, ${V.pct(pS)} dos eleitores ${onde} não foram votar`; sub = `São ${milhoes(S[2])} de pessoas no 1º turno${S2 ? `; no 2º turno, ${V.pct(X.valor(S2))}` : ""}. Onde mais gente faltou: ${nome(mais)}, ${V.pct(mais.v)}. Onde menos: ${nome(menos)}, ${V.pct(menos.v)}.`; }
       const t = pc || S; const pf = (100 * t[1]) / t[0];
       barra = `<div class="placar placar--cidade"><div class="placar__fatia" style="flex-basis:${pf}%;background:#2f6b4f;color:#fff"><b>${V.pct(pf)}</b><span>Foram votar</span></div><div class="placar__fatia placar__fatia--fim" style="flex-basis:${100 - pf}%;background:#9c5d16;color:#fff"><b>${V.pct(100 - pf)}</b><span${100 - pf < 25 ? ' class="so-largo"' : ""}>Não foram</span></div></div>`;
     } else {
       const t = pc || S, pb = (100 * t[3]) / t[1], pn = (100 * t[4]) / t[1];
-      if (cid) { tit = pc ? `Em ${cid.nome}, ${V.pct(pb + pn)} dos votos para ${NOME_CG[cargo]} foram brancos ou nulos em ${ano}` : `${cid.nome}: sem dados em ${ano}`; sub = pc ? `Brancos: ${V.pct(pb)}. Nulos: ${V.pct(pn)}. ${NO_UF(cid.uf)[0].toUpperCase() + NO_UF(cid.uf).slice(1)}, a soma foi ${V.pct(X.valor(soma(comp, cid.uf)))}; no Brasil, ${V.pct(pBR)}.` : ""; }
+      if (cid) { tit = pc ? `Em ${cid.nome}, ${V.pct(pb + pn)} dos votos para ${NOME_CG[cargo]} foram brancos ou nulos em ${ano}` : `${cid.nome}: ${semComp(cid)}`; sub = pc ? `Brancos: ${V.pct(pb)}. Nulos: ${V.pct(pn)}. ${NO_UF(cid.uf)[0].toUpperCase() + NO_UF(cid.uf).slice(1)}, a soma foi ${V.pct(X.valor(soma(comp, cid.uf)))}; no Brasil, ${V.pct(pBR)}.` : ""; }
       else { tit = `Em ${ano}, ${V.pct(pS)} de quem foi votar ${NO_UF(uf)} anulou ou votou em branco para ${NOME_CG[cargo]}`; sub = `Brancos: ${V.pct(pb)}; nulos: ${V.pct(pn)}, no 1º turno. Onde mais: ${nome(mais)}, ${V.pct(mais.v)}. Onde menos: ${nome(menos)}, ${V.pct(menos.v)}.`; }
       barra = `<div class="placar placar--cidade"><div class="placar__fatia" style="flex-basis:${100 - pb - pn}%;background:#4a5160;color:#fff"><b>${V.pct(100 - pb - pn)}</b><span>Votos válidos</span></div><div class="placar__fatia" style="flex-basis:${pb}%;background:#a48ccb;color:#16181d"></div><div class="placar__fatia placar__fatia--fim" style="flex-basis:${pn}%;background:#3b2766;color:#fff"></div></div>
         <p class="placar-leg"><i style="background:#a48ccb"></i>Brancos ${V.pct(pb)} <i style="background:#3b2766"></i>Nulos ${V.pct(pn)}</p>`;
@@ -563,10 +610,7 @@
           <div id="mapa-br" class="mapa-br"></div>
           <div class="mapa-zoom"><button class="btn" id="z-mais" aria-label="Aproximar">+</button><button class="btn" id="z-menos" aria-label="Afastar">−</button><button class="btn" id="z-br">Brasil inteiro</button></div>
           <div class="mapa-leg" id="mapa-leg">
-            <span class="mapa-leg__escala"><span>Esquerda</span><i></i><span>Direita</span></span>
-            <span class="mapa-leg__item" id="leg-indef-box"><i class="mapa-leg__risco"></i><span>Sem resultado definido (<span id="leg-indef"></span>)</span></span>
-      <span class="mapa-leg__item" id="leg-sem-box" hidden><i class="mapa-leg__sem"></i><span>Partido que os estudos não medem (<span id="leg-sem"></span>)</span></span>
-            <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>
+            ${legVenc()}
           </div>
         </div></div>
         <aside class="home__lado"><div id="lado" class="lado"></div></aside>
@@ -628,7 +672,7 @@
         <div class="placar__fatia" style="flex-basis:${(100 * m.v1) / m.tot}%;background:${V.parNota(nt(m.k1[1]))[0]};color:${V.parNota(nt(m.k1[1]))[1]}"><b>${V.pct((100 * m.v1) / m.tot)}</b><span>${V.esc(V.titulo(m.k1[0]))}</span></div>
         <div class="placar__fatia placar__resto" style="flex-basis:${(100 * (m.tot - m.v1 - m.v2)) / m.tot}%"></div>
         <div class="placar__fatia placar__fatia--fim" style="flex-basis:${(100 * m.v2) / m.tot}%;background:${V.parNota(nt(m.k2[1]))[0]};color:${V.parNota(nt(m.k2[1]))[1]}"><b>${V.pct((100 * m.v2) / m.tot)}</b><span>${V.esc(V.titulo(m.k2[0]))}</span></div></div>` : "";
-    const cab = document.getElementById("manchete");
+    const cab = document.getElementById("manchete"); PLW = cab.clientWidth || PLW;
     // guarda os números de antes para a troca de estado contar de um valor para o outro
     const antes = {}; cab.querySelectorAll(".conta").forEach((el) => (antes[el.dataset.f] = +el.textContent.replace(/\D/g, "")));
     const fatAntes = {}; cab.querySelectorAll(".placar__fatia[data-f]").forEach((el) => (fatAntes[el.dataset.f] = el.style.flexBasis));
@@ -639,7 +683,9 @@
     cab.querySelectorAll(".conta").forEach((el) => { if (antes[el.dataset.f] != null && !trocou) tween(el, antes[el.dataset.f], r[el.dataset.f]); });
     const fats = cab.querySelectorAll(".placar__fatia[data-f]");
     if (Object.keys(fatAntes).length) { const novo = []; fats.forEach((el) => { novo.push(el.style.flexBasis); el.style.flexBasis = fatAntes[el.dataset.f]; }); requestAnimationFrame(() => requestAnimationFrame(() => fats.forEach((el, i) => (el.style.flexBasis = novo[i])))); }
-    document.getElementById("leg-indef").textContent = plural(r.indef, "cidade", "cidades"); document.getElementById("leg-indef-box").hidden = !r.indef;
+    document.getElementById("leg-indef").textContent = plural(r.semRes, "cidade", "cidades"); document.getElementById("leg-indef-box").hidden = !r.semRes;
+    document.getElementById("leg-novo").textContent = plural(r.novo, "cidade de hoje", "cidades de hoje"); document.getElementById("leg-novo-box").hidden = !r.novo;
+    document.getElementById("leg-pref-box").hidden = !r.semPref;
     document.getElementById("leg-sem").textContent = plural(r.semNota, "cidade", "cidades"); document.getElementById("leg-sem-box").hidden = !r.semNota;
     const lado = document.getElementById("lado");
     lado.classList.remove("lado--chega");
@@ -660,7 +706,7 @@
     await base(); await V.geoBR();
     let cargo = cg || "PREF", ano = an ? +an : 2024;
     if (!ELEICOES[cargo] || !ELEICOES[cargo].prontos.includes(ano)) { cargo = "PREF"; ano = 2024; }
-    BR.venc = await V.dados("br/venc/" + cargo + ano);
+    BR.venc = await V.dados("br/venc/" + cargo + ano); BR.eleicao = { cargo, ano };
     if (ib && !uf) uf = BR.porIbge.get(ib) && BR.porIbge.get(ib).uf;
     const nova = !mesma || !H || !document.getElementById("mapa-br");
     if (nova) montar(main);

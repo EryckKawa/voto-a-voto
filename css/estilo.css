@@ -805,6 +805,7 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 }
 .revela__fim { margin-top: 28px; font-size: 18px; font-weight: 700; }
 .mapa-leg__sem { width: 14px; height: 14px; border-radius: 3px; background: #c9ccd1; }
+.mapa-leg__novo { width: 14px; height: 14px; border-radius: 3px; background: #e2e5e9 radial-gradient(circle, #7b818a 0 1px, transparent 1.4px) 0 0 / 4px 4px; }
 
 /* ---------- Partidos ---------- */
 .pt-svg { width: 100%; height: auto; display: block; }

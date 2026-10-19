@@ -18,6 +18,9 @@
     </div></div>`;
 
   /* ---------- busca de cidades e candidatos ---------- */
+  // índice nacional da busca, com os nomes já sem acento (carregado só na primeira busca)
+  let nomesProm = null;
+  const nomesBR = () => nomesProm || (nomesProm = V.dados("br/busca").then((B) => B.map((r) => ({ r, n: V.norm(r[0]) }))));
   V.ligarBusca = function (input, lista) {
     let itens = [], sel = -1;
     const fechar = () => { lista.hidden = true; input.setAttribute("aria-expanded", "false"); sel = -1; };
@@ -36,9 +39,19 @@
       if (cid.length) pinta(cid);
       let cand = [];
       try {
+        // Brasil inteiro: presidente, governador e senador (todos) e prefeitos eleitos; cada um leva ao mapa daquela eleição
+        const N = await nomesBR();
+        const nac = N.filter((x) => x.n.includes(t)).sort((a, b) => b.r[6] - a.r[6]).slice(0, 6).map(({ r }) => {
+          const [nome, sg, cg, ano, uf, ib, , el] = r, c = ib && BR.porIbge.get(ib);
+          const h = "#/mapa" + (cg === "PREF" && ano === 2024 ? "" : "/e/" + cg + ano) + (uf ? "/br/" + uf + (c ? "/c/" + ib : "") : "");
+          const s = sg + " · " + (cg === "PREF" ? `eleito prefeito de ${c ? c.nome + " (" + uf + ")" : uf} em ${ano}` : `${V.CARGOS[cg]} ${ano}${uf ? " · " + uf : ""}${el ? " · eleito" : ""}`);
+          return { h, v: r[6], ico: '<span class="busca__ico" style="background:' + V.corPartido(sg) + '">' + V.esc(V.iniciais(nome)) + "</span>", t: V.titulo(nome), s };
+        });
+        // seis estados do grupo: deputados e vereadores, com a ficha do candidato
         const B = await V.dados("busca");
-        cand = B.filter((r) => V.norm(r[1]).includes(t)).sort((a, b) => b[6] - a[6]).slice(0, 6)
-          .map((r) => ({ h: "#/candidato/" + r[5] + "/" + r[0], ico: '<span class="busca__ico" style="background:' + V.corPartido(r[2]) + '">' + V.esc(V.iniciais(r[1])) + "</span>", t: V.titulo(r[1]), s: r[2] + " · " + V.CARGOS_CURTO[r[3]] + " " + r[4] + " · " + r[5] }));
+        const seis = B.filter((r) => !["PRES", "GOV", "SEN", "PREF"].includes(r[3]) && V.norm(r[1]).includes(t)).sort((a, b) => b[6] - a[6]).slice(0, 6)
+          .map((r) => ({ h: "#/candidato/" + r[5] + "/" + r[0], v: r[6], ico: '<span class="busca__ico" style="background:' + V.corPartido(r[2]) + '">' + V.esc(V.iniciais(r[1])) + "</span>", t: V.titulo(r[1]), s: r[2] + " · " + V.CARGOS_CURTO[r[3]] + " " + r[4] + " · " + r[5] }));
+        cand = nac.concat(seis).sort((a, b) => b.v - a.v).slice(0, 7);
       } catch (e) {}
       if (V.norm(input.value.trim()) === t) pinta(cid.concat(cand));
     }

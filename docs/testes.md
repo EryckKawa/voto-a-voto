@@ -13,7 +13,7 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 
   O robô (`testes/rodar_testes.js`) abre o site numa tela de 1280 px e numa de celular (390 px), uma de cada vez, roda tudo e imprime o relatório. Ele sai com código 1 se algum teste falhar. Cada tela roda sozinha porque, rodando as duas juntas, elas disputam o processador e os testes de velocidade erram para pior.
 
-## O que é testado (54 testes por tela)
+## O que é testado (63 testes por tela)
 
 **Velocidade**
 
@@ -32,6 +32,15 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 - **Régua:** o PT não aparece como extremo.
 - **Erros:** nenhum erro de JavaScript durante todos os testes.
 - **Teclado:** a ordem do Tab começa pelo atalho "Pular para o conteúdo" (só no robô).
+
+**Preenchimento**
+
+- **Mapa, nas 35 eleições:** toda cidade tem vencedor ou um motivo (sem resultado oficial, ainda não era município, não elege prefeito).
+- **Mapa desenhado** (presidente 1994, prefeito 1996 e 2024, governador 2022): nenhuma cidade em branco, e a legenda fecha a conta.
+- **Textos:** 20 páginas sem "undefined", "NaN" ou título vazio.
+- **Tabelas das 12 perguntas:** nenhuma célula vazia.
+- **Uma cidade de cada estado:** urna, lista de candidatos e os quatro cargos no histórico, ou a explicação de por que não há resultado.
+- **Busca:** acha a cidade com ou sem acento, em maiúsculas ou com espaços; acha candidatos do Brasil inteiro (presidente, governador, prefeito) e abre o mapa daquela eleição; Enter abre o primeiro resultado; texto estranho (código HTML, SQL, 300 letras) não quebra a página nem vira código.
 
 **Acessibilidade**, em todas as páginas:
 
@@ -57,4 +66,4 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
   - PL e Novo de 2026 na direita;
   - nenhuma nota fora de −1 a +1.
 
-Resultado da última rodada: tudo certo nas duas telas.
+Resultado da última rodada (19/10/2026): tudo certo nas duas telas. O único aviso é a fluidez do zoom em computador sem placa de vídeo.

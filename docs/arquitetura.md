@@ -52,6 +52,22 @@ Principais pastas de `data/br/`:
 | `partidos_notas` | Notas de cada partido em cada eleição, medida por medida, para a página Partidos |
 | `perguntas` | O SQL, as colunas e as linhas de cada consulta das 12 perguntas |
 | `achados` | Números já calculados da página "O que o voto revela" |
+| `cidades` | As 5.570 cidades: códigos do TSE e do IBGE, nome, estado, população, PIB e o ano da primeira eleição |
+| `busca` | Índice da busca: candidatos a presidente, governador e senador, e prefeitos eleitos, de 1994 a 2026 |
+
+## Cidades sem vencedor no mapa
+
+O mapa usa o desenho atual das cidades em todas as eleições. Uma cidade sem vencedor numa eleição aparece com um destes motivos, na cor e na legenda:
+
+| No mapa | Motivo | Exemplo |
+|---|---|---|
+| Pontilhada | **Ainda não era município.** A cidade foi criada depois; os eleitores dela votavam na cidade de origem. Vem do ano da primeira eleição da cidade (`scripts/primeira_eleicao.py`). | 548 cidades de hoje em 1994 |
+| Pontilhada | **Não elege prefeito:** Brasília e Fernando de Noronha. | |
+| Hachurada | **Sem resultado oficial.** Ou o TSE não declarou ninguém eleito (eleição anulada ou em julgamento), ou o arquivo oficial não traz a cidade. | 39 cidades para prefeito em 2024 |
+
+A explicação aparece ao passar o mouse, no título e no painel da cidade. A função `porQue()`, em `js/brasil.js`, decide o motivo.
+
+Quatro cidades criadas em 2013 (Mojuí dos Campos/PA, Nazária/PI, Paraíso das Águas/MS e Pinto Bandeira/RS) não têm desenho próprio na malha usada: a área delas aparece dentro da cidade de origem. Elas são achadas pela busca e têm painel, mas não são pintadas à parte.
 
 ## As três réguas no mapa
 

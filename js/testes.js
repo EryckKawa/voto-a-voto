@@ -1,5 +1,5 @@
 /* Voto a voto — testes do site, rodando dentro do próprio navegador (abra index.html#/testes ou testes.html).
-   Quatro grupos: velocidade, funcionamento, acessibilidade (axe-core) e conferência dos dados com números oficiais do TSE.
+   Cinco grupos: velocidade, funcionamento, preenchimento (campos e mapa sem vazios), acessibilidade (axe-core) e conferência dos dados com números oficiais do TSE.
    Os testes esperam a página ficar pronta (evento "vav:pronto" do roteador) em vez de esperar um tempo fixo. */
 (function () {
   "use strict";
@@ -244,11 +244,127 @@
     return R(c && c.r >= 0.9, "correlação de " + c.r.toFixed(2).replace(".", ",") + " em " + c.n + " partidos", "0,90 ou mais");
   });
 
+  // PREENCHIMENTO: nenhum campo vazio, nenhuma área do mapa sem cor ou sem explicação, e a busca aguenta qualquer texto
+  const ELEICOES_MAPA = [["PREF", [1996, 2000, 2004, 2008, 2012, 2016, 2020, 2024]], ...["PRES", "GOV", "SEN"].map((c) => [c, [1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026]])];
+  teste("Preenchimento", "Mapa: em todas as 35 eleições, toda cidade tem cor ou motivo", async () => {
+    const BR = await V.baseBR(); await V.geoBR();
+    const ids = BR.geo.mun.map((f) => f.id), ruins = [], semArq = []; let n = 0;
+    for (const [cg, anos] of ELEICOES_MAPA) for (const a of anos) {
+      const w = await V.dados("br/venc/" + cg + a); n++;
+      const conta = { venc: 0, indef: 0, semArq: 0, novo: 0, semPref: 0, x: 0 };
+      for (const id of ids) { const k = V.porQueBR(id, a, cg, w[id]); conta[k in conta ? k : "x"]++; if (k === "venc" && w[id][8] === undefined) conta.x++; }
+      if (conta.x) ruins.push(cg + a);
+      if (conta.semArq) semArq.push(`${cg} ${a}: ${conta.semArq}`);
+      if (conta.venc < ids.length * (a === 1994 ? 0.85 : 0.94)) ruins.push(`${cg}${a} só ${conta.venc} com vencedor`);
+    }
+    return R(ruins.length === 0 && n === 35, `${n} eleições, ${V.int(ids.length)} desenhos cada${ruins.length ? " · problema: " + ruins.join(", ") : ""}`, "toda cidade com vencedor, ou marcada como sem resultado oficial ou ainda não criada",
+      semArq.length ? "Sem resultado no arquivo do TSE: " + semArq.join("; ") + "." : "");
+  });
+  for (const e of ["PRES1994", "PREF1996", "PREF2024", "GOV2022"]) {
+    teste("Preenchimento", `Mapa de ${e.slice(0, -4).replace("PRES", "presidente").replace("PREF", "prefeito").replace("GOV", "governador")} ${e.slice(-4)}: nenhuma cidade em branco, legenda fecha a conta`, async () => {
+      await irPara(e === "PREF2024" ? "#/mapa" : "#/mapa/e/" + e); await ate(() => q("#apu-rever") && !q("#apu-rever").hidden, 8000); await quadros(2);
+      const ps = qq("#mapa-br path.mun"), branco = ps.filter((p) => { const f = p.getAttribute("fill"); return !f || f === "none" || f === "#eceef1"; });
+      const num = (id) => (q(id) && !q(id).closest("[hidden]") ? +q(id).textContent.replace(/\D/g, "") : 0);
+      const comCor = ps.filter((p) => !/^url/.test(p.getAttribute("fill") || "")).length;
+      const leg = num("#leg-indef") + num("#leg-novo");
+      const semCor = ps.length - comCor;
+      // a legenda conta as 5.570 cidades de hoje; quatro delas (criadas depois do desenho do mapa) não têm desenho próprio
+      return R(branco.length === 0 && Math.abs(leg - semCor) <= 4, `${branco.length} em branco · ${V.int(comCor)} com cor · ${V.int(semCor)} hachuradas ou pontilhadas · legenda: ${V.int(leg)}`, "nenhuma em branco; legenda igual às marcadas (±4)");
+    });
+  }
+  teste("Preenchimento", "Textos sem campo vazio em todas as páginas", async () => {
+    const pags = ["#/", "#/mapa", "#/mapa/e/PRES1994", "#/mapa/e/PREF1996/br/MA", "#/mapa/v/abst", "#/mapa/v/bn", "#/mapa/v/vira", "#/revela", "#/perguntas", ...Array.from({ length: 12 }, (_, i) => "#/perguntas/q" + (i + 1)), "#/partidos"];
+    const ruins = [], RUIM = /\b(undefined|NaN|null|Infinity)\b|\[object |R\$ ?NaN/;
+    for (const h of pags) {
+      await irPara(h); await quadros(2);
+      const m = q("main"), t = m.innerText;
+      if (RUIM.test(t)) ruins.push(h + ": “" + t.match(RUIM)[0] + "”");
+      const vaz = qq("main h1, main h2, main h3, main th, main .pq-resp, main .manchete__titulo").filter((e) => !e.textContent.trim() && !e.closest("[hidden]"));
+      if (vaz.length) ruins.push(h + ": " + vaz.length + " título(s) vazio(s)");
+      if (m.dataset.erro) ruins.push(h + ": erro ao abrir");
+    }
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${pags.length} páginas, nenhum vazio`, "sem “undefined”, “NaN” ou título vazio");
+  });
+  teste("Preenchimento", "Tabelas das 12 perguntas sem célula vazia", async () => {
+    const ruins = [];
+    for (let i = 1; i <= 12; i++) {
+      await irPara("#/perguntas/q" + i); await quadros(1);
+      const vaz = qq("main td").filter((td) => !td.textContent.trim());
+      if (vaz.length) ruins.push(`Q${i}: ${vaz.length}`);
+    }
+    return R(ruins.length === 0, ruins.length ? "células vazias em " + ruins.join(", ") : "nenhuma célula vazia", "toda célula com valor ou “—”");
+  });
+  teste("Preenchimento", "Uma cidade de cada estado: painel completo", async () => {
+    const BR = await V.baseBR(), ruins = [], explicadas = [];
+    const maior = Object.keys(V.UFN).filter((u) => u !== "DF").map((u) => BR.lista.filter((c) => c.uf === u).sort((a, b) => (b.pop || 0) - (a.pop || 0))[1] || BR.lista.find((c) => c.uf === u));
+    for (const c of maior) {
+      await irPara(`#/mapa/br/${c.uf}/c/${c.ibge}`); await ate(() => qq("#hist .linha-tempo").length >= 4, 8000).catch(() => {});
+      const nome = txt(".urna__nome"), cands = qq("#cid-corpo .lista-cand li").length, cargos = qq("#hist .linha-tempo").length;
+      // cidade sem resultado oficial em 2024: no lugar da urna, o painel explica o porquê
+      const explica = txt("#cid-corpo .vazio").length > 40;
+      if (explica && cargos >= 4) explicadas.push(c.nome + "/" + c.uf);
+      else if (!nome || cands < 1 || cargos < 4) ruins.push(`${c.nome}/${c.uf} (urna ${nome ? "ok" : "vazia"}, ${cands} candidatos, ${cargos} cargos)`);
+    }
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${maior.length} cidades com urna, candidatos e histórico`, "urna, lista de candidatos e os quatro cargos no histórico",
+      explicadas.length ? "Sem resultado oficial em 2024, com a explicação no painel: " + explicadas.join(", ") + "." : "");
+  });
+  // a busca: o único campo de texto do site
+  const buscar = async (texto, esperar = true) => {
+    const inp = q("#busca"); inp.focus(); inp.value = texto; inp.dispatchEvent(new Event("input", { bubbles: true }));
+    if (!esperar) { await new Promise((r) => setTimeout(r, 400)); return qq("#busca-lista li"); }
+    await ate(() => !q("#busca-lista").hidden && qq("#busca-lista li").length, 8000).catch(() => {});
+    await new Promise((r) => setTimeout(r, 350));   // o índice de candidatos chega depois das cidades
+    return qq("#busca-lista li");
+  };
+  const limparBusca = () => { const inp = q("#busca"); inp.value = ""; inp.dispatchEvent(new Event("input", { bubbles: true })); inp.blur(); };
+  teste("Preenchimento", "Busca: acentos, maiúsculas e espaços não atrapalham", async () => {
+    await irPara("#/");
+    const casos = [["SÃO PAULO", /São Paulo/], ["sao paulo", /São Paulo/], ["  teresina  ", /Teresina/], ["CuiaBá", /Cuiabá/], ["mojui", /Mojuí dos Campos/]];
+    const ruins = [];
+    for (const [t, re] of casos) { const li = await buscar(t); if (!li.some((l) => re.test(l.textContent))) ruins.push(`“${t.trim()}”`); }
+    limparBusca();
+    return R(ruins.length === 0, ruins.length ? "não achou: " + ruins.join(", ") : `${casos.length} buscas acharam a cidade`, "acha a cidade escrita de qualquer jeito");
+  });
+  teste("Preenchimento", "Busca: candidatos do Brasil inteiro", async () => {
+    await irPara("#/");
+    const casos = [["lula", /Lula/i, /Presidente/], ["silvio mendes", /Silvio Mendes/i, /Teresina/], ["tarcisio", /Tarc[ií]sio/i, /Governador|SP/]];
+    const ruins = [];
+    for (const [t, re, re2] of casos) { const li = await buscar(t); if (!li.some((l) => re.test(l.textContent) && re2.test(l.textContent))) ruins.push(`“${t}”`); }
+    // e o resultado leva para o mapa daquela eleição
+    const li = (await buscar("silvio mendes")).find((l) => /Teresina/.test(l.textContent));
+    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    if (li) { li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true })); await pronto; await ate(() => /Teresina/.test(txt("#manchete")), 8000).catch(() => {}); }
+    const foi = /Teresina/.test(txt("#manchete"));
+    return R(ruins.length === 0 && foi, (ruins.length ? "não achou: " + ruins.join(", ") + " · " : `${casos.length} candidatos achados · `) + (foi ? "abriu Teresina" : "não abriu a cidade"), "acha presidente, prefeito e governador e abre o mapa da eleição");
+  });
+  teste("Preenchimento", "Busca: texto estranho não quebra nem injeta código", async () => {
+    await irPara("#/");
+    const antes = ERROS.length, ruins = [];
+    const vazio = await buscar("zzqqxxkw");
+    if (!vazio.some((l) => /Nada encontrado/.test(l.textContent))) ruins.push("sem aviso de “nada encontrado”");
+    const um = await buscar("a", false); if (!q("#busca-lista").hidden && um.length) ruins.push("1 letra abriu a lista");
+    await buscar('<img src=x onerror="window.__xss=1">');
+    if (q("#busca-lista img") || window.__xss) ruins.push("o texto virou código");
+    await buscar("%'; DROP TABLE municipio; --");
+    await buscar("ã".repeat(300));
+    limparBusca();
+    if (ERROS.length > antes) ruins.push("erro de JavaScript: " + ERROS[antes].slice(0, 60));
+    return R(ruins.length === 0, ruins.length ? ruins.join(" · ") : "5 textos estranhos, nenhum problema", "avisa que não achou; não executa código; nenhum erro");
+  });
+  teste("Preenchimento", "Busca pelo teclado: Enter abre o primeiro resultado", async () => {
+    await irPara("#/");
+    await buscar("campina grande");
+    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    q("#busca").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
+    await pronto; await ate(() => /Campina Grande/.test(txt("#manchete")), 8000).catch(() => {});
+    return R(/Campina Grande/.test(txt("#manchete")), txt("#manchete").slice(0, 60) + "…", "abre Campina Grande");
+  });
+
   // por último: nada quebrou durante todos os testes acima
   teste("Funcionamento", "Nenhum erro de JavaScript durante os testes", async () => R(ERROS.length === 0, ERROS.length ? ERROS.length + ": " + ERROS[0].slice(0, 90) : "nenhum", "nenhum"));
 
   /* ---------- execução e relatório ---------- */
-  const GRUPOS = ["Velocidade", "Funcionamento", "Acessibilidade", "Dados"];
+  const GRUPOS = ["Velocidade", "Funcionamento", "Preenchimento", "Acessibilidade", "Dados"];
   const ICONE = { ok: "✓", aviso: "!", falha: "✗" };
   let ultimo = null;
 
@@ -290,7 +406,7 @@
     const u = ultimo, c = u ? contar(u.res) : null;
     main.innerHTML = `<div class="pagina testes">
       <header><h1 class="titulo-grande">${u ? (c.falha ? `${c.falha} ${c.falha === 1 ? "teste falhou" : "testes falharam"} de ${u.res.length}` : `Os ${u.res.length} testes passaram${c.aviso ? `, ${c.aviso} com aviso` : ""}`) : "Testes do site"}</h1>
-        <p class="lead">${u ? `Rodados agora neste navegador, numa tela de ${u.largura} px, em ${V.int(Math.round(u.duracao / 1000))} segundos.` : `${T.length} testes em quatro grupos: velocidade, funcionamento, acessibilidade e conferência dos dados com os números oficiais do TSE. Eles abrem as páginas sozinhos; leva menos de um minuto. Para testar o celular, abra esta página numa janela estreita ou no próprio celular.`}</p>
+        <p class="lead">${u ? `Rodados agora neste navegador, numa tela de ${u.largura} px, em ${V.int(Math.round(u.duracao / 1000))} segundos.` : `${T.length} testes em cinco grupos: velocidade, funcionamento, preenchimento, acessibilidade e conferência dos dados com os números oficiais do TSE. Eles abrem as páginas sozinhos; leva cerca de dois minutos. Para testar o celular, abra esta página numa janela estreita ou no próprio celular.`}</p>
         <p class="testes__acoes"><button type="button" class="btn btn--confirma" id="testes-rodar">${u ? "Rodar de novo" : "Rodar os testes"}</button>${u ? ' <button type="button" class="btn" id="testes-baixar">Baixar relatório (.txt)</button>' : ""}</p></header>
       ${u ? GRUPOS.map((g) => { const rs = u.res.filter((r) => r.grupo === g), cc = contar(rs); return `<section class="testes__grupo"><h2 class="secao__titulo">${g} <small>${cc.ok} de ${rs.length}</small></h2>
         <table class="testes__tabela"><thead><tr><th scope="col"><span class="visualmente-oculto">Resultado</span></th><th scope="col">Teste</th><th scope="col">Medido</th><th scope="col">Esperado</th></tr></thead><tbody>
