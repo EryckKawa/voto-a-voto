@@ -1,0 +1,49 @@
+﻿VOTO A VOTO - o que o voto revela sobre o Brasil (Grupo 6, BDR/UFPI)
+
+Como abrir
+  Dê dois cliques em index.html. Abre em qualquer navegador (Chrome, Edge,
+  Firefox), sem internet e sem instalar nada. Depois de atualizar arquivos,
+  aperte Ctrl + F5 para o navegador carregar a versão nova.
+
+Colocar no ar só para a rede de casa (mesmo Wi-Fi)
+  1. Dê dois cliques em LIGAR_SITE_NA_REDE.bat.
+     Na primeira vez o Windows pede permissão ("Sim"): ela libera a porta 8080
+     só para aparelhos da rede local.
+  2. A janela mostra o endereço, algo como http://192.168.0.10:8080
+     Abra esse endereço no celular ou em outro computador do mesmo Wi-Fi.
+  3. Para tirar do ar, feche a janela. Para fechar também a porta liberada,
+     dê dois cliques em TIRAR_SITE_DA_REDE.bat.
+  O servidor (rede/servidor_rede.ps1) só responde a endereços da rede local,
+  só entrega arquivos de dentro desta pasta e não aceita envio de nada.
+
+Testes
+  Dê dois cliques em testes.html (ou use o link "Testes do site" no rodapé).
+  São testes de velocidade, funcionamento, acessibilidade e conferência dos
+  dados com os números oficiais do TSE. Com Node.js e Playwright instalados:
+  node testes/rodar_testes.js  (computador e celular ao mesmo tempo).
+
+Páginas
+  #/          O candidato Ninguém (faltas, brancos e nulos)
+  #/mapa      Mapa das 5.570 cidades, 1994 a 2026, pintado pelo lado político
+              de quem venceu, com três réguas (todas as medidas, Harvard, voto)
+  #/revela    O que o voto revela: achados de 30 anos de eleições
+  #/perguntas As 12 perguntas do trabalho, cada uma com gráfico, tabela e SQL
+  #/partidos  Onde fica cada partido em cada eleição, segundo três estudos
+              acadêmicos e o voto na Câmara
+  #/testes    Testes do site
+
+No ar: https://eryckkawa.github.io/voto-a-voto/
+Documentação completa: README.md e a pasta docs/
+
+Pastas
+  css/      estilo.css
+  js/       base.js (utilidades e rotas), brasil.js (mapa), ninguem.js (início),
+            revela.js (achados), perguntas.js (12 perguntas), partidos.js
+            (partidos), cidade.js (busca), testes.js (testes)
+  data/br/  dados já prontos em .js (funcionam sem servidor)
+  vendor/   D3 7.9.0, topojson-client 3.1.0 e axe-core 4.10.2 (testes)
+  fonts/    Atkinson Hyperlegible e Barlow Condensed (licença OFL)
+  scripts/  como os dados foram feitos, a partir dos arquivos do TSE, IBGE e
+            Câmara: processa_munzona.py, nacional_venc.py, historico.py,
+            regua_voto.py, ideologia_anos.py, achados.py, geo_proj.js,
+            empacotar.py (JSON -> .js)
