@@ -1,0 +1,1161 @@
+{
+ "fonte": "Orientações de bancada no Plenário da Câmara dos Deputados, 2019 a 2026 (dadosabertos.camara.leg.br)",
+ "metodo": "Régua pelo voto: posição dos partidos a partir das orientações de bancada no Plenário da Câmara (2019-2026).\n\nUso: python regua_voto.py PASTA_CAMARA SAIDA.json [ideologia.json de Harvard]\nLê votacoesOrientacoes-*.csv e votacoes-*.csv (dadosabertos.camara.leg.br).\n- Só votações de mérito (fora requerimentos, recursos e preferências).\n- Sim = +1, Não e Obstrução = -1, Liberado = sem posição.\n- Bloco sem linha própria do partido: o partido herda a orientação do bloco.\n- Em cada governo (Bolsonaro 2019-22, Lula 2023-26): concordância entre partidos -> escalonamento (MDS clássico),\n  1ª dimensão, de -1 (mais à esquerda) a +1 (mais à direita).\n- nota = média dos dois governos; governismo = % de votos iguais à orientação do líder do Governo.",
+ "votacoes": {
+  "bol": 1291,
+  "lula": 563
+ },
+ "calibracao": {
+  "a": 0.0409,
+  "b": 0.7947,
+  "r": 0.95,
+  "n": 15
+ },
+ "partidos": {
+  "AVANTE": {
+   "bol": 0.802,
+   "n_bol": 964,
+   "gov_bol": 95.6,
+   "lula": -0.221,
+   "n_lula": 73,
+   "gov_lula": 87.7,
+   "nota": 0.291,
+   "bruto": {
+    "bol": 0.958,
+    "lula": -0.329,
+    "nota": 0.315
+   }
+  },
+  "CIDADANIA": {
+   "bol": 0.458,
+   "n_bol": 981,
+   "gov_bol": 76.1,
+   "lula": -0.229,
+   "n_lula": 256,
+   "gov_lula": 90.2,
+   "nota": 0.114,
+   "bruto": {
+    "bol": 0.525,
+    "lula": -0.34,
+    "nota": 0.092
+   }
+  },
+  "DEM": {
+   "bol": 0.751,
+   "n_bol": 876,
+   "gov_bol": 90.9,
+   "nota": 0.433,
+   "um_governo": "bol",
+   "vizinhos": [
+    "NOVO",
+    "PSD",
+    "REPUBLICANOS"
+   ],
+   "bruto": {
+    "bol": 0.894,
+    "nota": 0.493
+   }
+  },
+  "MDB": {
+   "bol": 0.692,
+   "n_bol": 1155,
+   "gov_bol": 88.7,
+   "lula": -0.324,
+   "n_lula": 235,
+   "gov_lula": 95.3,
+   "nota": 0.184,
+   "bruto": {
+    "bol": 0.819,
+    "lula": -0.459,
+    "nota": 0.18
+   }
+  },
+  "NOVO": {
+   "bol": 0.769,
+   "n_bol": 1268,
+   "gov_bol": 77.0,
+   "lula": 0.836,
+   "n_lula": 547,
+   "gov_lula": 27.1,
+   "nota": 0.802,
+   "bruto": {
+    "bol": 0.916,
+    "lula": 1.0,
+    "nota": 0.958
+   }
+  },
+  "PATRIOTA": {
+   "bol": 0.806,
+   "n_bol": 857,
+   "gov_bol": 97.6,
+   "nota": 0.452,
+   "um_governo": "bol",
+   "vizinhos": [
+    "AVANTE",
+    "PL",
+    "PP"
+   ],
+   "bruto": {
+    "bol": 0.963,
+    "nota": 0.517
+   }
+  },
+  "PCdoB": {
+   "bol": -0.552,
+   "n_bol": 1169,
+   "gov_bol": 28.9,
+   "lula": -0.678,
+   "n_lula": 468,
+   "gov_lula": 98.7,
+   "nota": -0.615,
+   "bruto": {
+    "bol": -0.746,
+    "lula": -0.905,
+    "nota": -0.826
+   }
+  },
+  "PDT": {
+   "bol": -0.442,
+   "n_bol": 1194,
+   "gov_bol": 35.3,
+   "lula": -0.542,
+   "n_lula": 89,
+   "gov_lula": 93.7,
+   "nota": -0.492,
+   "bruto": {
+    "bol": -0.608,
+    "lula": -0.734,
+    "nota": -0.671
+   }
+  },
+  "PL": {
+   "bol": 0.8,
+   "n_bol": 1245,
+   "gov_bol": 94.9,
+   "lula": 0.695,
+   "n_lula": 416,
+   "gov_lula": 38.8,
+   "nota": 0.747,
+   "bruto": {
+    "bol": 0.955,
+    "lula": 0.823,
+    "nota": 0.889
+   }
+  },
+  "PODEMOS": {
+   "bol": 0.668,
+   "n_bol": 1033,
+   "gov_bol": 88.0,
+   "lula": -0.324,
+   "n_lula": 235,
+   "gov_lula": 95.3,
+   "nota": 0.172,
+   "bruto": {
+    "bol": 0.789,
+    "lula": -0.459,
+    "nota": 0.165
+   }
+  },
+  "PP": {
+   "bol": 0.789,
+   "n_bol": 1255,
+   "gov_bol": 94.6,
+   "lula": -0.155,
+   "n_lula": 389,
+   "gov_lula": 87.8,
+   "nota": 0.317,
+   "bruto": {
+    "bol": 0.941,
+    "lula": -0.246,
+    "nota": 0.347
+   }
+  },
+  "PROS": {
+   "bol": 0.805,
+   "n_bol": 1017,
+   "gov_bol": 95.7,
+   "nota": 0.452,
+   "um_governo": "bol",
+   "vizinhos": [
+    "AVANTE",
+    "PL",
+    "PP"
+   ],
+   "bruto": {
+    "bol": 0.962,
+    "nota": 0.517
+   }
+  },
+  "PSB": {
+   "bol": -0.559,
+   "n_bol": 1187,
+   "gov_bol": 29.3,
+   "lula": -0.479,
+   "n_lula": 193,
+   "gov_lula": 96.9,
+   "nota": -0.519,
+   "bruto": {
+    "bol": -0.755,
+    "lula": -0.654,
+    "nota": -0.705
+   }
+  },
+  "PSC": {
+   "bol": 0.787,
+   "n_bol": 962,
+   "gov_bol": 95.8,
+   "nota": 0.43,
+   "um_governo": "bol",
+   "vizinhos": [
+    "PP",
+    "PL",
+    "REPUBLICANOS"
+   ],
+   "bruto": {
+    "bol": 0.939,
+    "nota": 0.489
+   }
+  },
+  "PSD": {
+   "bol": 0.77,
+   "n_bol": 1242,
+   "gov_bol": 93.6,
+   "lula": -0.225,
+   "n_lula": 355,
+   "gov_lula": 90.5,
+   "nota": 0.272,
+   "bruto": {
+    "bol": 0.918,
+    "lula": -0.335,
+    "nota": 0.291
+   }
+  },
+  "PSDB": {
+   "bol": 0.657,
+   "n_bol": 1153,
+   "gov_bol": 85.2,
+   "lula": -0.229,
+   "n_lula": 256,
+   "gov_lula": 90.2,
+   "nota": 0.213,
+   "bruto": {
+    "bol": 0.775,
+    "lula": -0.34,
+    "nota": 0.217
+   }
+  },
+  "PSL": {
+   "bol": 0.836,
+   "n_bol": 941,
+   "gov_bol": 95.3,
+   "nota": 0.452,
+   "um_governo": "bol",
+   "vizinhos": [
+    "AVANTE",
+    "PL",
+    "PP"
+   ],
+   "bruto": {
+    "bol": 1.0,
+    "nota": 0.517
+   }
+  },
+  "PSOL": {
+   "bol": -0.754,
+   "n_bol": 1224,
+   "gov_bol": 22.2,
+   "lula": -0.754,
+   "n_lula": 485,
+   "gov_lula": 84.4,
+   "nota": -0.754,
+   "bruto": {
+    "bol": -1.0,
+    "lula": -1.0,
+    "nota": -1.0
+   }
+  },
+  "PT": {
+   "bol": -0.619,
+   "n_bol": 1275,
+   "gov_bol": 26.1,
+   "lula": -0.678,
+   "n_lula": 468,
+   "gov_lula": 98.7,
+   "nota": -0.649,
+   "bruto": {
+    "bol": -0.831,
+    "lula": -0.905,
+    "nota": -0.868
+   }
+  },
+  "PTB": {
+   "bol": 0.801,
+   "n_bol": 1085,
+   "gov_bol": 95.3,
+   "nota": 0.452,
+   "um_governo": "bol",
+   "vizinhos": [
+    "PL",
+    "AVANTE",
+    "PP"
+   ],
+   "bruto": {
+    "bol": 0.956,
+    "nota": 0.517
+   }
+  },
+  "PV": {
+   "bol": 0.031,
+   "n_bol": 682,
+   "gov_bol": 57.5,
+   "lula": -0.678,
+   "n_lula": 468,
+   "gov_lula": 98.7,
+   "nota": -0.324,
+   "bruto": {
+    "bol": -0.013,
+    "lula": -0.905,
+    "nota": -0.459
+   }
+  },
+  "REDE": {
+   "bol": -0.541,
+   "n_bol": 859,
+   "gov_bol": 31.7,
+   "lula": -0.754,
+   "n_lula": 485,
+   "gov_lula": 84.4,
+   "nota": -0.647,
+   "bruto": {
+    "bol": -0.732,
+    "lula": -1.0,
+    "nota": -0.866
+   }
+  },
+  "REPUBLICANOS": {
+   "bol": 0.772,
+   "n_bol": 1228,
+   "gov_bol": 93.4,
+   "lula": -0.324,
+   "n_lula": 235,
+   "gov_lula": 95.3,
+   "nota": 0.225,
+   "bruto": {
+    "bol": 0.92,
+    "lula": -0.459,
+    "nota": 0.231
+   }
+  },
+  "SOLIDARIEDADE": {
+   "bol": 0.68,
+   "n_bol": 1062,
+   "gov_bol": 90.2,
+   "lula": -0.222,
+   "n_lula": 78,
+   "gov_lula": 88.2,
+   "nota": 0.229,
+   "bruto": {
+    "bol": 0.804,
+    "lula": -0.331,
+    "nota": 0.237
+   }
+  },
+  "UNIÃO": {
+   "bol": 0.662,
+   "n_bol": 321,
+   "gov_bol": 92.8,
+   "lula": -0.155,
+   "n_lula": 389,
+   "gov_lula": 87.8,
+   "nota": 0.254,
+   "bruto": {
+    "bol": 0.782,
+    "lula": -0.246,
+    "nota": 0.268
+   }
+  },
+  "PRD": {
+   "lula": -0.216,
+   "n_lula": 68,
+   "gov_lula": 86.7,
+   "nota": 0.264,
+   "um_governo": "lula",
+   "vizinhos": [
+    "AVANTE",
+    "SOLIDARIEDADE",
+    "PSD"
+   ],
+   "bruto": {
+    "lula": -0.323,
+    "nota": 0.281
+   }
+  }
+ },
+ "anos": {
+  "2018": {
+   "AVANTE": [
+    0.291,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "DC": [
+    0.536,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "DEM": [
+    0.433,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (NOVO, PSD, REPUBLICANOS)"
+   ],
+   "MDB": [
+    0.184,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "NOVO": [
+    0.802,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PATRI": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PC do B": [
+    -0.615,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PCB": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PCO": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PDT": [
+    -0.492,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PHS": [
+    0.291,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PMB": [
+    0.278,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PMN": [
+    0.274,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PODE": [
+    0.172,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PP": [
+    0.317,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PPL": [
+    0.357,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PPS": [
+    0.114,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PR": [
+    0.747,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PRB": [
+    0.225,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PROS": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PRP": [
+    0.425,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PRTB": [
+    0.395,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PSB": [
+    -0.519,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSC": [
+    0.43,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PP, PL, REPUBLICANOS)"
+   ],
+   "PSD": [
+    0.272,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSDB": [
+    0.213,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSL": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PSOL": [
+    -0.754,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSTU": [
+    -0.826,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PT": [
+    -0.649,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PTB": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PL, AVANTE, PP)"
+   ],
+   "PTC": [
+    0.483,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PV": [
+    -0.324,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REDE": [
+    -0.647,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "SOLIDARIEDADE": [
+    0.229,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ]
+  },
+  "2020": {
+   "AVANTE": [
+    0.291,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "CIDADANIA": [
+    0.114,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "DC": [
+    0.536,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "DEM": [
+    0.433,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (NOVO, PSD, REPUBLICANOS)"
+   ],
+   "MDB": [
+    0.184,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "NOVO": [
+    0.802,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PATRIOTA": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PC do B": [
+    -0.615,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PDT": [
+    -0.492,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PL": [
+    0.747,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PMB": [
+    0.278,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PMN": [
+    0.274,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PODE": [
+    0.172,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PP": [
+    0.317,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PROS": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PRTB": [
+    0.395,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PSB": [
+    -0.519,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSC": [
+    0.43,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PP, PL, REPUBLICANOS)"
+   ],
+   "PSD": [
+    0.272,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSDB": [
+    0.213,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSL": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PSOL": [
+    -0.754,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PT": [
+    -0.649,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PTB": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PL, AVANTE, PP)"
+   ],
+   "PTC": [
+    0.483,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PV": [
+    -0.324,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REDE": [
+    -0.647,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REPUBLICANOS": [
+    0.225,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "SOLIDARIEDADE": [
+    0.229,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ]
+  },
+  "2022": {
+   "AGIR": [
+    0.483,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "AVANTE": [
+    0.291,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "CIDADANIA": [
+    0.114,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "DC": [
+    0.536,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "MDB": [
+    0.184,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "NOVO": [
+    0.802,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PATRIOTA": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PC do B": [
+    -0.615,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PCB": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PCO": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PDT": [
+    -0.492,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PL": [
+    0.747,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PMB": [
+    0.278,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PMN": [
+    0.274,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PODE": [
+    0.172,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PP": [
+    0.317,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PROS": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (AVANTE, PL, PP)"
+   ],
+   "PRTB": [
+    0.395,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PSB": [
+    -0.519,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSC": [
+    0.43,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PP, PL, REPUBLICANOS)"
+   ],
+   "PSD": [
+    0.272,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSDB": [
+    0.213,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSOL": [
+    -0.754,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSTU": [
+    -0.826,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PT": [
+    -0.649,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PTB": [
+    0.452,
+    true,
+    "voto na Câmara só no governo Bolsonaro; nota pelos partidos que votavam igual (PL, AVANTE, PP)"
+   ],
+   "PV": [
+    -0.324,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REDE": [
+    -0.647,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REPUBLICANOS": [
+    0.225,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "SOLIDARIEDADE": [
+    0.229,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "UNIÃO": [
+    0.254,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "UP": [
+    null,
+    true,
+    "sem nota"
+   ]
+  },
+  "2024": {
+   "AGIR": [
+    0.483,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "AVANTE": [
+    0.291,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "CIDADANIA": [
+    0.114,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "DC": [
+    0.536,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "MDB": [
+    0.184,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "MOBILIZA": [
+    0.274,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "NOVO": [
+    0.802,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PC do B": [
+    -0.615,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PDT": [
+    -0.492,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PL": [
+    0.747,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PMB": [
+    0.278,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PODE": [
+    0.172,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PP": [
+    0.317,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PRD": [
+    0.264,
+    true,
+    "voto na Câmara só no governo Lula; nota pelos partidos que votavam igual (AVANTE, SOLIDARIEDADE, PSD)"
+   ],
+   "PRTB": [
+    0.395,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PSB": [
+    -0.519,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSD": [
+    0.272,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSDB": [
+    0.213,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSOL": [
+    -0.754,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSTU": [
+    -0.826,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PT": [
+    -0.649,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PV": [
+    -0.324,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REDE": [
+    -0.647,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REPUBLICANOS": [
+    0.225,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "SOLIDARIEDADE": [
+    0.229,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "UNIÃO": [
+    0.254,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ]
+  },
+  "2026": {
+   "AGIR": [
+    0.483,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "AVANTE": [
+    0.291,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "CIDADANIA": [
+    0.114,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "DC": [
+    0.536,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "DEMOCRATA": [
+    null,
+    true,
+    "sem nota"
+   ],
+   "MDB": [
+    0.184,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "MISSÃO": [
+    null,
+    true,
+    "sem nota"
+   ],
+   "MOBILIZA": [
+    0.274,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "NOVO": [
+    0.802,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PCB": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PCO": [
+    -1.0,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PDT": [
+    -0.492,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PL": [
+    0.747,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PODE": [
+    0.172,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PP": [
+    0.317,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PRD": [
+    0.264,
+    true,
+    "voto na Câmara só no governo Lula; nota pelos partidos que votavam igual (AVANTE, SOLIDARIEDADE, PSD)"
+   ],
+   "PRTB": [
+    0.395,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PSB": [
+    -0.519,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSD": [
+    0.272,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSDB": [
+    0.213,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSOL": [
+    -0.754,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PSTU": [
+    -0.826,
+    true,
+    "sem votos na Câmara: nota de Harvard"
+   ],
+   "PT": [
+    -0.649,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "PV": [
+    -0.324,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REDE": [
+    -0.647,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "REPUBLICANOS": [
+    0.225,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "SOLIDARIEDADE": [
+    0.229,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "UNIÃO": [
+    0.254,
+    false,
+    "voto na Câmara, 2019 a 2026"
+   ],
+   "UP": [
+    null,
+    true,
+    "sem nota"
+   ]
+  }
+ }
+}
