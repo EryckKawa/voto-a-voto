@@ -13,7 +13,7 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 
   O robô (`testes/rodar_testes.js`) abre o site numa tela de 1280 px e numa de celular (390 px), uma de cada vez, roda tudo e imprime o relatório. Ele sai com código 1 se algum teste falhar. Cada tela roda sozinha porque, rodando as duas juntas, elas disputam o processador e os testes de velocidade erram para pior.
 
-## O que é testado (63 testes por tela)
+## O que é testado (67 testes por tela)
 
 **Velocidade**
 
@@ -27,7 +27,8 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 - **Endereços antigos:** levam para as páginas novas.
 - **Busca:** acha uma cidade (Campinas) e abre a cidade.
 - **Mapa:** clicar numa cidade aproxima o estado, e "Passar os anos" avança sozinho.
-- **Histórico da cidade:** tem os quatro cargos e mais de 30 eleições.
+- **Histórico da cidade:** tem os sete cargos, na ordem do maior para o menor, e mais de 55 eleições.
+- **Cargos:** os botões vão de presidente a vereador; para deputado federal, a cidade mostra o partido mais votado.
 - **12 perguntas:** o botão de recorte troca o gráfico, a tabela tem as linhas certas e o SQL aparece.
 - **Régua:** o PT não aparece como extremo.
 - **Erros:** nenhum erro de JavaScript durante todos os testes.
@@ -35,11 +36,11 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 
 **Preenchimento**
 
-- **Mapa, nas 35 eleições:** toda cidade tem vencedor ou um motivo (sem resultado oficial, ainda não era município, não elege prefeito).
-- **Mapa desenhado** (presidente 1994, prefeito 1996 e 2024, governador 2022): nenhuma cidade em branco, e a legenda fecha a conta.
-- **Textos:** 20 páginas sem "undefined", "NaN" ou título vazio.
+- **Mapa, nas 61 eleições (7 cargos):** toda cidade tem vencedor ou um motivo (sem resultado oficial, ainda não era município, não elege prefeito).
+- **Mapa desenhado** (presidente 1994, prefeito 1996 e 2024, governador 2022, deputado federal 2022, vereador 1996): nenhuma cidade em branco, e a legenda fecha a conta.
+- **Textos:** 23 páginas sem "undefined", "NaN" ou título vazio.
 - **Tabelas das 12 perguntas:** nenhuma célula vazia.
-- **Uma cidade de cada estado:** urna, lista de candidatos e os quatro cargos no histórico, ou a explicação de por que não há resultado.
+- **Uma cidade de cada estado:** urna, lista de candidatos e os sete cargos no histórico, ou a explicação de por que não há resultado.
 - **Busca:** acha a cidade com ou sem acento, em maiúsculas ou com espaços; acha candidatos do Brasil inteiro (presidente, governador, prefeito) e abre o mapa daquela eleição; Enter abre o primeiro resultado; texto estranho (código HTML, SQL, 300 letras) não quebra a página nem vira código.
 
 **Acessibilidade**, em todas as páginas:

@@ -842,3 +842,6 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 .placar-nomes__cor { width: 13px; height: 13px; border-radius: 3px; flex: none; }
 .placar-nomes__cor--esquerda { background: #c22f39; } .placar-nomes__cor--centro { background: #cdc3ab; } .placar-nomes__cor--direita { background: #2f55b5; }
 .placar__fatia span { font-size: 14px; }
+/* sete cargos: no celular os botões quebram em linhas (todos à vista); o botão de passar os anos não quebra o texto */
+.tempo__play { white-space: nowrap; flex: none; }
+@media (max-width: 560px) { .controles__linha .chip { padding: 9px 12px; font-size: 14px; } }

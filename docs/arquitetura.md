@@ -42,7 +42,8 @@ Principais pastas de `data/br/`:
 
 | Pasta ou arquivo | Conteúdo |
 |---|---|
-| `venc/{CARGO}{ANO}` | Quem venceu em cada cidade, com partido, porcentagem, vantagem e nota do partido (70 eleições) |
+| `venc/{CARGO}{ANO}` | Quem venceu em cada cidade, com partido, porcentagem, vantagem e nota do partido (61 eleições, 7 cargos). Para deputado e vereador, o partido mais votado e o candidato com mais votos |
+| `prop/{CARGO}{ANO}` | Deputado federal, deputado estadual e vereador: votos de cada partido em cada cidade (8 maiores e "outros") e totais |
 | `ufx/{CARGO}{ANO}` | Resultado completo por cidade, um arquivo por eleição com todos os estados |
 | `resumo/{CARGO}{ANO}` | Votos por candidato no Brasil e por estado (cargos majoritários) |
 | `comp/{ANO}` | Aptos, comparecimento, abstenção, brancos e nulos por cidade |
@@ -55,6 +56,12 @@ Principais pastas de `data/br/`:
 | `cidades` | As 5.570 cidades: códigos do TSE e do IBGE, nome, estado, população, PIB e o ano da primeira eleição |
 | `busca` | Índice da busca: candidatos a presidente, governador e senador, e prefeitos eleitos, de 1994 a 2026 |
 
+## Os sete cargos do mapa
+
+Os botões vão do cargo maior para o menor: presidente, governador, senador, deputado federal, deputado estadual, prefeito e vereador. O histórico da cidade segue a mesma ordem.
+
+Presidente, governador, senador e prefeito são eleições majoritárias: a cidade tem a cor do partido de quem venceu (prefeito) ou de quem foi mais votado ali. Deputados e vereador são eleições proporcionais, em que se elegem muitos: a cidade tem a cor do **partido mais votado**, somando os votos nos candidatos do partido e os votos de legenda (`scripts/nacional_proporcional.py`). O TSE só separa o voto de legenda de 2000 em diante; em 1994, 1996 e 1998 entram só os votos nos candidatos. No Distrito Federal, o "deputado estadual" é o deputado distrital.
+
 ## Cidades sem vencedor no mapa
 
 O mapa usa o desenho atual das cidades em todas as eleições. Uma cidade sem vencedor numa eleição aparece com um destes motivos, na cor e na legenda:
@@ -63,6 +70,7 @@ O mapa usa o desenho atual das cidades em todas as eleições. Uma cidade sem ve
 |---|---|---|
 | Pontilhada | **Ainda não era município.** A cidade foi criada depois; os eleitores dela votavam na cidade de origem. Vem do ano da primeira eleição da cidade (`scripts/primeira_eleicao.py`). | 548 cidades de hoje em 1994 |
 | Pontilhada | **Não elege prefeito:** Brasília e Fernando de Noronha. | |
+| Pontilhada | **Não elege vereadores:** Brasília e Fernando de Noronha. | |
 | Hachurada | **Sem resultado oficial.** Ou o TSE não declarou ninguém eleito (eleição anulada ou em julgamento), ou o arquivo oficial não traz a cidade. | 39 cidades para prefeito em 2024 |
 
 A explicação aparece ao passar o mouse, no título e no painel da cidade. A função `porQue()`, em `js/brasil.js`, decide o motivo.

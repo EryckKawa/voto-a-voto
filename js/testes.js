@@ -116,6 +116,15 @@
     await ate(() => location.hash.includes("/br/SP"), 6000); await ate(() => /São Paulo/.test(txt("#manchete")), 6000);
     return R(true, location.hash, "#/mapa/br/SP");
   });
+  teste("Funcionamento", "Botões de cargo do maior para o menor, com deputados e vereador", async () => {
+    await irPara("#/mapa"); const b = qq("#controles .controles__linha .chip").map((e) => e.textContent.trim());
+    return R(b.join(",") === "Presidente,Governador,Senador,Dep. federal,Dep. estadual,Prefeito,Vereador", b.join(" · "), "Presidente · Governador · Senador · Dep. federal · Dep. estadual · Prefeito · Vereador");
+  });
+  teste("Funcionamento", "Deputado federal: cidade mostra o partido mais votado", async () => {
+    await irPara("#/mapa/e/DF2022/br/PI/c/2211001"); await ate(() => qq("#cid-corpo .ranking li").length >= 3, 8000);
+    const t = txt("#manchete h1"), n = qq("#cid-corpo .ranking li").length;
+    return R(/partido mais votado para deputado federal em 2022/.test(t) && n >= 3, t.slice(0, 80) + " · " + n + " partidos", "título com o partido mais votado; lista de partidos no painel");
+  });
   teste("Funcionamento", "▶ Passar os anos avança sozinho", async () => {
     await irPara("#/mapa"); await quadros(2);
     q("#tocar").click();
@@ -123,10 +132,11 @@
     const ano = location.hash; q("#tocar") && q("#tocar").click(); await new Promise((r) => setTimeout(r, 300));
     return R(true, ano, "passa para os anos anteriores");
   });
-  teste("Funcionamento", "Histórico da cidade tem os quatro cargos", async () => {
-    await irPara("#/mapa/br/PI/c/2211001"); const n = await ate(() => qq("#hist .linha-tempo").length, 8000);
-    const anos = qq("#hist .linha-tempo__anos li").length;
-    return R(n === 4 && anos >= 30, n + " cargos, " + anos + " eleições", "4 cargos, 30 ou mais eleições");
+  teste("Funcionamento", "Histórico da cidade tem os sete cargos, do maior para o menor", async () => {
+    await irPara("#/mapa/br/PI/c/2211001"); const n = await ate(() => qq("#hist .linha-tempo").length >= 7 && qq("#hist .linha-tempo").length, 8000);
+    const anos = qq("#hist .linha-tempo__anos li").length, ordem = qq("#hist .linha-tempo__cg").map((e) => e.textContent.trim());
+    const certa = ordem.join(",") === "Presidente,Governador,Senador,Deputado federal,Deputado estadual,Prefeito,Vereador";
+    return R(n === 7 && anos >= 55 && certa, n + " cargos, " + anos + " eleições · " + ordem.join(", "), "7 cargos na ordem Presidente … Vereador, 55 ou mais eleições");
   });
   teste("Funcionamento", "12 perguntas: recorte, Gráfico | Tabela e SQL", async () => {
     await irPara("#/perguntas/q2"); await quadros(2);
@@ -245,11 +255,11 @@
   });
 
   // PREENCHIMENTO: nenhum campo vazio, nenhuma área do mapa sem cor ou sem explicação, e a busca aguenta qualquer texto
-  const ELEICOES_MAPA = [["PREF", [1996, 2000, 2004, 2008, 2012, 2016, 2020, 2024]], ...["PRES", "GOV", "SEN"].map((c) => [c, [1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026]])];
-  teste("Preenchimento", "Mapa: em todas as 35 eleições, toda cidade tem cor ou motivo", async () => {
+  const ELEICOES_MAPA = () => Object.entries(V.ELEICOES_BR).map(([c, e]) => [c, e.prontos]);
+  teste("Preenchimento", "Mapa: em todas as 61 eleições (7 cargos), toda cidade tem cor ou motivo", async () => {
     const BR = await V.baseBR(); await V.geoBR();
     const ids = BR.geo.mun.map((f) => f.id), ruins = [], semArq = []; let n = 0;
-    for (const [cg, anos] of ELEICOES_MAPA) for (const a of anos) {
+    for (const [cg, anos] of ELEICOES_MAPA()) for (const a of anos) {
       const w = await V.dados("br/venc/" + cg + a); n++;
       const conta = { venc: 0, indef: 0, semArq: 0, novo: 0, semPref: 0, x: 0 };
       for (const id of ids) { const k = V.porQueBR(id, a, cg, w[id]); conta[k in conta ? k : "x"]++; if (k === "venc" && w[id][8] === undefined) conta.x++; }
@@ -257,11 +267,12 @@
       if (conta.semArq) semArq.push(`${cg} ${a}: ${conta.semArq}`);
       if (conta.venc < ids.length * (a === 1994 ? 0.85 : 0.94)) ruins.push(`${cg}${a} só ${conta.venc} com vencedor`);
     }
-    return R(ruins.length === 0 && n === 35, `${n} eleições, ${V.int(ids.length)} desenhos cada${ruins.length ? " · problema: " + ruins.join(", ") : ""}`, "toda cidade com vencedor, ou marcada como sem resultado oficial ou ainda não criada",
+    return R(ruins.length === 0 && n === 61, `${n} eleições, ${V.int(ids.length)} desenhos cada${ruins.length ? " · problema: " + ruins.join(", ") : ""}`, "toda cidade com vencedor, ou marcada como sem resultado oficial ou ainda não criada",
       semArq.length ? "Sem resultado no arquivo do TSE: " + semArq.join("; ") + "." : "");
   });
-  for (const e of ["PRES1994", "PREF1996", "PREF2024", "GOV2022"]) {
-    teste("Preenchimento", `Mapa de ${e.slice(0, -4).replace("PRES", "presidente").replace("PREF", "prefeito").replace("GOV", "governador")} ${e.slice(-4)}: nenhuma cidade em branco, legenda fecha a conta`, async () => {
+  const NOME_E = { PRES: "presidente", PREF: "prefeito", GOV: "governador", DF: "deputado federal", VER: "vereador" };
+  for (const e of ["PRES1994", "PREF1996", "PREF2024", "GOV2022", "DF2022", "VER1996"]) {
+    teste("Preenchimento", `Mapa de ${NOME_E[e.slice(0, -4)]} ${e.slice(-4)}: nenhuma cidade em branco, legenda fecha a conta`, async () => {
       await irPara(e === "PREF2024" ? "#/mapa" : "#/mapa/e/" + e); await ate(() => q("#apu-rever") && !q("#apu-rever").hidden, 8000); await quadros(2);
       const ps = qq("#mapa-br path.mun"), branco = ps.filter((p) => { const f = p.getAttribute("fill"); return !f || f === "none" || f === "#eceef1"; });
       const num = (id) => (q(id) && !q(id).closest("[hidden]") ? +q(id).textContent.replace(/\D/g, "") : 0);
@@ -273,7 +284,7 @@
     });
   }
   teste("Preenchimento", "Textos sem campo vazio em todas as páginas", async () => {
-    const pags = ["#/", "#/mapa", "#/mapa/e/PRES1994", "#/mapa/e/PREF1996/br/MA", "#/mapa/v/abst", "#/mapa/v/bn", "#/mapa/v/vira", "#/revela", "#/perguntas", ...Array.from({ length: 12 }, (_, i) => "#/perguntas/q" + (i + 1)), "#/partidos"];
+    const pags = ["#/", "#/mapa", "#/mapa/e/PRES1994", "#/mapa/e/PREF1996/br/MA", "#/mapa/e/DF2022", "#/mapa/e/DE2014/br/BA", "#/mapa/e/VER2024/br/PI/c/2211001", "#/mapa/v/abst", "#/mapa/v/bn", "#/mapa/v/vira", "#/revela", "#/perguntas", ...Array.from({ length: 12 }, (_, i) => "#/perguntas/q" + (i + 1)), "#/partidos"];
     const ruins = [], RUIM = /\b(undefined|NaN|null|Infinity)\b|\[object |R\$ ?NaN/;
     for (const h of pags) {
       await irPara(h); await quadros(2);
@@ -298,14 +309,14 @@
     const BR = await V.baseBR(), ruins = [], explicadas = [];
     const maior = Object.keys(V.UFN).filter((u) => u !== "DF").map((u) => BR.lista.filter((c) => c.uf === u).sort((a, b) => (b.pop || 0) - (a.pop || 0))[1] || BR.lista.find((c) => c.uf === u));
     for (const c of maior) {
-      await irPara(`#/mapa/br/${c.uf}/c/${c.ibge}`); await ate(() => qq("#hist .linha-tempo").length >= 4, 8000).catch(() => {});
+      await irPara(`#/mapa/br/${c.uf}/c/${c.ibge}`); await ate(() => qq("#hist .linha-tempo").length >= 7, 8000).catch(() => {});
       const nome = txt(".urna__nome"), cands = qq("#cid-corpo .lista-cand li").length, cargos = qq("#hist .linha-tempo").length;
       // cidade sem resultado oficial em 2024: no lugar da urna, o painel explica o porquê
       const explica = txt("#cid-corpo .vazio").length > 40;
-      if (explica && cargos >= 4) explicadas.push(c.nome + "/" + c.uf);
-      else if (!nome || cands < 1 || cargos < 4) ruins.push(`${c.nome}/${c.uf} (urna ${nome ? "ok" : "vazia"}, ${cands} candidatos, ${cargos} cargos)`);
+      if (explica && cargos >= 7) explicadas.push(c.nome + "/" + c.uf);
+      else if (!nome || cands < 1 || cargos < 7) ruins.push(`${c.nome}/${c.uf} (urna ${nome ? "ok" : "vazia"}, ${cands} candidatos, ${cargos} cargos)`);
     }
-    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${maior.length} cidades com urna, candidatos e histórico`, "urna, lista de candidatos e os quatro cargos no histórico",
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${maior.length} cidades com urna, candidatos e histórico`, "urna, lista de candidatos e os sete cargos no histórico",
       explicadas.length ? "Sem resultado oficial em 2024, com a explicação no painel: " + explicadas.join(", ") + "." : "");
   });
   // a busca: o único campo de texto do site

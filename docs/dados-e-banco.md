@@ -32,6 +32,7 @@ geo_proj.js                   desenho do mapa já projetado → data/br/geo_proj
 regua_voto.py                 régua pelo voto na Câmara → data/br/ideologia_voto
 ideologia.py, ideologia_anos.py  régua de Harvard por ano → data/br/ideologia
 notas_estudos.py              nota de cada partido em cada eleição → partidos_notas, ideologia_consenso, partido_nota.csv
+nacional_proporcional.py      deputados e vereador: partido mais votado em cada cidade → data/br/venc, prop e hist
 primeira_eleicao.py           ano da primeira eleição de cada cidade → coluna nova em cidades (roda depois de nacional_venc.py)
 busca_brasil.py               índice da busca do Brasil inteiro → data/br/busca
 banco_brasil.py               banco nacional em DuckDB (abaixo)

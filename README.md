@@ -11,7 +11,7 @@ O site é estático (HTML, CSS e JavaScript, sem servidor e sem banco no navegad
 | Página | Endereço | O que mostra |
 |---|---|---|
 | Ninguém | `#/` | O "candidato Ninguém": quem faltou, votou em branco ou anulou. Em 2024, foram 42,6 milhões de eleitores no 1º turno. |
-| Mapa | `#/mapa` | As 5.570 cidades, eleição por eleição (prefeito, presidente, governador, senador, de 1994 a 2026), pintadas pelo lado político de quem venceu. Também mostra quem faltou, branco e nulo, e a virada de 2018 para 2022. |
+| Mapa | `#/mapa` | As 5.570 cidades, eleição por eleição, em sete cargos (presidente, governador, senador, deputado federal, deputado estadual, prefeito e vereador, de 1994 a 2026), pintadas pelo lado político de quem venceu. Para deputado e vereador, vale o partido mais votado na cidade. Também mostra quem faltou, branco e nulo, e a virada de 2018 para 2022. |
 | O que o voto revela | `#/revela` | Oito achados de trinta anos de eleições, cada um com o título que já diz o dado. |
 | 12 perguntas | `#/perguntas` | As 12 perguntas de pesquisa do trabalho, respondidas com o Brasil inteiro. Cada resposta traz o gráfico, a tabela e a consulta SQL que a produziu. |
 | Partidos | `#/partidos` | Onde fica cada partido entre esquerda e direita em cada eleição, segundo três estudos acadêmicos e o voto na Câmara. |
