@@ -126,12 +126,12 @@
     return R(/partido mais votado para deputado federal em 2022/.test(t) && n >= 3, t.slice(0, 80) + " · " + n + " partidos", "título com o partido mais votado; lista de partidos no painel");
   });
   teste("Funcionamento", "Fotos dos candidatos no painel da cidade", async () => {
-    await irPara("#/mapa/e/PREF2024/br/PI/c/2211001"); await ate(() => qq("#cid-corpo .lista-cand li").length >= 2, 8000);
+    await irPara("#/mapa/e/PREF2024/br/CE/c/2304400"); await ate(() => qq("#cid-corpo .lista-cand li").length >= 2, 8000);
     const imgs = qq("#cid-corpo img").filter((i) => /img\/fotos\/2024\//.test(i.getAttribute("src"))), cands = qq("#cid-corpo .lista-cand li").length;
     // a foto da urna precisa carregar de verdade (as da lista carregam quando chegam perto da tela)
     const u = q("#cid-corpo .urna__foto img"); if (u) { u.scrollIntoView({ block: "center" }); await ate(() => u.complete, 5000).catch(() => {}); }
     const carregou = !!(u && u.naturalWidth > 0);
-    return R(imgs.length >= cands + 1 && carregou, `${imgs.length} fotos para ${cands} candidatos a prefeito de Teresina (2024) · foto da urna ${carregou ? "carregou" : "não carregou"}`, "foto na urna (carregada) e em cada candidato da lista");
+    return R(imgs.length >= cands + 1 && carregou, `${imgs.length} fotos para ${cands} candidatos a prefeito de Fortaleza (2024) · foto da urna ${carregou ? "carregou" : "não carregou"}`, "foto na urna (carregada) e em cada candidato da lista");
   });
   teste("Funcionamento", "▶ Passar os anos avança sozinho", async () => {
     await irPara("#/mapa"); await quadros(2);

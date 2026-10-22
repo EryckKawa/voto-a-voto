@@ -28,7 +28,7 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 - **Busca:** acha uma cidade (Campinas) e abre a cidade.
 - **Mapa:** clicar numa cidade aproxima o estado, e "Passar os anos" avança sozinho.
 - **Histórico da cidade:** tem os sete cargos, na ordem do maior para o menor, e mais de 55 eleições.
-- **Fotos dos candidatos:** no painel de Teresina, prefeito 2024, a urna e cada candidato da lista têm a foto do TSE, e a da urna carrega.
+- **Fotos dos candidatos:** no painel de Fortaleza, prefeito 2024, a urna e cada candidato da lista têm a foto do TSE, e a da urna carrega.
 - **Cargos:** os botões vão de presidente a vereador; para deputado federal, a cidade mostra o partido mais votado.
 - **12 perguntas:** o botão de recorte troca o gráfico, a tabela tem as linhas certas e o SQL aparece.
 - **Régua:** o PT não aparece como extremo.
