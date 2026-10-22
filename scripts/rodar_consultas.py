@@ -33,9 +33,10 @@ def valor(v):
 
 def main():
     texto = open(os.path.join(AQUI, 'consultas_brasil.sql'), encoding='utf-8').read()
-    antigo = {}
+    antigo, velho = {}, {}
     if SO and os.path.exists(SAIDA):
-        antigo = {c['id']: c for c in json.load(open(SAIDA, encoding='utf-8'))['consultas']}
+        velho = json.load(open(SAIDA, encoding='utf-8'))
+        antigo = {c['id']: c for c in velho['consultas']}
     con = duckdb.connect(BANCO, read_only=True)
     con.execute("SET threads TO 4")
     saida = []
@@ -51,11 +52,13 @@ def main():
         seg = round(time.time() - t, 2)
         print(f'{cid:5} {len(linhas):5} linhas  {seg:6.2f}s  {desc[:70]}', flush=True)
         saida.append({'id': cid, 'descricao': desc, 'sql': sql, 'colunas': cols, 'linhas': linhas, 'segundos': seg})
-    tam = {r[0]: r[1] for r in con.execute(
+    # rodando só algumas consultas, o tamanho do banco continua o da última rodada completa
+    tam = velho.get('tamanho') if SO and velho else {r[0]: r[1] for r in con.execute(
         "SELECT 'candidaturas', COUNT(*) FROM candidatura UNION ALL SELECT 'votos', COUNT(*) FROM votacao_candidato "
         "UNION ALL SELECT 'receitas', COUNT(*) FROM receita UNION ALL SELECT 'despesas', COUNT(*) FROM despesa "
         "UNION ALL SELECT 'municipios', COUNT(*) FROM municipio").fetchall()}
-    json.dump({'gerado': datetime.date.today().isoformat(), 'banco': os.path.basename(BANCO), 'tamanho': tam, 'consultas': saida},
+    banco = velho.get('banco', os.path.basename(BANCO)) if SO and velho else os.path.basename(BANCO)
+    json.dump({'gerado': datetime.date.today().isoformat(), 'banco': banco, 'tamanho': tam, 'consultas': saida},
               open(SAIDA, 'w', encoding='utf-8'), ensure_ascii=False, separators=(',', ':'))
     print('salvo', SAIDA, os.path.getsize(SAIDA) // 1024, 'KB')
 

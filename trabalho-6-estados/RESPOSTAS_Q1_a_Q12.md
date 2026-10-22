@@ -1,4 +1,4 @@
-# Respostas das 12 questões de pesquisa — Grupo 6 (CE, ES, MT, PR, SC, TO)
+# Respostas das 12 questões de pesquisa — Grupo 5 (CE, ES, MT, PR, SC, TO)
 
 Trabalho de Banco de Dados Relacionais — "Dinheiro, Voto e Território: modelagem relacional e
 análise das eleições de 2018 a 2024 nos estados do Ceará, Espírito Santo, Mato Grosso, Paraná,

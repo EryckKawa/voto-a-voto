@@ -1,5 +1,5 @@
 -- =====================================================================
--- Trabalho de Banco de Dados Relacionais - Eleições (Grupo 6)
+-- Trabalho de Banco de Dados Relacionais - Eleições (Grupo 5)
 -- Estados: CE, ES, MT, PR, SC, TO
 -- Fontes: TSE (Portal de Dados Abertos) e IBGE (SIDRA / IBGE Cidades)
 -- SGBD alvo: MySQL 8.0+ (InnoDB, utf8mb4)

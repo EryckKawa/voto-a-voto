@@ -8,9 +8,8 @@
   const mi = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1).replace(".", ",") + " milhões" : V.int(n));
   /* foto do candidato quando existir em img/fotos/<ano>/<sq>.jpg; senão, as iniciais na cor do partido */
   V.fotoBR = (ano, sq, nome, cor) => {
-    const tem = window.__D && window.__D["br/fotos"] && window.__D["br/fotos"][ano] && window.__D["br/fotos"][ano].includes(+sq);
     const [bg, fg] = cor || ["#c9ccd1", "#16181d"];
-    return tem ? `<img class="foto-c" alt="" loading="lazy" src="img/fotos/${ano}/${sq}.jpg">` : `<span class="foto-c foto-c--ini" style="background:${bg};color:${fg}" aria-hidden="true">${V.esc(V.iniciais(nome))}</span>`;
+    return V.fotoOu(ano, sq, `<span class="foto-c foto-c--ini" style="background:${bg};color:${fg}" aria-hidden="true">${V.esc(V.iniciais(nome))}</span>`, "foto-c");
   };
   const FOTO_NINGUEM = '<span class="foto-c foto-c--ninguem" aria-hidden="true"><svg viewBox="0 0 40 40"><circle cx="20" cy="15" r="7" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/><path d="M6 38c1-9 7-14 14-14s13 5 14 14" fill="none" stroke="currentColor" stroke-width="2" stroke-dasharray="3 3"/></svg></span>';
   const PESSOA = {
@@ -40,7 +39,7 @@
   V.rota(/^\/$/, async function (main) {
     V.marcarNav("inicio");
     const BR = await V.baseBR();
-    try { await V.dados("br/fotos"); } catch (e) {}
+    await V.carregarFotos(2024);
     const [PF24, R, N24, N18, N22, EL, C18, C20, C22, C24] = await Promise.all([V.dados("br/perfil/2024"), V.dados("br/ninguem/resumo"), V.dados("br/ninguem/PREF2024"), V.dados("br/ninguem/PRES2018"), V.dados("br/ninguem/PRES2022"), V.dados("br/ninguem/eleito2024"), ...[2018, 2020, 2022, 2024].map((a) => V.dados("br/comp/" + a))]);
     const vence = (N) => Object.values(N).filter((x) => x[1] + x[2] + x[3] > x[4]).length;
     const P = R.PREF2024, ning = P.abst + P.brancos + P.nulos, part = new Map(P.partidos), top = P.partidos[0];

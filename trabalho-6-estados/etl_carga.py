@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """
 ETL de carga do banco eleicoes_g6 (DuckDB) a partir dos arquivos do TSE e do IBGE.
-Grupo 6: CE, ES, MT, PR, SC, TO (+ BR para Presidente).
+Grupo 5: CE, ES, MT, PR, SC, TO (+ BR para Presidente).
 Saida: eleicoes_g6.duckdb na mesma pasta deste script. Espelha modelo_votacao_grupo6.sql
 com tipos equivalentes do DuckDB.
 

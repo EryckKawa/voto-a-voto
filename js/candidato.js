@@ -4,6 +4,7 @@
   const V = window.V;
   V.rota(/^\/candidato\/([A-Z]{2})\/(\d+)$/, async function (main, uf, id) {
     await V.carregarBase();
+    await Promise.all([2018, 2022, 2024, 2026].map(V.carregarFotos));   // fotos do TSE dos anos desta base
     const UF = await V.dados("uf/" + uf);
     const k = UF.cand[id];
     if (!k) throw new Error("Candidato não encontrado nesta base");

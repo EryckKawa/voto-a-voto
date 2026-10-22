@@ -393,17 +393,18 @@
     const notas = BR.ideo.anos[ano] || {};
     const nt = (sg) => (notas[sg] ? notas[sg][0] : null);
     const turnos = r.t2 ? ["t1"] : ["t1"];
+    await V.carregarFotos(ano);   // fotos do TSE (quando há): senão, as iniciais
     const vk = w && U.c[w[0]];
     const urna = vk ? `<div class="urna urna--compacta"><div class="urna__tela"><span class="urna__cab">SEU VOTO PARA</span><span class="urna__cargo">${V.CARGOS[cargo]} · ${ano}</span>
       <div class="urna__campos"><div class="urna__linha"><span>Número:</span><span class="digitos">${String(vk[2]).split("").map((d) => "<b>" + d + "</b>").join("")}</span></div>
       <div class="urna__linha"><span>Nome:</span><span class="urna__nome">${V.esc(V.titulo(vk[0]))}</span></div><div class="urna__linha"><span>Partido:</span><span><b>${V.esc(vk[1])}</b> <small class="nota-chip" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">nota ${fmtNota(nt(vk[1]))} · ${V.nome5(nt(vk[1]))}</small></span></div></div>
-      <div class="urna__foto"><span class="iniciais" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">${V.esc(V.iniciais(vk[0]))}</span></div>
+      <div class="urna__foto">${V.fotoOu(ano, w[0], `<span class="iniciais" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">${V.esc(V.iniciais(vk[0]))}</span>`)}</div>
       <div class="urna__rodape"><span class="urna__votos">${V.pct(w[3])}<small>dos votos válidos</small></span>${cargo === "PREF" ? `<span class="tecla ${w[9] ? "tecla--eleito" : "tecla--nao"}">${w[9] ? "Eleito" : "Sem resultado definido"}</span>` : `<span class="tecla tecla--nao">Mais votado aqui</span>${String(vk[3]).startsWith("ELEITO") ? '<span class="tecla tecla--eleito">Eleito no país</span>' : ""}`}</div></div></div>` : "";
     const lista = turnos.map((t) => {
       const rs = r[t], tot = rs.reduce((a, x) => a + x[1], 0);
       return `<h3 class="lado__turno">${r.t2 ? "Como foi o 1º turno" : "Todos os candidatos"}</h3><ul class="lista-cand lista-cand--curta">${rs.map(([sq, v]) => {
         const k = U.c[sq] || ["?", "?", "", ""], p = (100 * v) / (tot || 1);
-        return `<li><span class="mini-foto" style="width:40px;height:40px"><span class="iniciais" style="background:${V.parNota(nt(k[1]))[0]};color:${V.parNota(nt(k[1]))[1]};font-size:16px">${V.esc(V.iniciais(k[0]))}</span></span>
+        return `<li><span class="mini-foto" style="width:40px;height:40px">${V.fotoOu(ano, sq, `<span class="iniciais" style="background:${V.parNota(nt(k[1]))[0]};color:${V.parNota(nt(k[1]))[1]};font-size:16px">${V.esc(V.iniciais(k[0]))}</span>`)}</span>
           <span><span class="cand-nome">${V.esc(V.titulo(k[0]))}<small>${V.esc(k[1])}</small>${String(k[3]).startsWith("ELEITO") ? '<span class="selo selo--eleito">Eleito</span>' : ""}</span><span class="barra"><i style="width:${p}%;background:${V.corNota(nt(k[1]))}"></i></span></span>
           <span class="cand-num">${V.pct(p)}<small>${V.int(v)} votos</small></span></li>`;
       }).join("")}</ul>`;

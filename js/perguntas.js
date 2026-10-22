@@ -10,7 +10,13 @@
   const reais = (v) => (v >= 1e9 ? `R$\u00a0${N1.format(v / 1e9)}\u00a0${v >= 2e9 ? "bilhões" : "bilhão"}` : v >= 1e6 ? `R$\u00a0${N1.format(v / 1e6)}\u00a0${v >= 2e6 ? "milhões" : "milhão"}` : v >= 1e3 ? `R$\u00a0${V.int(Math.round(v / 1e3))}\u00a0mil` : `R$\u00a0${V.int(Math.round(v))}`);
   const vezes = (a, b) => { const r = a / b; return r >= 2 ? `${N1.format(r).replace(/,0$/, "")} vezes` : `${pct(100 * (r - 1), 0)} a mais`; };
   const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
-  const CARGO = { "DEPUTADO FEDERAL": "Deputado federal", "DEPUTADO ESTADUAL": "Deputado estadual", PREFEITO: "Prefeito", VEREADOR: "Vereador", SENADOR: "Senador", GOVERNADOR: "Governador" };
+  /* nota de −1 (esquerda) a +1 (direita), com sinal: "+0,20", "−0,35" */
+  const nota = (v, d = 2) => (v == null ? "—" : (v > 0.0005 ? "+" : v < -0.0005 ? "−" : "") + Math.abs(v).toFixed(d).replace(".", ","));
+  /* correlação de Pearson, com duas casas: "0,77" */
+  const corr = (v) => (v < 0 ? "−" : "") + Math.abs(v).toFixed(2).replace(".", ",");
+  const anos1 = (v) => `${N1.format(v)} anos`;
+  const CARGOS_NOTA = [["PRES", 1, "Presidente", "#16181d"], ["GOV", 3, "Governador", "#4f6fb3"], ["SEN", 5, "Senador", "#7a5aa6"], ["DF", 6, "Deputado federal", "#9c5d16"], ["DE", 7, "Deputado estadual", "#c99a52"], ["PREF", 11, "Prefeito", "#2f7d5b"], ["VER", 13, "Vereador", "#79b394"]];
+  const CARGO = { PRESIDENTE: "Presidente", "DEPUTADO FEDERAL": "Deputado federal", "DEPUTADO ESTADUAL": "Deputado estadual", PREFEITO: "Prefeito", VEREADOR: "Vereador", SENADOR: "Senador", GOVERNADOR: "Governador" };
   const ESP5 = ["ESQUERDA", "CENTRO-ESQUERDA", "CENTRO", "CENTRO-DIREITA", "DIREITA"];
   const COR = { esq: V.ESPC.ESQUERDA, cen: V.ESPC.CENTRO, dir: V.ESPC.DIREITA, escuro: "#16181d", azul: "#4f6fb3", cinza: "#c9ccd1", terra: "#9c5d16" };
 
@@ -20,8 +26,8 @@
   /* duas (ou mais) barras por linha: um tema, dois grupos */
   function paresHTML(linhas, { nomes, cores, max, fmt = (v) => pct(v) }) {
     const mx = max || Math.max(...linhas.flatMap((l) => l.v.filter((v) => v != null)));
-    return `<ol class="pares">${linhas.map((l) => `<li><span class="pares__rot">${l.rot}${l.sub ? `<small>${l.sub}</small>` : ""}</span>
-      ${l.v.map((v, i) => `<span class="pares__lin"><small>${nomes[i]}</small><span class="barras__trilho"><i style="flex-basis:${v == null ? 0 : (100 * v) / mx}%;background:${cores[i]}"></i></span><b>${v == null ? "—" : fmt(v)}</b></span>`).join("")}</li>`).join("")}</ol>`;
+    return `<ol class="pares">${linhas.map((l) => `<li><span class="pares__rot">${l.rot}${l.sub ? `<small>${l.sub}</small>` : ""}</span><span class="pares__lins">
+      ${l.v.map((v, i) => `<span class="pares__lin"><small>${nomes[i]}</small><span class="barras__trilho"><i style="flex-basis:${v == null ? 0 : Math.max(0, (100 * v) / mx)}%;background:${cores[i]}"></i></span><b>${v == null ? "—" : fmt(v)}</b></span>`).join("")}</span></li>`).join("")}</ol>`;
   }
 
   /* tabela do resultado de uma consulta (as primeiras linhas) */
@@ -46,7 +52,10 @@
       const fp = o.fmtParte || ((v) => pct(v, 0));
       return { html, tab: { cols, linhas: l.map((x) => [x.rot, ...(temSub ? [x.sub] : []), ...(o.nomesPartes ? x.partes.map((p) => fp(p.v)) : [x.vTxt || pct(x.v)])]) } };
     };
-    const linhas = (o) => ({ html: G.linhas(o), tab: { cols: ["Ano", ...o.series.map((x) => x.nome)], linhas: o.anos.map((a, i) => [String(a), ...o.series.map((x) => pct(x.v[i]))]) } });
+    const linhas = (o) => { const f = o.fmtPonto || o.fmt || ((v) => pct(v));
+      return { html: G.linhas(o), tab: { cols: ["Ano", ...o.series.map((x) => x.nome)], linhas: o.anos.map((a, i) => [String(a), ...o.series.map((x) => (x.v[i] == null ? "—" : f(x.v[i])))]) } }; };
+    /* linhas da nota (−1 esquerda, +1 direita): zero marcado e as faixas de esquerda e direita sombreadas */
+    const linhasNota = (o) => linhas({ min: -0.5, max: 0.5, meio: 0, fmt: (v) => nota(v), fmtPonto: (v) => nota(v), fmtEixo: (t) => nota(t), faixas: [[-1, -0.25, COR.esq], [0.25, 1, COR.dir]], ...o });
     const pares = (l, o) => {
       const temSub = l.some((x) => x.sub), c = o.cols || [""], f = o.fmt || ((v) => pct(v));
       return { html: paresHTML(l, o), tab: { cols: [c[0], ...(temSub ? [c[1] || ""] : []), ...o.nomes.map(cap1)], linhas: l.map((x) => [x.rot, ...(temSub ? [x.sub] : []), ...x.v.map((v) => (v == null ? "—" : f(v)))]) } };
@@ -73,54 +82,77 @@
         consultas: ["q1", "q1b"], fonte: "TSE, prestação de contas eleitorais" });
     }
 
-    // ---------- 2. dinheiro e sucesso ----------
+    // ---------- 2. patrimônio, dinheiro de campanha e sucesso ----------
     {
-      const R = linhasDe(C.q2);
+      const R = linhasDe(C.q2), B = linhasDe(C.q2b), M = linhasDe(C.q2c);
       const QN = ["20% com menos dinheiro", "2º grupo", "3º grupo", "4º grupo", "20% com mais dinheiro"];
       const de = (a, cg) => R.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
+      const bens = (a, cg) => B.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
+      const med = (a, cg, res) => M.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_resultado === res);
       const f = de(2022, "DEPUTADO FEDERAL"), baixo = f.slice(0, 3), nB = baixo.reduce((s, r) => s + r.qt_candidatos, 0), eB = Math.round(baixo.reduce((s, r) => s + (r.qt_candidatos * r.pc_taxa_sucesso) / 100, 0));
-      const v = de(2024, "VEREADOR");
-      const vista = (a, cg) => ({ rot: `${CARGO[cg]} ${a}`, graf: () => barras(de(a, cg).map((r) => ({ rot: QN[r.nr_quintil - 1], sub: `média de ${V.brl(r.vr_receita_media)}`, v: r.pc_taxa_sucesso })), { cor: COR.escuro, max: 100, cols: ["Grupo de candidatos", "Receita média", "Eleitos"] }),
-        nota: "A barra vai até 100%: a parte dos candidatos de cada grupo que se elegeu." });
-      blocos.push({ id: "q2", n: 2, num: pct(f[4].pc_taxa_sucesso, 0), numRot: "dos candidatos a deputado federal com mais dinheiro se elegeram (2022)", medida: "Parte dos candidatos que se elegeu, por dinheiro de campanha", tabelas: ["vw_candidatura_resumo", "candidatura", "receita", "situacao_totalizacao"], tema: "Dinheiro", pergunta: "Quem tem mais dinheiro se elege mais?",
-        tit: `Entre os candidatos a deputado federal de 2022 com mais dinheiro, ${pct(f[4].pc_taxa_sucesso, 0)} se elegeram. Entre os ${V.int(nB)} com menos, ${V.int(eB)}`,
-        sub: `Os candidatos de cada cargo em cinco grupos do mesmo tamanho, pela receita de campanha. Para vereador o dinheiro pesa menos, mas a escada é a mesma: em 2024, ${pct(v[0].pc_taxa_sucesso)} de sucesso no grupo com menos dinheiro e ${pct(v[4].pc_taxa_sucesso)} no com mais.`,
-        vistas: [vista(2022, "DEPUTADO FEDERAL"), vista(2022, "DEPUTADO ESTADUAL"), vista(2024, "PREFEITO"), vista(2024, "VEREADOR")],
-        como: "Receita total declarada por candidato (TSE), com os candidatos que não declararam nada contando como zero. NTILE(5) separa os candidatos de cada cargo e ano em cinco grupos iguais. Dinheiro e voto andam juntos nos dois sentidos: quem tem chance atrai mais doação e mais fundo do partido.",
-        consultas: ["q2"], fonte: "TSE" });
+      const bf = bens(2022, "DEPUTADO FEDERAL"), b0 = bf[0], b6 = bf[bf.length - 1];
+      const mE = med(2022, "DEPUTADO FEDERAL", "eleito"), mN = med(2022, "DEPUTADO FEDERAL", "não eleito"), vE = med(2024, "VEREADOR", "eleito"), vN = med(2024, "VEREADOR", "não eleito");
+      const vistaBens = (a, cg) => ({ rot: `Bens · ${CARGO[cg]} ${a}`, graf: () => barras(bens(a, cg).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos`, v: r.pc_taxa_sucesso })), { cor: COR.terra, max: 100, cols: ["Bens declarados", "Candidatos", "Eleitos"] }),
+        nota: "A barra vai até 100%: a parte dos candidatos de cada faixa de patrimônio que se elegeu." });
+      const vista = (a, cg) => ({ rot: `Campanha · ${CARGO[cg]} ${a}`, graf: () => barras(de(a, cg).map((r) => ({ rot: QN[r.nr_quintil - 1], sub: `média de ${V.brl(r.vr_receita_media)}`, v: r.pc_taxa_sucesso })), { cor: COR.escuro, max: 100, cols: ["Grupo de candidatos", "Receita média", "Eleitos"] }),
+        nota: "A barra vai até 100%: a parte dos candidatos de cada grupo, pelo dinheiro de campanha, que se elegeu." });
+      blocos.push({ id: "q2", n: 2, num: `${pct(b6.pc_taxa_sucesso, 0)} × ${pct(b0.pc_taxa_sucesso)}`, numRot: "dos candidatos a deputado federal com mais de R$ 5 milhões em bens × sem nenhum bem se elegeram (2022)", medida: "Parte dos candidatos que se elegeu, pelo patrimônio e pelo dinheiro de campanha", tabelas: ["bem_candidato", "vw_patrimonio_candidato", "candidatura", "situacao_totalizacao", "vw_candidatura_resumo", "receita"], tema: "Dinheiro", pergunta: "Quem tem mais dinheiro se elege mais?",
+        tit: `Entre os candidatos a deputado federal de 2022 que declararam mais de R$ 5 milhões em bens, ${pct(b6.pc_taxa_sucesso, 0)} se elegeram. Entre os que não declararam bem nenhum, ${pct(b0.pc_taxa_sucesso)}`,
+        sub: `A chance sobe a cada faixa de patrimônio. Metade dos deputados federais eleitos tinha mais de ${reais(mE.vr_patrimonio_mediano)} em bens; metade dos que perderam, menos de ${reais(mN.vr_patrimonio_mediano)}. Para vereador, em 2024, ${reais(vE.vr_patrimonio_mediano)} contra ${reais(vN.vr_patrimonio_mediano)}. O dinheiro da campanha conta a mesma história: no grupo de candidatos a deputado federal com mais receita, ${pct(f[4].pc_taxa_sucesso, 0)} se elegeram; entre os ${V.int(nB)} com menos, ${V.int(eB)}.`,
+        vistas: [vistaBens(2022, "DEPUTADO FEDERAL"), vistaBens(2024, "PREFEITO"), vistaBens(2024, "VEREADOR"), vista(2022, "DEPUTADO FEDERAL"), vista(2024, "VEREADOR")],
+        como: "Patrimônio: soma dos bens que o candidato declarou ao TSE no registro da candidatura (casa, terreno, carro, aplicações, participação em empresa), pelo valor que ele mesmo informou. Quem não declarou nenhum bem conta como zero. Dinheiro de campanha: receita total declarada na prestação de contas, com NTILE(5) separando os candidatos de cada cargo e ano em cinco grupos iguais. Nos dois casos a tabela mostra associação, não causa: quem tem patrimônio costuma ter mais tempo, mais contatos e mais chance de receber dinheiro do partido.",
+        consultas: ["q2b", "q2c", "q2"], fonte: "TSE, bens declarados e prestação de contas" });
     }
 
-    // ---------- 3. cidade rica x pobre ----------
+    // ---------- 3. IDHM, renda e campo político ----------
     {
-      const R = linhasDe(C.q3);
+      const R = linhasDe(C.q3), I = linhasDe(C.q3b), K = linhasDe(C.q3c);
       const RN = { "1 pobre": "pobre", "2 intermediário": "renda média", "3 rico": "rica" }, PN = { "1": "Pequena", "2": "Média", "3": "Grande" };
       const ach = (a, p, r) => R.find((x) => x.nr_ano_eleicao === a && x.ds_porte.startsWith(p) && x.ds_renda === r);
       const pp = ach(2022, "1", "1 pobre"), pr = ach(2022, "1", "3 rico");
-      const vista = (a, rot) => ({ rot, graf: () => barras(R.filter((x) => x.nr_ano_eleicao === a).map((x) => ({ rot: `${PN[x.ds_porte[0]]} e ${RN[x.ds_renda]}`, sub: `${V.int(x.qt_municipios)} cidades · faltaram ${pct(x.pc_abstencao_media, 0)}`, v: 100, vTxt: pct(x.pc_mun_esquerda, 0),
-          partes: [["pc_mun_esquerda", COR.esq, "Esquerda em 1º"], ["pc_mun_centro", COR.cen, "Centro em 1º"], ["pc_mun_direita", COR.dir, "Direita em 1º"]].map(([k, cor, t]) => ({ v: x[k], cor, tit: `${t}: ${pct(x[k], 0)} das cidades` })) })), { max: 100, cols: ["Tamanho e renda", "Cidades e faltas"], nomesPartes: ["Esquerda em 1º", "Centro em 1º", "Direita em 1º"] }),
+      const idh = (a, cg) => I.filter((x) => x.nr_ano_eleicao === a && x.ds_cargo === cg);
+      const ip = idh(2022, "PRESIDENTE"), i1 = ip[0], i5 = ip[ip.length - 1];
+      const k = (a, cg) => K.find((x) => x.nr_ano_eleicao === a && x.ds_cargo === cg);
+      const kP = k(2022, "PRESIDENTE"), kG = k(2022, "GOVERNADOR"), kM = k(2024, "PREFEITO");
+      const PARTES = (x) => [["pc_mun_esquerda", COR.esq, "Esquerda em 1º"], ["pc_mun_centro", COR.cen, "Centro em 1º"], ["pc_mun_direita", COR.dir, "Direita em 1º"]].map(([c, cor, t]) => ({ v: x[c], cor, tit: `${t}: ${pct(x[c], 0)} das cidades` }));
+      const LEG = leg([[COR.esq, "Esquerda em 1º"], [COR.cen, "Centro em 1º"], [COR.dir, "Direita em 1º"]]);
+      const vistaI = (a, cg) => ({ rot: `IDHM · ${cap1(CARGO[cg] || cg.toLowerCase())} ${a}`, legenda: LEG, graf: () => barras(idh(a, cg).map((x) => { const [nm, fx] = x.ds_faixa_idhm.slice(2).split(" ("); return { rot: `IDHM ${nm}`, sub: `${fx.replace(")", "")} · ${V.int(x.qt_municipios)} cidades · nota ${nota(x.vr_nota_media)}`, v: 100, vTxt: pct(x.pc_mun_esquerda, 0), partes: PARTES(x) }; }),
+          { max: 100, cols: ["IDHM da cidade", "Faixa, cidades e nota média"], nomesPartes: ["Esquerda em 1º", "Centro em 1º", "Direita em 1º"] }),
+        nota: "O número à direita é a parte das cidades com a esquerda em 1º. Faixas de IDHM do PNUD; as 32 cidades de IDHM muito baixo (abaixo de 0,500) estão junto com as de IDHM baixo. Nota média: a dos votos da cidade, de −1 (esquerda) a +1 (direita), na média das cidades da faixa." });
+      const INDS = [["r_idhm", "IDHM"], ["r_idhm_educacao", "IDHM Educação"], ["r_renda_per_capita", "Renda por habitante (Atlas)"], ["r_pib_per_capita", "PIB por habitante (IBGE)"], ["r_populacao", "Número de habitantes"]];
+      const vistaK = { rot: "Correlação", legenda: leg([[COR.escuro, "Presidente 2022"], [COR.azul, "Governador 2022"], [COR.cinza, "Prefeito 2024"]]),
+        graf: () => pares(INDS.map(([c, t]) => ({ rot: t, v: [kP[c], kG[c], kM[c]] })), { nomes: ["presidente 2022", "governador 2022", "prefeito 2024"], cores: [COR.escuro, COR.azul, COR.cinza], max: 1, fmt: corr, cols: ["Indicador da cidade"] }),
+        nota: "Correlação, cidade a cidade, entre o indicador e a nota média dos votos: 0 é nenhuma relação, 1 é relação total. Positiva: quanto maior o indicador, mais à direita a cidade votou. Renda, PIB e habitantes em logaritmo." };
+      const vista = (a, rot) => ({ rot, legenda: LEG, graf: () => barras(R.filter((x) => x.nr_ano_eleicao === a).map((x) => ({ rot: `${PN[x.ds_porte[0]]} e ${RN[x.ds_renda]}`, sub: `${V.int(x.qt_municipios)} cidades · faltaram ${pct(x.pc_abstencao_media, 0)}`, v: 100, vTxt: pct(x.pc_mun_esquerda, 0),
+          partes: PARTES(x) })), { max: 100, cols: ["Tamanho e renda", "Cidades e faltas"], nomesPartes: ["Esquerda em 1º", "Centro em 1º", "Direita em 1º"] }),
         nota: "O número à direita é a parte das cidades com a esquerda em 1º. Pequena: até 20 mil habitantes; média: até 100 mil; grande: mais de 100 mil." });
-      blocos.push({ id: "q3", n: 3, num: `${pct(pp.pc_mun_esquerda, 0)} × ${pct(pr.pc_mun_esquerda, 0)}`, numRot: "das cidades pequenas pobres × ricas deram o 1º lugar à esquerda para governador (2022)", medida: "Campo político do mais votado, por tamanho e renda da cidade", tabelas: ["votacao_candidato", "candidatura", "partido", "comparecimento", "eleicao", "vw_indicador_atual", "indicador_municipio", "vw_partido_ano"], tema: "Território", pergunta: "A cidade rica vota diferente da cidade pobre?",
-        tit: `Em 2022, nas cidades pequenas e pobres, a esquerda ficou em 1º para governador em ${pct(pp.pc_mun_esquerda, 0)} delas. Nas pequenas e ricas, em ${pct(pr.pc_mun_esquerda, 0)}`,
-        sub: `A renda separa mais que o tamanho. Para prefeito, em 2024, a diferença diminui, mas não some. Quem falta varia pouco: ${pct(pp.pc_abstencao_media, 0)} nas pequenas e pobres e ${pct(pr.pc_abstencao_media, 0)} nas pequenas e ricas.`,
-        legenda: leg([[COR.esq, "Esquerda em 1º"], [COR.cen, "Centro em 1º"], [COR.dir, "Direita em 1º"]]),
-        vistas: [vista(2022, "Governador 2022"), vista(2024, "Prefeito 2024")],
-        como: "Partido mais votado em cada cidade no 1º turno (TSE), classificado pela nota do partido na época da eleição, que junta três estudos e o voto na Câmara. Esquerda e centro-esquerda contam juntas, assim como direita e centro-direita. Tamanho pela população do Censo 2022; renda pelo PIB por habitante de 2021 (IBGE), com as cidades em três grupos do mesmo tamanho. Abstenção é a média das cidades do grupo.",
-        consultas: ["q3"], link: "#/mapa/e/GOV2022", linkTxt: "Ver governador 2022 no mapa", fonte: "TSE e IBGE" });
+      blocos.push({ id: "q3", n: 3, num: `${pct(i1.pc_mun_esquerda, 0)} × ${pct(i5.pc_mun_esquerda, 0)}`, numRot: "das cidades de IDHM baixo × muito alto deram o 1º lugar à esquerda para presidente (2022)", medida: "Campo político do mais votado, pelo desenvolvimento, pela renda e pelo tamanho da cidade", tabelas: ["votacao_partido", "votacao_candidato", "candidatura", "partido", "comparecimento", "eleicao", "vw_indicador_atual", "indicador_municipio", "indicador_atlas", "vw_partido_ano"], tema: "Território", pergunta: "A cidade rica vota diferente da cidade pobre?",
+        tit: `Em 2022, nas cidades de IDHM baixo ou muito baixo, a esquerda ficou em 1º para presidente em ${pct(i1.pc_mun_esquerda, 0)} delas. Nas de IDHM muito alto, em ${pct(i5.pc_mun_esquerda, 0)}`,
+        sub: `Quanto maior o desenvolvimento da cidade, mais à direita ela vota para presidente: cidade a cidade, a correlação entre o IDHM e a nota média dos votos foi de ${corr(kP.r_idhm)} em 2022, e a renda por habitante separa ainda um pouco mais (${corr(kP.r_renda_per_capita)}). O tamanho da cidade não separa nada (${corr(kP.r_populacao)}). Na eleição local o efeito encolhe: ${corr(kG.r_idhm)} para governador e ${corr(kM.r_idhm)} para prefeito. Para governador, nas cidades pequenas e pobres a esquerda ficou em 1º em ${pct(pp.pc_mun_esquerda, 0)} delas; nas pequenas e ricas, em ${pct(pr.pc_mun_esquerda, 0)}.`,
+        vistas: [vistaI(2022, "PRESIDENTE"), vistaI(2022, "GOVERNADOR"), vistaI(2024, "PREFEITO"), vistaK, vista(2022, "Renda e tamanho · Governador 2022"), vista(2024, "Renda e tamanho · Prefeito 2024")],
+        como: "IDHM: Índice de Desenvolvimento Humano Municipal do Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e Fundação João Pinheiro), que junta educação, renda e longevidade numa nota de 0 a 1. É o do Censo 2010, o último calculado para as cidades; baixado da API do IpeaData. Partido mais votado em cada cidade no 1º turno (TSE), classificado pela nota do partido na época da eleição, que junta três estudos e o voto na Câmara; esquerda e centro-esquerda contam juntas, assim como direita e centro-direita. Nota média da cidade: soma dos votos de cada partido (nominais e de legenda) vezes a nota dele, dividida pelo total. Correlação de Pearson entre as cidades. Tamanho pela população do Censo 2022; renda pelo PIB por habitante de 2021 (IBGE), com as cidades em três grupos do mesmo tamanho.",
+        consultas: ["q3b", "q3c", "q3"], link: "#/mapa/e/PRES2022", linkTxt: "Ver presidente 2022 no mapa", fonte: "TSE, IBGE e Atlas do Desenvolvimento Humano (PNUD, Ipea e FJP)" });
     }
 
-    // ---------- 4. escolaridade x tamanho ----------
+    // ---------- 4. escolaridade da cidade x escolaridade dos eleitos ----------
     {
-      const R = linhasDe(C.q4).filter((r) => r.nr_ordem === 8);
+      const R = linhasDe(C.q4).filter((r) => r.nr_ordem === 8), E = linhasDe(C.q4b), K = linhasDe(C.q4c)[0];
       const PN = ["Até 20 mil habitantes", "De 20 a 100 mil", "Mais de 100 mil"];
       const [pq, , gr] = R;
-      blocos.push({ id: "q4", n: 4, num: pct(gr.pc_eleitos_no_porte, 0), numRot: "dos eleitos nas cidades com mais de 100 mil habitantes têm curso superior (2024)", medida: "Parte com curso superior completo", recorte: "Prefeitos e vereadores, 2024", tabelas: ["candidatura", "grau_instrucao", "situacao_totalizacao", "eleicao", "vw_indicador_atual", "indicador_municipio"], tema: "Perfil", pergunta: "Cidade grande elege quem estudou mais?",
-        tit: `Nas cidades com mais de 100 mil habitantes, ${pct(gr.pc_eleitos_no_porte, 0)} dos eleitos em 2024 tinham curso superior. Nas com até 20 mil, ${pct(pq.pc_eleitos_no_porte, 0)}`,
-        sub: `E o eleitor filtra: nas cidades grandes, ${pct(gr.pc_candidatos_no_porte, 0)} dos candidatos tinham diploma, mas entre os eleitos eles eram ${pct(gr.pc_eleitos_no_porte, 0)}.`,
-        legenda: leg([[COR.cinza, "Entre os candidatos"], [COR.escuro, "Entre os eleitos"]]),
-        grafico: () => pares(R.map((r, i) => ({ rot: PN[i], v: [r.pc_candidatos_no_porte, r.pc_eleitos_no_porte] })), { nomes: ["candidatos", "eleitos"], cores: [COR.cinza, COR.escuro], max: 100, cols: ["Tamanho da cidade"] }),
-        nota: "Parte com superior completo, prefeito e vereador, eleição de 2024.",
-        como: "Grau de instrução declarado pelo candidato no registro da candidatura (TSE), prefeitos e vereadores de 2024. Tamanho da cidade pela população do Censo 2022 (IBGE). A consulta traz todos os graus; o gráfico mostra o superior completo.",
-        consultas: ["q4"], fonte: "TSE e IBGE" });
+      const eq = (cg) => E.filter((r) => r.ds_cargo === cg), ve = eq("VEREADOR"), v1 = ve[0], v5 = ve[ve.length - 1], pf = eq("PREFEITO");
+      const QE = ["20% com IDHM Educação mais baixo", "2º grupo", "3º grupo", "4º grupo", "20% com IDHM Educação mais alto"];
+      const N3 = (v) => v.toFixed(3).replace(".", ",");
+      const LEG = leg([[COR.cinza, "Entre os candidatos"], [COR.escuro, "Entre os eleitos"]]);
+      const vistaE = (cg) => ({ rot: `Escolaridade da cidade · ${CARGO[cg]}`, legenda: LEG, graf: () => pares(eq(cg).map((r) => ({ rot: QE[r.nr_quintil - 1], sub: `IDHM Educação de ${N3(r.vr_idhm_e_min)} a ${N3(r.vr_idhm_e_max)} · ${pct(r.pc_adultos_superior_2010, 0)} dos adultos com diploma`, v: [r.pc_candidatos_superior, r.pc_eleitos_superior] })),
+          { nomes: ["candidatos", "eleitos"], cores: [COR.cinza, COR.escuro], max: 100, cols: ["Cidades", "IDHM Educação e adultos com diploma"] }),
+        nota: `Parte com superior completo, ${cg === "PREFEITO" ? "prefeitos" : "vereadores"}, eleição de 2024. Cidades em cinco grupos do mesmo tamanho pelo IDHM Educação (Censo 2010).` });
+      blocos.push({ id: "q4", n: 4, num: `${pct(v5.pc_eleitos_superior, 0)} × ${pct(v1.pc_eleitos_superior, 0)}`, numRot: "dos vereadores eleitos têm diploma nas cidades de IDHM Educação mais alto × mais baixo (2024)", medida: "Parte com curso superior completo, pela escolaridade e pelo tamanho da cidade", tabelas: ["candidatura", "grau_instrucao", "situacao_totalizacao", "eleicao", "vw_indicador_atual", "indicador_atlas", "vw_eleitorado_municipio", "eleitorado_perfil"], tema: "Perfil", pergunta: "Cidade mais estudada elege quem estudou mais?",
+        tit: `Nas cidades com o IDHM Educação mais alto, ${pct(v5.pc_eleitos_superior, 0)} dos vereadores eleitos em 2024 tinham curso superior. Nas com o mais baixo, ${pct(v1.pc_eleitos_superior, 0)}`,
+        sub: `E o eleitor escolhe gente mais estudada que ele: onde só ${pct(v1.pc_adultos_superior_2010, 0)} dos adultos tinham diploma, ${pct(v1.pc_eleitos_superior, 0)} dos vereadores eleitos tinham (entre os candidatos, ${pct(v1.pc_candidatos_superior, 0)}). Para prefeito, de ${pct(pf[0].pc_eleitos_superior, 0)} a ${pct(pf[pf.length - 1].pc_eleitos_superior, 0)}. Escolaridade e tamanho andam juntos: cidade a cidade, a parte dos vereadores com diploma acompanha a dos adultos com diploma (correlação de ${corr(K.r_adultos_superior_2010)}) tanto quanto o tamanho da cidade (${corr(K.r_populacao)}). Nas cidades com mais de 100 mil habitantes, ${pct(gr.pc_eleitos_no_porte, 0)} dos eleitos tinham diploma; nas com até 20 mil, ${pct(pq.pc_eleitos_no_porte, 0)}.`,
+        vistas: [vistaE("VEREADOR"), vistaE("PREFEITO"), { rot: "Tamanho da cidade", legenda: LEG, graf: () => pares(R.map((r, i) => ({ rot: PN[i], v: [r.pc_candidatos_no_porte, r.pc_eleitos_no_porte] })), { nomes: ["candidatos", "eleitos"], cores: [COR.cinza, COR.escuro], max: 100, cols: ["Tamanho da cidade"] }),
+          nota: "Parte com superior completo, prefeito e vereador, eleição de 2024." }],
+        como: "Grau de instrução declarado pelo candidato no registro da candidatura (TSE), prefeitos e vereadores de 2024. Escolaridade da cidade: IDHM Educação e parte dos adultos (25 anos ou mais) com curso superior, do Atlas do Desenvolvimento Humano (Censo 2010, o último calculado para as cidades), e parte dos eleitores com superior completo no perfil do eleitorado do TSE de 2024. Tamanho da cidade pela população do Censo 2022 (IBGE). Correlação de Pearson entre as cidades, com a população em logaritmo.",
+        consultas: ["q4b", "q4c", "q4"], fonte: "TSE, IBGE e Atlas do Desenvolvimento Humano (PNUD, Ipea e FJP)" });
     }
 
     // ---------- 5. voto de legenda ----------
@@ -157,21 +189,33 @@
         consultas: ["q6", "q6b"], fonte: "TSE, propostas de governo" });
     }
 
-    // ---------- 7. jovens ----------
+    // ---------- 7. idade: jovem vota em jovem? ----------
     {
-      const R = linhasDe(C.q7), E = linhasDe(C.q7b).filter((r) => r.ds_espectro !== "NÃO CLASSIFICADO");
+      const R = linhasDe(C.q7), E = linhasDe(C.q7b).filter((r) => r.ds_espectro !== "NÃO CLASSIFICADO"), J = linhasDe(C.q7c), D = linhasDe(C.q7d);
       const anos = [...new Set(R.map((r) => r.nr_ano_eleicao))].filter((a) => a % 4 === 0);
       const g = (a, f) => R.find((r) => r.nr_ano_eleicao === a && r.ds_faixa === f);
-      const j24 = g(2024, "jovem"), n24 = g(2024, "não jovem"), j22 = g(2022, "jovem"), n22 = g(2022, "não jovem");
+      const sj24 = g(2024, "jovem"), sn24 = g(2024, "não jovem");
       const mn = Math.min(...E.map((r) => r.pc_jovens_eleitos)), mx = Math.max(...E.map((r) => r.pc_jovens_eleitos));
-      blocos.push({ id: "q7", n: 7, num: `${pct(j24.pc_sucesso)} × ${pct(n24.pc_sucesso)}`, numRot: "dos jovens × dos mais velhos se elegeram prefeito ou vereador (2024)", medida: "Parte dos candidatos que se elegeu, por idade", recorte: "Prefeitos e vereadores, 2004 a 2024", tabelas: ["vw_candidatura_resumo", "candidatura", "situacao_totalizacao", "partido"], tema: "Perfil", pergunta: "Jovem tem chance de se eleger?",
-        tit: `Em 2024, ${pct(j24.pc_sucesso)} dos candidatos com até 29 anos se elegeram prefeito ou vereador. Entre os mais velhos, ${pct(n24.pc_sucesso)}`,
-        sub: `O jovem perde em todas as eleições desde 2002. Para deputado, em 2022, foram ${pct(j22.pc_sucesso)} contra ${pct(n22.pc_sucesso)}. E nenhum campo político abre mais espaço: de 2018 a 2024, os jovens foram de ${pct(mn)} a ${pct(mx)} dos eleitos em todos, da esquerda à direita.`,
-        legenda: leg([[COR.azul, "Até 29 anos"], [COR.escuro, "30 anos ou mais"]]),
-        grafico: () => pares(anos.map((a) => ({ rot: String(a), sub: `${V.int(g(a, "jovem").qt_candidatos)} candidatos jovens`, v: [g(a, "jovem").pc_sucesso, g(a, "não jovem").pc_sucesso] })), { nomes: ["até 29 anos", "30 ou mais"], cores: [COR.azul, COR.escuro], cols: ["Ano", "Candidatos jovens"] }),
-        nota: "Prefeitos e vereadores, eleições municipais. A consulta também traz deputados, nas eleições gerais.",
-        como: "Idade na data da posse, declarada no registro da candidatura (TSE). Jovem: até 29 anos, como no Estatuto da Juventude. Sucesso: parte dos candidatos que se elegeu, contando os eleitos por média.",
-        consultas: ["q7", "q7b"], fonte: "TSE" });
+      const jq = (a) => J.filter((r) => r.nr_ano_eleicao === a), j24 = jq(2024), jo = j24[0], jy = j24[j24.length - 1];
+      const d = (a, cg) => D.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
+      const dV = d(2024, "VEREADOR"), dF = d(2022, "DEPUTADO FEDERAL"), dS = d(2022, "SENADOR");
+      const QJ = ["20% com eleitorado mais velho", "2º grupo", "3º grupo", "4º grupo", "20% com eleitorado mais jovem"];
+      const LEGJ = leg([[COR.cinza, "No eleitorado"], [COR.azul, "Entre os vereadores eleitos"]]);
+      const vistaJ = (a) => ({ rot: `Eleitorado e eleitos ${a}`, legenda: LEGJ, graf: () => pares(jq(a).map((r) => ({ rot: QJ[r.nr_quintil - 1], sub: `${V.int(r.qt_municipios)} cidades · eleitor com ${anos1(r.vr_idade_media_eleitorado)} em média`, v: [r.pc_eleitorado_ate_29, r.pc_eleitos_ate_29] })),
+          { nomes: ["no eleitorado", "entre os eleitos"], cores: [COR.cinza, COR.azul], max: 40, cols: ["Cidades", "Idade média do eleitor"] }),
+        nota: `Parte com até 29 anos. Cidades em cinco grupos do mesmo tamanho pela parte do eleitorado com até 29 anos (TSE, ${a}); vereadores eleitos no mesmo ano. A barra vai até 40%.` });
+      const CG7 = [[2024, "VEREADOR"], [2024, "PREFEITO"], [2022, "DEPUTADO ESTADUAL"], [2022, "DEPUTADO FEDERAL"], [2022, "GOVERNADOR"], [2022, "SENADOR"]];
+      const vistaIdade = { rot: "Idade média por cargo", legenda: leg([[COR.cinza, "Eleitor"], [COR.escuro, "Eleito"]]), graf: () => pares(CG7.map(([a, cg]) => { const r = d(a, cg); return { rot: `${CARGO[cg]} ${a}`, sub: `${V.int(r.qt_eleitos)} eleitos`, v: [r.vr_idade_media_eleitorado, r.vr_idade_media_eleitos] }; }),
+          { nomes: ["eleitor", "eleito"], cores: [COR.cinza, COR.escuro], max: 70, fmt: anos1, cols: ["Cargo", "Eleitos"] }),
+        nota: "Idade média do eleitorado apto (TSE) e dos eleitos na data da posse. A barra vai até 70 anos." };
+      const vistaSucesso = { rot: "Chance de se eleger", legenda: leg([[COR.azul, "Até 29 anos"], [COR.escuro, "30 anos ou mais"]]), graf: () => pares(anos.map((a) => ({ rot: String(a), sub: `${V.int(g(a, "jovem").qt_candidatos)} candidatos jovens`, v: [g(a, "jovem").pc_sucesso, g(a, "não jovem").pc_sucesso] })), { nomes: ["até 29 anos", "30 ou mais"], cores: [COR.azul, COR.escuro], cols: ["Ano", "Candidatos jovens"] }),
+        nota: "Parte dos candidatos a prefeito e vereador que se elegeu, nas eleições municipais. A consulta também traz deputados, nas eleições gerais." };
+      blocos.push({ id: "q7", n: 7, num: `${pct(jy.pc_eleitorado_ate_29, 0)} × ${pct(jy.pc_eleitos_ate_29, 0)}`, numRot: "dos eleitores × dos vereadores eleitos têm até 29 anos, nas cidades de eleitorado mais jovem (2024)", medida: "Parte com até 29 anos e idade média, de quem vota e de quem é eleito", tabelas: ["eleitorado_perfil", "vw_eleitorado_municipio", "candidatura", "situacao_totalizacao", "vw_candidatura_resumo", "partido"], tema: "Perfil", pergunta: "Jovem vota em jovem?",
+        tit: `Não. Nas cidades com o eleitorado mais jovem, ${pct(jy.pc_eleitorado_ate_29, 0)} dos eleitores têm até 29 anos, mas só ${pct(jy.pc_eleitos_ate_29)} dos vereadores eleitos em 2024. Nas de eleitorado mais velho, ${pct(jo.pc_eleitos_ate_29)}`,
+        sub: `A idade de quem vota quase não muda a de quem se elege. O eleitor tinha ${anos1(dV.vr_idade_media_eleitorado)} em média em 2024; o vereador eleito, ${anos1(dV.vr_idade_media_eleitos)}; o deputado federal de 2022, ${anos1(dF.vr_idade_media_eleitos)}; o senador, ${anos1(dS.vr_idade_media_eleitos)}. E o jovem que se candidata perde mais: em 2024, ${pct(sj24.pc_sucesso)} dos candidatos com até 29 anos se elegeram prefeito ou vereador, contra ${pct(sn24.pc_sucesso)} dos mais velhos. Nenhum campo político abre mais espaço: de 2018 a 2024, os jovens foram de ${pct(mn)} a ${pct(mx)} dos eleitos em todos, da esquerda à direita.`,
+        vistas: [vistaJ(2024), vistaJ(2020), vistaIdade, vistaSucesso],
+        como: "Eleitorado: perfil do eleitorado do TSE no ano de cada eleição, com a faixa de idade de cada eleitor apto, cidade a cidade; a idade média usa o meio de cada faixa. O TSE já publica esse perfil ano a ano, então não é preciso projetar a população entre um censo e outro (como faria o IpeaData), e ele conta só quem pode votar. Eleitos: idade na data da posse, declarada no registro da candidatura (TSE). Jovem: até 29 anos, como no Estatuto da Juventude. O voto é secreto, então não dá para saber em quem cada jovem votou: a pergunta é respondida cidade a cidade, comparando as que têm mais e menos eleitores jovens.",
+        consultas: ["q7c", "q7d", "q7", "q7b"], fonte: "TSE, perfil do eleitorado e candidaturas" });
     }
 
     // ---------- 8. empresas ----------
@@ -201,14 +245,23 @@
       const frenteD = (r) => r.qt_mun_direita_na_frente > r.qt_mun_centro_na_frente && r.qt_mun_direita_na_frente > r.qt_mun_esquerda_na_frente;
       let desde = mN; for (let i = M.length - 1; i >= 0 && frenteD(M[i]); i--) desde = M[i];
       const ser = (L) => [["pc_votos_esquerda", "Esquerda", COR.esq], ["pc_votos_centro", "Centro", COR.cen], ["pc_votos_direita", "Direita", COR.dir]].map(([k, nome, cor]) => ({ nome, cor, grossa: true, v: L.map((r) => r[k]) }));
-      blocos.push({ id: "q9", n: 9, num: `${pct(gN.pc_votos_direita, 0)} × ${pct(gN.pc_votos_esquerda, 0)}`, numRot: `direita × esquerda para presidente no 1º turno de ${gN.nr_ano_eleicao}`, medida: "Votos no 1º turno por campo político", tabelas: ["votacao_candidato", "candidatura", "partido", "eleicao", "municipio", "vw_partido_ano", "partido_nota"], tema: "Território", pergunta: "Para que lado a sua cidade foi?",
+      const NB = linhasDe(C.q9b), nb = (cd, a) => (NB.find((r) => r.cd_cargo === cd && r.nr_ano_eleicao === a) || {}).vr_nota_brasil;
+      const serNota = (anosS, cgs) => CARGOS_NOTA.filter(([, cd]) => cgs.includes(cd)).map(([, cd, nome, cor]) => ({ nome, cor, grossa: true, curto: nome.replace("Deputado ", "Dep. "), curtoM: nome.replace("Deputado federal", "Fed.").replace("Deputado estadual", "Est.").replace("Presidente", "Pres.").replace("Governador", "Gov.").replace("Senador", "Sen."), v: anosS.map((a) => nb(cd, a) ?? null) }));
+      const anosG = [1994, 1998, 2002, 2006, 2010, 2014, 2018, 2022, 2026], anosM = [1996, 2000, 2004, 2008, 2012, 2016, 2020, 2024];
+      const legNota = (cds) => leg(CARGOS_NOTA.filter(([, cd]) => cds.includes(cd)).map(([, , nome, cor]) => [cor, nome]));
+      const notaVistas = [
+        { rot: "Nota · eleições gerais", legenda: legNota([1, 3, 5, 6, 7]), graf: () => linhasNota({ anos: anosG, series: serNota(anosG, [1, 3, 5, 6, 7]), rot: "Nota média dos votos por cargo, eleições gerais, 1º turno" }),
+          nota: "Nota média dos votos de todo o Brasil: −1 é tudo na esquerda, +1 tudo na direita; as faixas sombreadas são esquerda (abaixo de −0,25) e direita (acima de +0,25). O arquivo de votos por partido do TSE não traz presidente, governador e senador em 1994, nem presidente em 1998." },
+        { rot: "Nota · eleições municipais", legenda: legNota([11, 13]), graf: () => linhasNota({ anos: anosM, series: serNota(anosM, [11, 13]), rot: "Nota média dos votos por cargo, eleições municipais, 1º turno" }),
+          nota: "Nota média dos votos de todas as cidades, de −1 (esquerda) a +1 (direita)." }];
+      blocos.push({ id: "q9", n: 9, num: `${pct(gN.pc_votos_direita, 0)} × ${pct(gN.pc_votos_esquerda, 0)}`, numRot: `direita × esquerda para presidente no 1º turno de ${gN.nr_ano_eleicao}`, medida: "Votos no 1º turno por campo político", tabelas: ["votacao_partido", "votacao_candidato", "candidatura", "partido", "eleicao", "municipio", "vw_partido_ano", "partido_nota"], tema: "Território", pergunta: "Para que lado a sua cidade foi?",
         tit: `Desde ${primD.nr_ano_eleicao}, a disputa para presidente é esquerda contra direita: em ${gN.nr_ano_eleicao}, ${pct(gN.pc_votos_direita, 0)} a ${pct(gN.pc_votos_esquerda, 0)} no 1º turno`,
-        sub: `Antes, o adversário do PT era o PSDB, que as medidas põem bem na fronteira entre centro e centro-direita (+0,25)${antesD.length ? `: em ${antesD.join(" e ")} ele aparece à direita, em ${ultC.nr_ano_eleicao} de novo no centro` : ""} (<a href="#/partidos">veja na página Partidos</a>). Para prefeito, a direita está na frente em mais cidades desde ${desde.nr_ano_eleicao}: em ${mN.nr_ano_eleicao}, em ${V.int(mN.qt_mun_direita_na_frente)} das ${V.int(mN.qt_municipios)}.`,
+        sub: `Somando os votos de cada partido pela nota dele (de −1, esquerda, a +1, direita), o país vota mais à direita para deputado e vereador do que para presidente: em 2022, ${nota(nb(6, 2022))} para deputado federal e ${nota(nb(1, 2022))} para presidente; para vereador, a nota foi de ${nota(nb(13, 2008))} em 2008 para ${nota(nb(13, 2024))} em 2024. Antes, o adversário do PT era o PSDB, que as medidas põem bem na fronteira entre centro e centro-direita (+0,25)${antesD.length ? `: em ${antesD.join(" e ")} ele aparece à direita, em ${ultC.nr_ano_eleicao} de novo no centro` : ""} (<a href="#/partidos">veja na página Partidos</a>). Para prefeito, a direita está na frente em mais cidades desde ${desde.nr_ano_eleicao}: em ${mN.nr_ano_eleicao}, em ${V.int(mN.qt_mun_direita_na_frente)} das ${V.int(mN.qt_municipios)}. Abaixo, a linha da sua cidade.`,
         legenda: leg([[COR.esq, "Esquerda e centro-esquerda"], [COR.cen, "Centro"], [COR.dir, "Direita e centro-direita"]]),
-        vistas: [{ rot: "Presidente", graf: () => linhas({ anos: G.map((r) => r.nr_ano_eleicao), series: ser(G), max: 80, rot: "Votos para presidente por lado, 1º turno" }), nota: `Parte dos votos nominais do 1º turno. Cidades com a esquerda na frente: ${G.map((r) => `${r.nr_ano_eleicao}, ${V.int(r.qt_mun_esquerda_na_frente)}`).slice(-3).join("; ")}.` },
+        vistas: [...notaVistas, { rot: "Presidente", graf: () => linhas({ anos: G.map((r) => r.nr_ano_eleicao), series: ser(G), max: 80, rot: "Votos para presidente por lado, 1º turno" }), nota: `Parte dos votos nominais do 1º turno. Cidades com a esquerda na frente: ${G.map((r) => `${r.nr_ano_eleicao}, ${V.int(r.qt_mun_esquerda_na_frente)}`).slice(-3).join("; ")}.` },
           { rot: "Prefeito", graf: () => linhas({ anos: M.map((r) => r.nr_ano_eleicao), series: ser(M), max: 80, rot: "Votos para prefeito por lado, 1º turno" }), nota: "Soma dos votos de todas as cidades no 1º turno." }],
-        como: "Cada partido entra com a nota da época da eleição (view vw_partido_ano): três estudos acadêmicos (Zucco e Power, 2024; Bolognesi, Ribeiro e Codato, 2023; V-Party, 2022) e o voto na Câmara (2019 a 2026), pesando mais a medida mais próxima da eleição. O que falta para 100% são votos em partidos que nenhum estudo mede (como o Prona de Enéas, em 1994).",
-        consultas: ["q9"], link: "#/mapa/e/PRES2026", linkTxt: "Ver a sua cidade no mapa, de 1994 a 2026", fonte: "TSE; notas dos partidos: Zucco e Power (2024), Bolognesi, Ribeiro e Codato (2023), V-Party (2022) e Câmara dos Deputados" });
+        como: "Nota média: para cada cidade, cargo e eleição, a soma dos votos de cada partido no 1º turno (nominais e de legenda) vezes a nota do partido, dividida pelo total de votos dos partidos com nota. Cada partido entra com a nota da época da eleição (view vw_partido_ano): três estudos acadêmicos (Zucco e Power, 2024; Bolognesi, Ribeiro e Codato, 2023; V-Party, 2022) e o voto na Câmara (2019 a 2026), pesando mais a medida mais próxima da eleição. O que falta para 100% são votos em partidos que nenhum estudo mede (como o Prona de Enéas, em 1994).",
+        consultas: ["q9b", "q9"], extra: cidadeHTML, ligar: ligarCidade, link: "#/mapa/e/PRES2026", linkTxt: "Ver a sua cidade no mapa, de 1994 a 2026", fonte: "TSE; notas dos partidos: Zucco e Power (2024), Bolognesi, Ribeiro e Codato (2023), V-Party (2022) e Câmara dos Deputados" });
     }
 
     // ---------- 10. dinheiro público ----------
@@ -264,6 +317,42 @@
     return blocos;
   }
 
+  /* ---------- Q9: a linha do tempo de uma cidade, cargo a cargo (data/br/vies/{UF}, feito por scripts/vies_cidades.py) ---------- */
+  const cidadeHTML = `<section class="pq-painel pq-cidade" aria-labelledby="pq-cid-tit">
+      <div class="pq-painel__cab"><div><h2 class="pq-painel__tit" id="pq-cid-tit">A sua cidade, cargo a cargo</h2>
+        <p class="pq-painel__rec">Nota média dos votos no 1º turno, de −1 (esquerda) a +1 (direita), de 1994 a 2026</p></div></div>
+      <p class="pq-cidade__busca"><label for="pq-cid-busca">Cidade</label>
+        <input id="pq-cid-busca" type="text" list="pq-cid-lista" autocomplete="off" spellcheck="false" placeholder="Digite o nome e escolha na lista"><datalist id="pq-cid-lista"></datalist></p>
+      <p class="pq-cidade__res" id="pq-cid-res" aria-live="polite"></p>
+      <div id="pq-cid-leg"></div><div class="pq-graf" id="pq-cid-graf"></div>
+      <p class="pq-nota" id="pq-cid-nota"></p>
+    </section>`;
+  async function ligarCidade() {
+    const BR = await V.baseBR(), inp = document.getElementById("pq-cid-busca");
+    if (!inp) return;
+    const rot = (c) => `${c.nome} (${c.uf})`, porRot = new Map(BR.lista.map((c) => [V.norm(rot(c)), c]));
+    document.getElementById("pq-cid-lista").innerHTML = BR.lista.map((c) => `<option value="${V.esc(rot(c))}"></option>`).join("");
+    const anos = Array.from({ length: 17 }, (_, i) => 1994 + 2 * i);
+    async function mostrar(c) {
+      const d = ((await V.dados("br/vies/" + c.uf)) || {})[c.ibge] || {};
+      if (!document.getElementById("pq-cid-graf")) return;   // a pessoa já saiu da página
+      const cgs = CARGOS_NOTA.filter(([k]) => d[k] && d[k].length);
+      const series = cgs.map(([k, , nome, cor]) => { const m = new Map(d[k]); return { nome, cor, grossa: true, curto: nome.replace("Deputado ", "Dep. "), curtoM: nome.replace("Deputado federal", "Fed.").replace("Deputado estadual", "Est.").replace("Presidente", "Pres.").replace("Governador", "Gov.").replace("Senador", "Sen.").replace("Prefeito", "Pref.").replace("Vereador", "Ver."), v: anos.map((a) => m.get(a) ?? null) }; });
+      const ult = (k) => (d[k] && d[k].length ? d[k][d[k].length - 1] : null), pres = ult("PRES"), ver = ult("VER");
+      document.getElementById("pq-cid-res").innerHTML = `<b>${V.esc(c.nome)}</b>${pres ? `: para presidente, ${nota(pres[1])} em ${pres[0]}` : ""}${ver ? `${pres ? ";" : ":"} para vereador, ${nota(ver[1])} em ${ver[0]}` : ""}.`;
+      document.getElementById("pq-cid-leg").innerHTML = V.graf.leg(cgs.map(([, , nome, cor]) => [cor, nome]));
+      document.getElementById("pq-cid-graf").innerHTML = series.length ? V.graf.linhas({ anos, series, min: -1, max: 1, meio: 0, fmt: (v) => nota(v), fmtPonto: (v) => nota(v), fmtEixo: (t) => nota(t, 1), faixas: [[-1, -0.25, V.ESPC.ESQUERDA], [0.25, 1, V.ESPC.DIREITA]], rot: `Nota média dos votos em ${c.nome}, por cargo` }) : '<p class="vazio">Sem votos por partido para esta cidade.</p>';
+      document.getElementById("pq-cid-nota").innerHTML = `As faixas sombreadas são esquerda (abaixo de −0,25) e direita (acima de +0,25). Só entram as eleições em que pelo menos 80% dos votos da cidade foram para partidos com nota. <a href="${V.linkBR ? V.linkBR(c.uf, c.ibge) : "#/mapa/br/" + c.uf + "/c/" + c.ibge}">Ver ${V.esc(c.nome)} no mapa</a>.`;
+    }
+    const escolher = () => { const c = porRot.get(V.norm(inp.value.trim())); if (c) { mostrar(c); try { localStorage.setItem("vav-pq-cidade", c.ibge); } catch (e) {} } };
+    inp.addEventListener("change", escolher);
+    inp.addEventListener("input", escolher);
+    let ib = "2211001";   // Teresina, até a pessoa escolher outra
+    try { ib = localStorage.getItem("vav-pq-cidade") || ib; } catch (e) {}
+    const c0 = BR.porIbge.get(ib) || BR.porIbge.get("2211001");
+    inp.value = rot(c0); await mostrar(c0);
+  }
+
   /* ---------- páginas ---------- */
   const modoSalvo = () => { try { return localStorage.getItem("vav-pq-modo") === "tab" ? "tab" : "graf"; } catch (e) { return "graf"; } };
   let ATUAL = null;      // pergunta aberta: { b, vi (recorte escolhido), modo ("graf" | "tab") }
@@ -285,6 +374,7 @@
     const rec = v.rec || b.recorte || v.rot || "";
     document.getElementById("pq-rec").textContent = vistasDe(b).length > 1 ? "" : rec;
     document.getElementById("pq-rec").hidden = vistasDe(b).length > 1;
+    document.getElementById("pq-leg").innerHTML = v.legenda || b.legenda || "";
     document.getElementById("pq-leg").hidden = modo === "tab";
     document.getElementById("pq-graf").innerHTML = modo === "tab" ? tabelaHTML(g.tab, `${b.medida}${rec ? ", " + rec : ""}`) : g.html;
     document.getElementById("pq-nota").innerHTML = `${v.nota ? v.nota + " " : ""}<span class="pq-fonte">Fonte: ${b.fonte}.</span>`;
@@ -371,5 +461,6 @@
     main.innerHTML = paginaPergunta(b, blocos, C);
     ATUAL = { b, vi: 0, modo: modoSalvo() };
     pintarPainel();
+    if (b.ligar) await b.ligar();
   });
 })();

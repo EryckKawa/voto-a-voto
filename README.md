@@ -1,6 +1,6 @@
 # Voto a voto: o que o voto revela sobre o Brasil
 
-Site sobre as eleições brasileiras de 1994 a 2026, nas 5.570 cidades, feito para o trabalho de **Banco de Dados Relacional (BDR 2026.2) da UFPI, Grupo 6**. O tema é o ato de votar e o que ele revela sobre o país: quem vota, quem falta, para que lado cada cidade foi e quanto custa uma eleição.
+Site sobre as eleições brasileiras de 1994 a 2026, nas 5.570 cidades, feito para o trabalho de **Banco de Dados Relacional (BDR 2026.2) da UFPI, Grupo 5**. O tema é o ato de votar e o que ele revela sobre o país: quem vota, quem falta, para que lado cada cidade foi e quanto custa uma eleição.
 
 **Site no ar:** https://eryckkawa.github.io/voto-a-voto/
 
@@ -30,6 +30,7 @@ index.html          página única; as seções são trocadas pelo endereço (#/
 css/estilo.css      todo o visual (tema claro, fontes Atkinson Hyperlegible e Barlow Condensed)
 js/                 código do site, um arquivo por página (detalhes em docs/arquitetura.md)
 data/               dados já prontos, em .json (origem) e .js (para abrir sem servidor)
+img/fotos/          fotos oficiais dos candidatos (TSE), em miniatura
 scripts/            como os dados foram feitos, a partir dos arquivos do TSE, IBGE e Câmara
 testes/             robô que roda os testes do site no computador e no celular (Playwright)
 vendor/             D3 7.9.0, topojson-client 3.1.0, axe-core 4.10.2
@@ -49,8 +50,9 @@ docs/               documentação
 
 ## Fontes dos dados
 
-- **Tribunal Superior Eleitoral (TSE), Portal de Dados Abertos:** candidatos, votação por município e zona, comparecimento, prestação de contas (receitas e despesas) e propostas de governo, de 1994 a 2026.
+- **Tribunal Superior Eleitoral (TSE), Portal de Dados Abertos:** candidatos, bens declarados, perfil do eleitorado, votação por município e zona, comparecimento, prestação de contas (receitas e despesas) e propostas de governo, de 1994 a 2026.
 - **IBGE:** municípios, Censo 2022 (população) e PIB dos municípios (2021).
+- **Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e Fundação João Pinheiro),** pela API do IpeaData: IDHM, escolaridade dos adultos e renda por habitante de cada município (Censos 1991, 2000 e 2010).
 - **Câmara dos Deputados, dados abertos:** orientação das bancadas nas votações do Plenário, de 2019 a 2026.
 - **Estudos acadêmicos sobre a posição dos partidos:**
   - Zucco e Power (2024), *Latin American Politics and Society*; dados no Harvard Dataverse, doi:10.7910/DVN/6KVTUV.
@@ -61,4 +63,4 @@ O site não mostra CPF, título de eleitor nem e-mail de ninguém. Os nomes de c
 
 ## Licenças
 
-O código do site é do Grupo 6. As fontes Atkinson Hyperlegible e Barlow Condensed estão sob a licença SIL Open Font License (`fonts/LICENSE-*.txt`). D3, topojson-client e axe-core mantêm as licenças dos seus autores.
+O código do site é do Grupo 5. As fontes Atkinson Hyperlegible e Barlow Condensed estão sob a licença SIL Open Font License (`fonts/LICENSE-*.txt`). D3, topojson-client e axe-core mantêm as licenças dos seus autores.

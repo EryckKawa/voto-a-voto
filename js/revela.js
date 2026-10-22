@@ -14,21 +14,27 @@
       <b>${l.vTxt || pct(l.v)}</b></li>`).join("")}</ol>`;
   }
 
-  /* linhas ao longo dos anos. Séries grossas têm nome na ponta; finas ficam em cinza, com o nome na dica */
-  function linhas({ anos, series, max = 100, vazios = [], rot }) {
+  /* linhas ao longo dos anos. Séries grossas têm nome na ponta; finas ficam em cinza, com o nome na dica.
+     Por padrão a escala vai de 0 a max (em %). Para uma escala com negativos (a nota de −1 a +1), passe min, fmt (valor) e
+     fmtEixo (rótulo do eixo), e meio: a linha de referência mais escura (o zero). Um valor null é um ano sem dado: a linha
+     liga os pontos que existem. */
+  function linhas({ anos, series, max = 100, min = 0, vazios = [], rot, fmt = (v) => pct(v, 0), fmtPonto = (v) => pct(v), fmtEixo = (t) => Math.round(t) + "%", meio = null, marcas = [0, 0.25, 0.5, 0.75, 1], faixas = [] }) {
     const estreito = V.largura() < 600, W = estreito ? 360 : 760, H = estreito ? 250 : 300;
-    const m = { t: 16, r: estreito ? 108 : 140, b: 30, l: estreito ? 30 : 40 }, fs = estreito ? 11 : 13;
-    const x = d3.scalePoint().domain(anos).range([m.l, W - m.r]), y = d3.scaleLinear().domain([0, max]).range([H - m.b, m.t]);
+    const m = { t: 16, r: estreito ? 108 : 140, b: 30, l: estreito ? 34 : 44 }, fs = estreito ? 11 : 13;
+    const x = d3.scalePoint().domain(anos).range([m.l, W - m.r]), y = d3.scaleLinear().domain([min, max]).range([H - m.b, m.t]);
     const ordem = [...series].sort((a, b) => !!a.grossa - !!b.grossa);   // as grossas por cima
+    const pts = (s) => s.v.map((v, i) => [anos[i], v]).filter(([, v]) => v != null);
+    const ult = (s) => { const p = pts(s); return p.length ? p[p.length - 1][1] : null; };
     // rótulos das pontas sem encostar um no outro
-    const pontas = series.filter((s) => s.grossa).map((s) => ({ s, y: y(s.v[s.v.length - 1]) })).sort((a, b) => a.y - b.y);
+    const pontas = series.filter((s) => s.grossa && ult(s) != null).map((s) => ({ s, y: y(ult(s)) })).sort((a, b) => a.y - b.y);
     for (let i = 1; i < pontas.length; i++) if (pontas[i].y - pontas[i - 1].y < fs + 4) pontas[i].y = pontas[i - 1].y + fs + 4;
-    return `<svg class="serie" viewBox="0 0 ${W} ${H}" role="img" aria-label="${V.esc(rot)}: ${series.map((s) => s.nome + " " + s.v.map((v, i) => anos[i] + " " + pct(v, 0)).join(", ")).join("; ")}">
-      ${[0, 0.25, 0.5, 0.75, 1].map((f) => `<line x1="${m.l}" x2="${W - m.r}" y1="${y(f * max)}" y2="${y(f * max)}" stroke="#e1e3e7"/><text x="${m.l - 6}" y="${y(f * max) + 4}" text-anchor="end" font-size="${fs}" class="serie__eixo">${Math.round(f * max)}%</text>`).join("")}
+    return `<svg class="serie" viewBox="0 0 ${W} ${H}" role="img" aria-label="${V.esc(rot)}: ${series.map((s) => s.nome + " " + pts(s).map(([a, v]) => a + " " + fmt(v)).join(", ")).join("; ")}">
+      ${faixas.map(([de, ate, cor]) => { const a = Math.min(max, ate), d = Math.max(min, de); return a > d ? `<rect x="${m.l}" width="${W - m.r - m.l}" y="${y(a)}" height="${y(d) - y(a)}" fill="${cor}" opacity=".08"/>` : ""; }).join("")}
+      ${marcas.map((f) => { const t = min + f * (max - min); return `<line x1="${m.l}" x2="${W - m.r}" y1="${y(t)}" y2="${y(t)}" stroke="${meio != null && Math.abs(t - meio) < 1e-9 ? "#9aa0a8" : "#e1e3e7"}"/><text x="${m.l - 6}" y="${y(t) + 4}" text-anchor="end" font-size="${fs}" class="serie__eixo">${fmtEixo(t)}</text>`; }).join("")}
       ${anos.map((a, i) => (estreito && i % 2 && i !== anos.length - 1 ? "" : `<text x="${x(a)}" y="${H - 8}" text-anchor="middle" font-size="${fs}" class="serie__eixo">${a}</text>`)).join("")}
-      ${ordem.map((s) => `<g><title>${V.esc(s.nome)}</title><path d="${d3.line().x((d, i) => x(anos[i])).y((d) => y(d))(s.v)}" fill="none" stroke="${s.cor}" stroke-width="${s.grossa ? 3 : 1.5}"/>
-        ${s.grossa ? s.v.map((v, i) => `<circle cx="${x(anos[i])}" cy="${y(v)}" r="4" fill="${vazios.includes(anos[i]) ? "#fff" : s.cor}" stroke="${s.cor}" stroke-width="2"><title>${anos[i]}, ${V.esc(s.nome)}: ${pct(v)}</title></circle>`).join("") : ""}</g>`).join("")}
-      ${pontas.map((p) => `<text x="${W - m.r + 8}" y="${p.y + 4}" font-size="${fs + 1}" class="serie__rot" fill="${p.s.cor}">${V.esc((estreito && p.s.curtoM) || p.s.curto || p.s.nome)} ${pct(p.s.v[p.s.v.length - 1], 0)}</text>`).join("")}
+      ${ordem.map((s) => `<g><title>${V.esc(s.nome)}</title><path d="${d3.line().x((d) => x(d[0])).y((d) => y(d[1]))(pts(s))}" fill="none" stroke="${s.cor}" stroke-width="${s.grossa ? 3 : 1.5}"${s.tracejada ? ' stroke-dasharray="6 4"' : ""}/>
+        ${s.grossa ? pts(s).map(([a, v]) => `<circle cx="${x(a)}" cy="${y(v)}" r="4" fill="${vazios.includes(a) ? "#fff" : s.cor}" stroke="${s.cor}" stroke-width="2"><title>${a}, ${V.esc(s.nome)}: ${fmtPonto(v)}</title></circle>`).join("") : ""}</g>`).join("")}
+      ${pontas.map((p) => `<text x="${W - m.r + 8}" y="${p.y + 4}" font-size="${fs + 1}" class="serie__rot" fill="${p.s.cor}">${V.esc((estreito && p.s.curtoM) || p.s.curto || p.s.nome)} ${fmt(ult(p.s))}</text>`).join("")}
     </svg>`;
   }
   const leg = (itens) => `<p class="achado__leg">${itens.map(([cor, t, vazio]) => `<span><i style="background:${vazio ? "#fff" : cor};${vazio ? `border:2px solid ${cor};border-radius:50%` : ""}"></i>${t}</span>`).join("")}</p>`;

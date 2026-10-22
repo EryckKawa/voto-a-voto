@@ -11,6 +11,10 @@
 | TSE | prestação de contas de candidatos (receitas e despesas contratadas), 2010 a 2024 | banco (Q1, Q2, Q8, Q10, Q11) |
 | TSE | propostas de governo dos candidatos a presidente (PDF), 2018, 2022 e 2026 | banco (Q6) |
 | TSE | `perfil_comparecimento_abstencao` | Ninguém (idade e escolaridade de quem falta) |
+| TSE | `perfil_eleitorado` (eleitores aptos por cidade, faixa de idade, escolaridade e gênero), 2018 a 2024 | banco (Q4, Q7) |
+| TSE | `bem_candidato` (bens declarados no registro da candidatura), 2006 a 2026 | banco (Q2) |
+| TSE | fotos dos candidatos (`foto_cand<ano>_<UF>_div.zip`): presidente, governador e senador de 2010 a 2026 e prefeitos de 2024 | painel da cidade no mapa, página inicial |
+| Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e FJP), pela API do IpeaData | IDHM e seus três componentes, parte dos adultos com fundamental, médio e superior, renda por habitante; Censos 1991, 2000 e 2010, por município | banco (Q3, Q4) |
 | IBGE | malha municipal, Censo 2022 (população), PIB dos municípios 2021 | mapa, Q3, Q4 |
 | Câmara dos Deputados | votações e orientações de bancada no Plenário, 2019 a 2026 | régua pelo voto |
 | Harvard Dataverse, V-Dem, revista *Dados* | notas dos partidos (ver [regua-dos-partidos.md](regua-dos-partidos.md)) | régua dos partidos |
@@ -37,6 +41,11 @@ primeira_eleicao.py           ano da primeira eleição de cada cidade → colun
 busca_brasil.py               índice da busca do Brasil inteiro → data/br/busca
 banco_brasil.py               banco nacional em DuckDB (abaixo)
 rodar_consultas.py            roda consultas_brasil.sql → data/br/perguntas
+vies_cidades.py               nota média dos votos de cada cidade, cargo a cargo (Q9) → data/br/vies/{UF}
+baixar_extras.ps1             baixa os bens dos candidatos (TSE) e o IDHM das cidades (IpeaData), no Windows
+lista_fotos.py lista          quais fotos o site mostra → fotos_lista.csv
+baixar_fotos_site.ps1         baixa os pacotes de fotos do TSE e grava miniaturas 90×120 em img/fotos/<ano>/<sequencial>.jpg (Windows)
+lista_fotos.py indice         quais candidatos têm foto → data/br/fotos/<ano>
 empacotar.py                  .json → .js (para o site abrir sem servidor)
 ```
 
@@ -49,7 +58,7 @@ Cuidados que a carga trata:
 - **Cruzamento TSE × IBGE:** os códigos de município do TSE e do IBGE são cruzados por uma tabela de correspondência.
 - **Cidades que faltam no arquivo do TSE:** o arquivo de votação por município não traz algumas cidades em alguns anos, embora o arquivo de comparecimento traga. São 98 cidades para prefeito em 1996 (quase todas no Maranhão e no Pará), 3 no Pará em 1994 e até 8 nas eleições para prefeito de 2000 a 2024 (8 em 2024, entre elas Nossa Senhora do Socorro/SE e Iporá/GO). Em Pacujá/CE, em 2020, a eleição foi anulada e refeita depois. O site não inventa esses resultados: as cidades aparecem como "sem resultado oficial".
 
-Os scripts foram rodados num ambiente com as pastas fixas que aparecem no topo de cada um (`/tmp/claude-0/...`). Para rodar em outro computador, ajuste essas constantes.
+Os scripts foram rodados num ambiente com as pastas fixas que aparecem no topo de cada um (`/tmp/claude-0/...`). Para rodar em outro computador, ajuste essas constantes. O `banco_brasil.py` aceita as pastas por variável de ambiente: `BANCO` (o arquivo .duckdb), `WEB` (a pasta `data/br`), `IBGE` (a pasta com `pib_2021.json`) e `TMPBR` (arquivos temporários).
 
 ## O banco nacional (DuckDB)
 
@@ -61,7 +70,8 @@ As 12 perguntas são respondidas por consultas SQL num banco DuckDB com **o mesm
 |---|---:|---|
 | `uf` | 27 | estados e regiões |
 | `municipio` | 5.570 | código TSE e IBGE, nome, estado, capital |
-| `indicador_municipio` | 11.140 | população (Censo 2022) e PIB (2021) por município |
+| `indicador_municipio` | 27.832 | população (Censo 2022), PIB (2021) e IDHM (1991, 2000 e 2010) por município |
+| `indicador_atlas` | 16.692 | Atlas do Desenvolvimento Humano por município e censo: IDHM e componentes, escolaridade dos adultos, renda por habitante |
 | `eleicao` | 17 | eleições de 1994 a 2026 (geral ou municipal) |
 | `cargo`, `grau_instrucao`, `situacao_totalizacao` | 13, 11, 17 | tabelas de domínio |
 | `partido` | 85 | siglas do TSE |
@@ -75,11 +85,15 @@ As 12 perguntas são respondidas por consultas SQL num banco DuckDB com **o mesm
 | `receita` | 7.602.704 | receitas de campanha (2010 a 2024) |
 | `despesa` | 18.554.457 | despesas contratadas (2010 a 2024) |
 | `proposta_governo` | 39 | texto dos planos de governo para presidente |
+| `bem_candidato` | 2.107.302 | bens declarados por candidatura (2018 a 2024; o TSE publica de 2006 a 2026) |
+| `eleitorado_perfil` | 5.858.639 | eleitores aptos por cidade, faixa de idade, escolaridade e gênero (2018 a 2024) |
 
 ### Views
 
 - `vw_candidatura_resumo`: candidatura + cargo + partido + espectro do partido **naquela eleição** + eleito ou não + idade + receita (total, pública, privada) + despesa total. É a base de Q1, Q2, Q7 e Q10.
-- `vw_indicador_atual`: população de 2022 e PIB por habitante de 2021 de cada município. É a base de Q3 e Q4.
+- `vw_indicador_atual`: população de 2022, PIB por habitante de 2021 e, do Atlas (Censo 2010), IDHM, IDHM Educação, Renda e Longevidade, adultos com superior e médio e renda por habitante de cada município. É a base de Q3 e Q4.
+- `vw_patrimonio_candidato`: soma dos bens declarados de cada candidatura (zero para quem não declarou nada). É a base de Q2.
+- `vw_eleitorado_municipio`: eleitorado de cada cidade em cada eleição: total, idade média (pelo meio de cada faixa), parte com até 29 e com 60 anos ou mais, parte com superior completo. É a base de Q4 e Q7.
 - `vw_partido_ano`: a nota e a faixa (esquerda, centro-esquerda, centro, centro-direita, direita) de cada partido em cada eleição, com o aviso de classificação incerta.
 
 ### Decisões do modelo
@@ -95,10 +109,15 @@ As 12 perguntas são respondidas por consultas SQL num banco DuckDB com **o mesm
 ```
 python scripts/banco_brasil.py PASTA_DOS_ZIPS base cand votos partido_votos comp
 python scripts/banco_brasil.py PASTA_DOS_ZIPS contas 2010 2012 2014 2018 2020 2022 2024
-python scripts/banco_brasil.py PASTA_DOS_ZIPS propostas notas views
+python scripts/banco_brasil.py PASTA_DOS_ZIPS propostas idhm bens eleitorado notas views
 python scripts/rodar_consultas.py caminho/eleicoes_brasil.duckdb
+python scripts/vies_cidades.py caminho/eleicoes_brasil.duckdb
 python scripts/empacotar.py
 ```
+
+Para rodar só algumas consultas, guardando as outras como estavam: `python scripts/rodar_consultas.py caminho/eleicoes_brasil.duckdb q2b,q3b`.
+
+Os arquivos grandes vêm cortados em partes de 300 MB (`.zip.001`, `.zip.002`…); o script junta as partes antes de abrir. A etapa `idhm` lê os arquivos `ipea_ADH_*.json.001` que o `baixar_extras.ps1` grava na mesma pasta.
 
 ## Privacidade
 

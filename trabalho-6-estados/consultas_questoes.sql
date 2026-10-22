@@ -1,5 +1,5 @@
 -- =====================================================================
--- Consultas das 12 questões - Grupo 6 (CE, ES, MT, PR, SC, TO)
+-- Consultas das 12 questões - Grupo 5 (CE, ES, MT, PR, SC, TO)
 -- Banco: eleicoes_g6 (MySQL 8.0+ / MariaDB 10.6+)
 -- Cargos com campanha própria: 3 Governador, 5 Senador, 6 Dep. Federal,
 -- 7 Dep. Estadual, 11 Prefeito, 13 Vereador. Presidente (1) fica fora das

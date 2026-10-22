@@ -55,6 +55,8 @@ Principais pastas de `data/br/`:
 | `achados` | Números já calculados da página "O que o voto revela" |
 | `cidades` | As 5.570 cidades: códigos do TSE e do IBGE, nome, estado, população, PIB e o ano da primeira eleição |
 | `busca` | Índice da busca: candidatos a presidente, governador e senador, e prefeitos eleitos, de 1994 a 2026 |
+| `fotos/<ano>` | Sequenciais dos candidatos que têm foto em `img/fotos/<ano>/<sequencial>.jpg` (miniaturas 90×120 das fotos oficiais do TSE). Quem não tem foto aparece com as iniciais na cor do partido |
+| `vies/{UF}` | Nota média dos votos de cada cidade, cargo a cargo, de 1994 a 2026 (Q9) |
 
 ## Os sete cargos do mapa
 

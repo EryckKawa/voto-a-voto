@@ -1,7 +1,7 @@
 # -*- coding: utf-8 -*-
 """Carga suplementar: fatos de PRESIDENTE por municipio/zona, que estao apenas nos
 arquivos _BR (os arquivos por UF nao trazem o cargo PRESIDENTE).
-Filtra os 1.237 municipios do Grupo 6 e usa sq_flat com slot BR (=0), igual ao ETL.
+Filtra os 1.237 municipios do Grupo 5 e usa sq_flat com slot BR (=0), igual ao ETL.
 """
 import re
 from pathlib import Path

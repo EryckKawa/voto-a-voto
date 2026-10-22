@@ -83,6 +83,7 @@
   /* ---------- ficha da cidade ---------- */
   V.rota(/^\/cidade\/(\d{7})(?:\/(\d{4})\/([A-Z]+))?$/, async function (main, ibge, ano, cargo) {
     await V.carregarBase();
+    await Promise.all([2018, 2022, 2024, 2026].map(V.carregarFotos));   // fotos do TSE dos anos desta base
     const c = V.porIbge.get(ibge);
     if (!c) throw new Error("Cidade não encontrada");
     if (ano && V.cargosDoAno(+ano).includes(cargo)) { V.escolha = { ano: +ano, cargo }; V.salvarEscolha(); }

@@ -678,9 +678,10 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 .barras li.barras__total .barras__rot, .barras li.barras__total b { color: var(--tinta); text-decoration: underline; text-underline-offset: 4px; }
 .pares { list-style: none; margin: 8px 0 0; padding: 0; display: grid; gap: 12px; }
 .pares li { display: grid; grid-template-columns: minmax(130px, 220px) minmax(0, 1fr); gap: 4px 14px; align-items: center; }
-.pares__rot { grid-row: span 2; font-weight: 700; line-height: 1.2; }
+.pares__rot { font-weight: 700; line-height: 1.2; }
+.pares__lins { display: grid; gap: 4px; min-width: 0; }
 .pares__rot small { display: block; font-weight: 400; font-size: 13px; color: var(--tinta-3); }
-.pares__lin { display: grid; grid-template-columns: 96px minmax(0, 1fr) 62px; gap: 10px; align-items: center; }
+.pares__lin { display: grid; grid-template-columns: 116px minmax(0, 1fr) 62px; gap: 10px; align-items: center; }
 .pares__lin small { font-size: 13px; color: var(--tinta-3); }
 .pares__lin .barras__trilho { height: 18px; }
 .pares__lin b { font: 700 20px/1 var(--num); text-align: right; }
@@ -703,8 +704,7 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 .pq__rodape code { font-size: 13px; }
 @media (max-width: 720px) {
   .pares li { grid-template-columns: minmax(0, 1fr); }
-  .pares__rot { grid-row: auto; }
-  .pares__lin { grid-template-columns: 84px minmax(0, 1fr) 50px; }
+  .pares__lin { grid-template-columns: 104px minmax(0, 1fr) 54px; }
   .pq__indice { grid-template-columns: minmax(0, 1fr); }
   .pq__indice a { padding: 11px 12px; }
   .pq__copiar { position: static; margin-bottom: 6px; }
@@ -738,6 +738,14 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 .pq-graf { min-height: 120px; }
 .pq-nota { font-size: 14px; color: var(--tinta-3); max-width: 80ch; border-top: 1px solid var(--linha); padding-top: 10px; }
 .pq-fonte { white-space: nowrap; }
+@media (max-width: 720px) { .pq-fonte { white-space: normal; } }   /* fontes longas (Q3, Q9) não podem alargar a página no celular */
+/* Q9: a linha do tempo de uma cidade */
+.pq-cidade__busca { display: grid; gap: 6px; max-width: 420px; }
+.pq-cidade__busca label { font-weight: 700; font-size: 15px; }
+.pq-cidade__busca input { width: 100%; font: inherit; font-size: 16px; padding: 10px 14px; min-height: 44px; border: 2px solid var(--linha-forte); border-radius: 10px; background: var(--papel); color: var(--tinta); }
+.pq-cidade__busca input:focus { border-color: var(--link); outline: none; box-shadow: 0 0 0 3px rgba(15,95,181,.2); }
+.pq-cidade__res { font-size: 17px; color: var(--tinta-2); }
+.pq-cidade .pq-nota a { color: var(--link); font-weight: 700; }
 .pq__tabela--leitura { max-height: none; }
 .pq__tabela--leitura table { font-size: 15px; width: 100%; }
 .pq__tabela--leitura th, .pq__tabela--leitura td { white-space: normal; max-width: none; padding: 8px 12px; }

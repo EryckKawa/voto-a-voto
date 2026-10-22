@@ -50,11 +50,24 @@
   V.textoSobre = (cor) => (["#e8827a", "#6f9be0", "#c9ccd1"].includes(cor) ? "#16181d" : "#fff");
   V.partidoHtml = (sg) => { const c = V.corPartido(sg); return '<span class="partido" style="background:' + c + ";color:" + V.textoSobre(c) + '">' + V.esc(sg) + "</span>"; };
 
-  /* ---------- foto do candidato: arquivo img/fotos/<ano>/<sq>.jpg quando existir; senão, iniciais ---------- */
+  /* ---------- fotos dos candidatos (TSE): img/fotos/<ano>/<sq>.jpg ----------
+     data/br/fotos/<ano> lista os sequenciais que têm foto (feito por scripts/lista_fotos.py e baixar_fotos_site.ps1).
+     Quem não tem foto (ou cuja foto não carrega) fica com as iniciais na cor do partido. */
+  const FOTO_SETS = {};
+  V.carregarFotos = async (ano) => {
+    if (!FOTO_SETS[ano]) { try { FOTO_SETS[ano] = new Set((await V.dados("br/fotos/" + ano)).map(String)); } catch (e) { FOTO_SETS[ano] = new Set(); } }
+    return FOTO_SETS[ano];
+  };
+  V.temFoto = (ano, sq) => !!(FOTO_SETS[ano] && FOTO_SETS[ano].has(String(sq)));
+  /* a foto, ou "alt" (o HTML das iniciais) se não houver foto ou ela não carregar */
+  V.fotoOu = (ano, sq, alt, classe) => (V.temFoto(ano, sq)
+    ? `<img${classe ? ` class="${classe}"` : ""} loading="lazy" alt="" src="img/fotos/${ano}/${sq}.jpg" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="${V.esc(alt)}">`
+    : alt);
   V.FOTOS = window.__FOTOS || {};
   V.fotoHtml = (k, classe) => {
     const nome = k[0], sq = k[7], ano = k[5], cor = V.corPartido(k[1]);
     const ini = '<span class="iniciais" style="background:' + cor + ";color:" + V.textoSobre(cor) + '">' + V.esc(V.iniciais(nome)) + "</span>";
+    if (V.temFoto(ano, sq)) return V.fotoOu(ano, sq, ini);
     if (V.FOTOS[ano] && V.FOTOS[ano][sq]) return '<img loading="lazy" alt="" src="img/fotos/' + ano + "/" + sq + '.jpg" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="' + V.esc(ini) + '">';
     return ini;
   };

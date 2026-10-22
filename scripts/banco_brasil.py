@@ -5,7 +5,11 @@ Uso:  python banco_brasil.py PASTA_ZIPS ETAPA [ETAPA ...]
 Etapas: base (uf, município, indicadores, eleição, cargo...), cand (pessoa e candidatura, 1994-2026),
         votos (votacao_candidato por município), partido_votos (votacao_partido), comp (comparecimento),
         contas ANO (receita e despesa), propostas (texto dos planos de governo),
+        idhm (Atlas do Desenvolvimento Humano por município: IDHM e escolaridade dos adultos, 1991-2010),
+        bens (bens declarados pelos candidatos, 2006-2026), eleitorado (perfil do eleitorado por idade e escolaridade),
         notas (posição ideológica de cada partido em cada eleição), views.
+Caminhos (variáveis de ambiente, opcionais): BANCO (arquivo .duckdb), WEB (pasta data/br do site),
+        IBGE (pasta com pib_2021.json), TMPBR (pasta para arquivos temporários).
 Decisões (as mesmas do trabalho dos 6 estados, com o que muda no Brasil inteiro):
 - Os fatos de votação ficam no nível do município (nr_zona = 0): no Brasil inteiro, por zona, seriam centenas
   de milhões de linhas, e nenhuma das 12 questões usa a zona.
@@ -16,11 +20,12 @@ import sys, os, glob, json, csv, re, zipfile, shutil, tempfile
 import duckdb
 
 P, ETAPAS = sys.argv[1], sys.argv[2:]
-DB = '/tmp/claude-0/br/db/eleicoes_brasil.duckdb'
-D = '/tmp/claude-0/web/data/br'
-os.makedirs(os.path.dirname(DB), exist_ok=True)
+DB = os.environ.get('BANCO', '/tmp/claude-0/br/db/eleicoes_brasil.duckdb')
+D = os.environ.get('WEB', '/tmp/claude-0/web/data/br')
+TMP = os.environ.get('TMPBR', '/tmp/claude-0/br')
+os.makedirs(os.path.dirname(DB), exist_ok=True); os.makedirs(TMP, exist_ok=True)
 con = duckdb.connect(DB)
-con.execute("SET preserve_insertion_order = false; SET memory_limit = '6GB'; SET threads = 4")
+con.execute(f"SET preserve_insertion_order = false; SET memory_limit = '{os.environ.get('MEMORIA', '6GB')}'; SET threads = 4")
 log = lambda *a: print(*a, flush=True)
 
 UFS = {'RO': (11, 'Rondônia', 'Norte'), 'AC': (12, 'Acre', 'Norte'), 'AM': (13, 'Amazonas', 'Norte'), 'RR': (14, 'Roraima', 'Norte'), 'PA': (15, 'Pará', 'Norte'),
@@ -67,7 +72,7 @@ if 'base' in ETAPAS:
     cid = json.load(open(f'{D}/cidades.json'))
     con.executemany("INSERT INTO municipio VALUES (?,?,?,?,?)", [(c[0], int(c[1]), c[2], c[3], bool(c[4])) for c in cid])
     con.executemany("INSERT INTO indicador_municipio VALUES (?,?,?,?,NULL)", [(c[0], 2022, c[5], None) for c in cid if c[5]])
-    I = '/mnt/user-data/uploads/BDR_Votacao/dados/ibge/'
+    I = os.environ.get('IBGE', '/mnt/user-data/uploads/BDR_Votacao/dados/ibge') + '/'
     pib = {r['D1C']: float(r['V']) for r in json.load(open(I + 'pib_2021.json'))[1:] if r['V'].replace('.', '').isdigit()}
     con.executemany("INSERT INTO indicador_municipio VALUES (?,2021,NULL,?,NULL)", [(c[0], pib[c[1]]) for c in cid if c[1] in pib])
     con.executemany("INSERT INTO eleicao VALUES (?,?,?,?)", [(i + 1, a, 'GERAL' if a % 4 == 2 else 'MUNICIPAL', f"Eleições {'Gerais' if a % 4 == 2 else 'Municipais'} {a}") for i, a in enumerate(ANOS)])
@@ -75,7 +80,7 @@ if 'base' in ETAPAS:
 
 # ------------------------------------------------------------------ cand: pessoa e candidatura
 if 'cand' in ETAPAS and not ('cand2' in ETAPAS):
-    tmp = tempfile.mkdtemp(dir='/tmp/claude-0/br')
+    tmp = tempfile.mkdtemp(dir=TMP)
     con.execute("CREATE OR REPLACE TABLE stg_cand AS SELECT * FROM (SELECT NULL::VARCHAR x) WHERE false")
     first = True
     for ano in ANOS:
@@ -161,7 +166,7 @@ if 'espectro' in ETAPAS:
 # Vem dos parquets do processa_munzona.py (votos somados por município). O candidato é achado por
 # (eleição, alcance, cargo, número), que é único em todos os anos, mesmo quando o sequencial do TSE se repete.
 if 'votos' in ETAPAS:
-    PQ = '/tmp/claude-0/br/pq'
+    PQ = os.path.join(TMP, 'pq')
     con.execute("CREATE OR REPLACE TABLE votacao_candidato (id_candidatura INTEGER, nr_turno TINYINT, cd_municipio_tse INTEGER, nr_zona SMALLINT, qt_votos_nominais INTEGER)")
     for ano in ANOS:
         if not os.path.exists(f'{PQ}/votos_{ano}.parquet'): continue
@@ -187,7 +192,7 @@ if 'votos' in ETAPAS:
 
 # ------------------------------------------------------------------ partido_votos: votacao_partido (votos nominais e de legenda)
 if 'partido_votos' in ETAPAS:
-    tmp = tempfile.mkdtemp(dir='/tmp/claude-0/br')
+    tmp = tempfile.mkdtemp(dir=TMP)
     con.execute("CREATE OR REPLACE TABLE votacao_partido (id_eleicao SMALLINT, nr_turno TINYINT, cd_cargo SMALLINT, id_partido SMALLINT, cd_municipio_tse INTEGER, nr_zona SMALLINT, qt_votos_nominais BIGINT, qt_votos_legenda BIGINT)")
     for ano in ANOS:
         z = f'{P}/votacao_partido_munzona_{ano}.zip.001'
@@ -214,7 +219,7 @@ if 'partido_votos' in ETAPAS:
 
 # ------------------------------------------------------------------ comp: comparecimento por município, todos os cargos
 if 'comp' in ETAPAS:
-    tmp = tempfile.mkdtemp(dir='/tmp/claude-0/br')
+    tmp = tempfile.mkdtemp(dir=TMP)
     con.execute("CREATE OR REPLACE TABLE comparecimento (id_eleicao SMALLINT, nr_turno TINYINT, cd_cargo SMALLINT, cd_municipio_tse INTEGER, nr_zona SMALLINT, qt_aptos BIGINT, qt_comparecimento BIGINT, qt_abstencoes BIGINT, qt_votos_brancos BIGINT, qt_votos_nulos BIGINT)")
     for ano in ANOS:
         z = f'{P}/detalhe_votacao_munzona_{ano}.zip.001'
@@ -255,7 +260,7 @@ if 'contas' in ETAPAS:
         z = f'{P}/contas_{ano}.zip'
         if not os.path.exists(z): log('sem', z); continue
         con.execute(f"DELETE FROM receita WHERE nr_ano_eleicao = {ano}; DELETE FROM despesa WHERE nr_ano_eleicao = {ano}")
-        tmp = tempfile.mkdtemp(dir='/tmp/claude-0/br')
+        tmp = tempfile.mkdtemp(dir=TMP)
         # liga o lançamento à candidatura: pelo sequencial no ano (e pela UF quando o sequencial só é único na UF)
         cand = f"""(SELECT ca.id_candidatura, ca.sq_candidato, COALESCE(ca.sg_uf, 'BR') sg_uf FROM candidatura ca JOIN eleicao e USING (id_eleicao) WHERE e.nr_ano_eleicao = {ano})"""
         por_uf = ano < 2012 or ano == 2014 and False
@@ -317,7 +322,7 @@ if 'propostas' in ETAPAS:
     for ano in (2018, 2022, 2026):
         z = f'{P}/../../propostas/proposta_governo_{ano}_BR.zip'
         if not os.path.exists(z): log('sem', z); continue
-        tmp = tempfile.mkdtemp(dir='/tmp/claude-0/br')
+        tmp = tempfile.mkdtemp(dir=TMP)
         with zipfile.ZipFile(z) as zz:
             for n in zz.namelist():
                 m = re.search(r'(\d{4})BR(\d+)(_\d+)?\.pdf$', n)
@@ -331,6 +336,95 @@ if 'propostas' in ETAPAS:
         shutil.rmtree(tmp, ignore_errors=True)
         log('propostas', ano, con.execute(f"select count(*), sum(length(tx_proposta)) from proposta_governo join candidatura using(id_candidatura) join eleicao using(id_eleicao) where nr_ano_eleicao={ano}").fetchone())
 
+# ------------------------------------------------------------------ arquivos grandes vêm cortados em partes (.zip.001, .002...): junta antes de abrir
+def juntar(nome):
+    partes = sorted(glob.glob(f'{P}/{nome}.zip.[0-9][0-9][0-9]'))
+    if not partes: return None
+    if len(partes) == 1: return partes[0]
+    alvo = os.path.join(TMP, nome + '.zip')
+    if not os.path.exists(alvo):
+        with open(alvo, 'wb') as o:
+            for p_ in partes:
+                with open(p_, 'rb') as a: shutil.copyfileobj(a, o)
+    return alvo
+
+# valor em reais: o TSE grava "80000,00" nos anos novos e "80000.00" em alguns antigos
+reais = lambda c: f"CASE WHEN {c} LIKE '%,%' THEN TRY_CAST(REPLACE(REPLACE({c}, '.', ''), ',', '.') AS DECIMAL(16,2)) ELSE TRY_CAST({c} AS DECIMAL(16,2)) END"
+
+# ------------------------------------------------------------------ idhm: Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e FJP)
+# Censos de 1991, 2000 e 2010, por município, baixados da API do IpeaData (séries ADH_*, por código IBGE de 7 dígitos)
+# por baixar_extras.ps1. É o único IDHM municipal que existe: o Atlas não calculou o IDHM das cidades com o Censo 2022.
+if 'idhm' in ETAPAS:
+    SER = {'ADH_IDHM': 'vr_idhm', 'ADH_IDHM_E': 'vr_idhm_educacao', 'ADH_IDHM_R': 'vr_idhm_renda', 'ADH_IDHM_L': 'vr_idhm_longevidade',
+           'ADH_T_SUPER25M': 'pc_superior_25m', 'ADH_T_MED25M': 'pc_medio_25m', 'ADH_T_FUND25M': 'pc_fundamental_25m',
+           'ADH_E_ANOSESTUDO': 'vr_anos_estudo_esperados', 'ADH_RDPC': 'vr_renda_per_capita'}
+    val = {}
+    for serie, col in SER.items():
+        arq = (glob.glob(f'{P}/ipea_{serie}.json.001') or [None])[0]
+        if not arq: log('sem', serie); continue
+        for r in json.load(open(arq, encoding='utf-8-sig'))['value']:
+            if r['NIVNOME'] != 'Municípios' or r['VALVALOR'] is None: continue
+            val.setdefault((int(r['TERCODIGO']), int(r['VALDATA'][:4])), {})[col] = float(r['VALVALOR'])
+    cols = list(SER.values())
+    con.execute("CREATE OR REPLACE TABLE indicador_atlas (cd_municipio_tse INTEGER, nr_ano_referencia SMALLINT, "
+                + ", ".join(f"{c} DOUBLE" for c in cols) + ", PRIMARY KEY (cd_municipio_tse, nr_ano_referencia))")
+    ibge_tse = dict(con.execute("SELECT cd_municipio_ibge, cd_municipio_tse FROM municipio").fetchall())
+    linhas = [(ibge_tse[i], a, *[v.get(c) for c in cols]) for (i, a), v in val.items() if i in ibge_tse]
+    con.executemany(f"INSERT INTO indicador_atlas VALUES ({', '.join('?' * (len(cols) + 2))})", linhas)
+    # o IDHM também vai para indicador_municipio, onde o modelo do trabalho sempre o previu (vr_idhm)
+    con.execute("DELETE FROM indicador_municipio WHERE nr_ano_referencia IN (1991, 2000, 2010)")
+    con.execute("INSERT INTO indicador_municipio SELECT cd_municipio_tse, nr_ano_referencia, NULL, NULL, vr_idhm FROM indicador_atlas WHERE vr_idhm IS NOT NULL")
+    log('idhm:', con.execute("SELECT nr_ano_referencia, COUNT(*), ROUND(AVG(vr_idhm), 3), ROUND(AVG(pc_superior_25m), 2) FROM indicador_atlas GROUP BY 1 ORDER BY 1").fetchall(),
+        'sem IDHM:', con.execute("SELECT string_agg(nm_municipio || '/' || sg_uf, ', ') FROM municipio m WHERE NOT EXISTS (SELECT 1 FROM indicador_atlas a WHERE a.cd_municipio_tse = m.cd_municipio_tse AND a.nr_ano_referencia = 2010)").fetchone()[0])
+
+# ------------------------------------------------------------------ bens: bens declarados pelo candidato no registro da candidatura
+# Liga pelo sequencial do candidato no ano e pelo alcance (município, UF ou BR), como as contas.
+if 'bens' in ETAPAS:
+    tmp = tempfile.mkdtemp(dir=TMP)
+    con.execute("""CREATE OR REPLACE TABLE bem_candidato (id_candidatura INTEGER, nr_ordem SMALLINT, cd_tipo_bem SMALLINT, ds_tipo_bem VARCHAR,
+                   ds_bem VARCHAR, vr_bem DECIMAL(16,2), nr_ano_eleicao SMALLINT)""")
+    for ano in ANOS:
+        z = juntar(f'bem_candidato_{ano}')
+        if not z: continue
+        arqs = extrai(z, r'bem_candidato_\d{4}_(?!BRASIL)', tmp)
+        cols = set(open(arqs[0], encoding='utf-8').readline().replace('"', '').strip().split(';'))
+        tipo = "(CD_TIPO_ELEICAO = '2' OR NM_TIPO_ELEICAO ILIKE 'ORDIN%')" if 'NM_TIPO_ELEICAO' in cols else "true"
+        con.execute(f"CREATE OR REPLACE TEMP TABLE b AS SELECT * FROM {le(arqs)} WHERE {tipo}")
+        con.execute(f"""INSERT INTO bem_candidato
+            SELECT c.id_candidatura, TRY_CAST(b.NR_ORDEM_BEM_CANDIDATO AS SMALLINT), TRY_CAST(b.CD_TIPO_BEM_CANDIDATO AS SMALLINT), b.DS_TIPO_BEM_CANDIDATO,
+                   b.DS_BEM_CANDIDATO, {reais('b.VR_BEM_CANDIDATO')}, {ano}
+            FROM b JOIN eleicao e ON e.nr_ano_eleicao = {ano}
+            JOIN candidatura c ON c.id_eleicao = e.id_eleicao AND c.sq_candidato = TRY_CAST(b.SQ_CANDIDATO AS BIGINT) AND c.sg_ue IN (b.SG_UE, b.SG_UF)""")
+        tot = con.execute("SELECT COUNT(*), SUM(" + reais('VR_BEM_CANDIDATO') + ") FROM b").fetchone()
+        ok = con.execute(f"SELECT COUNT(*), SUM(vr_bem), COUNT(DISTINCT id_candidatura) FROM bem_candidato WHERE nr_ano_eleicao = {ano}").fetchone()
+        log('bens', ano, f'{ok[0]:,} de {tot[0]:,} bens ligados a uma candidatura ({100 * ok[0] / max(tot[0], 1):.2f}%), {ok[2]:,} candidaturas, R$ {float(ok[1] or 0) / 1e9:.1f} bilhões')
+        for a in arqs: os.remove(a)
+    shutil.rmtree(tmp, ignore_errors=True)
+
+# ------------------------------------------------------------------ eleitorado: perfil do eleitorado apto em cada eleição (TSE)
+# Soma as zonas, o estado civil, a cor/raça etc.: fica município × faixa de idade × escolaridade × gênero.
+if 'eleitorado' in ETAPAS:
+    con.execute("""CREATE OR REPLACE TABLE eleitorado_perfil (nr_ano_eleicao SMALLINT, cd_municipio_tse INTEGER, cd_faixa_etaria INTEGER, ds_faixa_etaria VARCHAR,
+                   nr_idade_min SMALLINT, nr_idade_max SMALLINT, cd_grau_escolaridade TINYINT, ds_grau_escolaridade VARCHAR, ds_genero VARCHAR, qt_eleitores INTEGER)""")
+    for ano in ANOS:
+        z = juntar(f'perfil_eleitorado_{ano}')
+        if not z: continue
+        tmp = tempfile.mkdtemp(dir=TMP)
+        arqs = extrai(z, r'perfil_eleitorado_\d{4}(_(?!BRASIL)[A-Z]{2})?\.csv$', tmp)   # 2018: um arquivo só, do Brasil
+        # faixa: "1600" = 16 anos, "2124" = 21 a 24, "9999" = 100 anos ou mais; idade fora disso (-3, inválida) fica sem idade
+        cols = set(open(arqs[0], encoding='utf-8').readline().replace('"', '').strip().split(';'))
+        qt = 'QT_ELEITORES' if 'QT_ELEITORES' in cols else 'QT_ELEITORES_PERFIL'   # 2018 a 2022: QT_ELEITORES_PERFIL
+        con.execute(f"""INSERT INTO eleitorado_perfil
+            SELECT {ano}, TRY_CAST(CD_MUNICIPIO AS INTEGER), f, ANY_VALUE(DS_FAIXA_ETARIA),
+                   CASE WHEN f >= 9999 THEN 100 WHEN f BETWEEN 1600 AND 9998 THEN f // 100 END,
+                   CASE WHEN f >= 9999 THEN 100 WHEN f BETWEEN 1600 AND 9998 THEN GREATEST(f % 100, f // 100) END,
+                   TRY_CAST(CD_GRAU_ESCOLARIDADE AS TINYINT), ANY_VALUE(DS_GRAU_ESCOLARIDADE), DS_GENERO, SUM(TRY_CAST({qt} AS INTEGER))
+            FROM (SELECT *, TRY_CAST(CD_FAIXA_ETARIA AS INTEGER) f FROM {le(arqs)})
+            GROUP BY CD_MUNICIPIO, f, CD_GRAU_ESCOLARIDADE, DS_GENERO""")
+        for a in arqs: os.remove(a)
+        shutil.rmtree(tmp, ignore_errors=True)
+        log('eleitorado', ano, con.execute(f"SELECT SUM(qt_eleitores), COUNT(DISTINCT cd_municipio_tse) FROM eleitorado_perfil WHERE nr_ano_eleicao = {ano}").fetchone())
+
 # ------------------------------------------------------------------ views: as mesmas do modelo do trabalho
 # ------------------------------------------------------------------ notas: posição ideológica do partido em cada eleição
 # Vem de scripts/notas_estudos.py (média de Zucco e Power 2024, Bolognesi, Ribeiro e Codato 2023 e V-Party 2022).
@@ -341,8 +435,11 @@ if 'notas' in ETAPAS:
     con.execute("""CREATE OR REPLACE TABLE partido_nota AS SELECT cd_linhagem, CAST(nr_ano_eleicao AS SMALLINT) nr_ano_eleicao, cd_fonte,
                    CAST(vr_nota AS DOUBLE) vr_nota, CAST(vr_erro AS DOUBLE) vr_erro, CAST(nr_ano_medida AS SMALLINT) nr_ano_medida, fl_aviso = '1' fl_aviso
                    FROM read_csv(?, all_varchar = true, header = true)""", [os.path.join(os.path.dirname(os.path.abspath(__file__)), 'partido_nota.csv')])
+    tem_vp = con.execute("SELECT COUNT(*) FROM information_schema.tables WHERE table_name = 'votacao_partido'").fetchone()[0]
     pares = con.execute("""SELECT DISTINCT c.id_partido, p.sg_partido, e.nr_ano_eleicao FROM candidatura c JOIN partido p ON p.id_partido = c.id_partido
-                           JOIN eleicao e ON e.id_eleicao = c.id_eleicao""").fetchall()
+                           JOIN eleicao e ON e.id_eleicao = c.id_eleicao""" + ("""
+                           UNION SELECT DISTINCT v.id_partido, p.sg_partido, e.nr_ano_eleicao FROM votacao_partido v JOIN partido p ON p.id_partido = v.id_partido
+                           JOIN eleicao e ON e.id_eleicao = v.id_eleicao""" if tem_vp else "")).fetchall()
     con.execute("CREATE OR REPLACE TABLE partido_linhagem (id_partido INTEGER, nr_ano_eleicao SMALLINT, cd_linhagem VARCHAR)")
     con.executemany("INSERT INTO partido_linhagem VALUES (?, ?, ?)", [(i, a, linhagem(sg, a)) for i, sg, a in pares])
     con.execute("""CREATE OR REPLACE VIEW vw_partido_ano AS
@@ -367,12 +464,28 @@ if 'views' in ETAPAS:
     LEFT JOIN (SELECT id_candidatura, SUM(vr_despesa) vr_total FROM despesa GROUP BY id_candidatura) d ON d.id_candidatura = c.id_candidatura;
     CREATE OR REPLACE VIEW vw_indicador_atual AS
     SELECT m.cd_municipio_tse, m.nm_municipio, m.sg_uf, pop.qt_populacao, pib.vr_pib_mil_reais,
-           ROUND(pib.vr_pib_mil_reais * 1000 / NULLIF(pop.qt_populacao, 0), 2) AS vr_pib_per_capita, idh.vr_idhm
+           ROUND(pib.vr_pib_mil_reais * 1000 / NULLIF(pop.qt_populacao, 0), 2) AS vr_pib_per_capita, idh.vr_idhm,
+           atl.vr_idhm_educacao, atl.vr_idhm_renda, atl.vr_idhm_longevidade, atl.pc_superior_25m, atl.pc_medio_25m, atl.vr_renda_per_capita
     FROM municipio m
     LEFT JOIN indicador_municipio pop ON pop.cd_municipio_tse = m.cd_municipio_tse AND pop.nr_ano_referencia = 2022
     LEFT JOIN indicador_municipio pib ON pib.cd_municipio_tse = m.cd_municipio_tse AND pib.nr_ano_referencia = 2021
     LEFT JOIN indicador_municipio idh ON idh.cd_municipio_tse = m.cd_municipio_tse AND idh.nr_ano_referencia = 2010
+    LEFT JOIN indicador_atlas atl ON atl.cd_municipio_tse = m.cd_municipio_tse AND atl.nr_ano_referencia = 2010   -- Atlas: Censo 2010
     WHERE pop.qt_populacao IS NOT NULL;
+    -- patrimônio declarado: soma dos bens de cada candidatura (quem não declarou nada fica com zero)
+    CREATE OR REPLACE VIEW vw_patrimonio_candidato AS
+    SELECT c.id_candidatura, COUNT(b.id_candidatura) AS qt_bens, COALESCE(SUM(b.vr_bem), 0) AS vr_patrimonio
+    FROM candidatura c LEFT JOIN bem_candidato b ON b.id_candidatura = c.id_candidatura GROUP BY c.id_candidatura;
+    -- eleitorado de cada município em cada eleição: tamanho, idade e escolaridade
+    -- idade média pelo meio de cada faixa (16, 17... 21 a 24 -> 22,5; 100 ou mais -> 100); sem idade válida fica de fora da média
+    CREATE OR REPLACE VIEW vw_eleitorado_municipio AS
+    SELECT nr_ano_eleicao, cd_municipio_tse, SUM(qt_eleitores) AS qt_eleitores,
+           SUM(qt_eleitores * (nr_idade_min + nr_idade_max) / 2.0) / NULLIF(SUM(CASE WHEN nr_idade_min IS NOT NULL THEN qt_eleitores END), 0) AS vr_idade_media,
+           100.0 * SUM(CASE WHEN nr_idade_max <= 29 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN nr_idade_min IS NOT NULL THEN qt_eleitores END), 0) AS pc_ate_29,
+           100.0 * SUM(CASE WHEN nr_idade_min >= 60 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN nr_idade_min IS NOT NULL THEN qt_eleitores END), 0) AS pc_60_mais,
+           100.0 * SUM(CASE WHEN cd_grau_escolaridade = 8 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 8 THEN qt_eleitores END), 0) AS pc_superior,
+           100.0 * SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 3 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 8 THEN qt_eleitores END), 0) AS pc_sem_fundamental
+    FROM eleitorado_perfil GROUP BY nr_ano_eleicao, cd_municipio_tse;
     """)
 
 con.close()
