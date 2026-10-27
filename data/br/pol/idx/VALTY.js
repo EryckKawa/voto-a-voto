@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VALTY"]=[["VALTYN DO BRAZIL",1704413,"VALTER NOGUEIRA DA SILVA","VALTYN DO BRAZIL",2022,6,"GO",0,367]];

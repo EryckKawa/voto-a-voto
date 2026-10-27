@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SAMUELI"]=[[0,440965,"SAMUELITO FIRMINO DE LIMA","GORDO DA FEIRA DO ROLO",2012,13,62510,0,58]];

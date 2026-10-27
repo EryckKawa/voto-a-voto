@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARIA_ELL"]=[[0,960265,"MARIA ELLANE VALDEVINO DE LIMA","ELLANE DO NORDESTE",2016,13,20273,0,21]];

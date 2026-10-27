@@ -7,7 +7,9 @@
   const pct = (v, d) => V.pct(v, d);
   const N1 = new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 1 });
   /* dinheiro por extenso, para os títulos */
-  const reais = (v) => (v >= 1e9 ? `R$\u00a0${N1.format(v / 1e9)}\u00a0${v >= 2e9 ? "bilhões" : "bilhão"}` : v >= 1e6 ? `R$\u00a0${N1.format(v / 1e6)}\u00a0${v >= 2e6 ? "milhões" : "milhão"}` : v >= 1e3 ? `R$\u00a0${V.int(Math.round(v / 1e3))}\u00a0mil` : `R$\u00a0${V.int(Math.round(v))}`);
+  // o plural vale para o número arredondado que aparece ("R$ 2 milhões", mesmo que o valor seja 1,96 milhão)
+  const r1 = (x) => Math.round(x * 10) / 10;
+  const reais = (v) => (v >= 1e9 ? `R$\u00a0${N1.format(v / 1e9)}\u00a0${r1(v / 1e9) >= 2 ? "bilhões" : "bilhão"}` : v >= 1e6 ? `R$\u00a0${N1.format(v / 1e6)}\u00a0${r1(v / 1e6) >= 2 ? "milhões" : "milhão"}` : v >= 1e3 ? `R$\u00a0${V.int(Math.round(v / 1e3))}\u00a0mil` : `R$\u00a0${V.int(Math.round(v))}`);
   const vezes = (a, b) => { const r = a / b; return r >= 2 ? `${N1.format(r).replace(/,0$/, "")} vezes` : `${pct(100 * (r - 1), 0)} a mais`; };
   const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
   /* nota de −1 (esquerda) a +1 (direita), com sinal: "+0,20", "−0,35" */
@@ -22,6 +24,8 @@
 
   /* resultado de uma consulta como lista de objetos */
   const linhasDe = (c) => c.linhas.map((l) => Object.fromEntries(c.colunas.map((k, i) => [k, l[i]])));
+  // os mesmos formatos servem para "Os números em detalhe" (js/detalhes.js)
+  V.pqUtil = { pct, reais, vezes, cap1, nota, corr, anos1, CARGO, linhasDe, N1 };
 
   /* duas (ou mais) barras por linha: um tema, dois grupos */
   function paresHTML(linhas, { nomes, cores, max, fmt = (v) => pct(v) }) {
@@ -64,9 +68,15 @@
 
     // ---------- 1. custo por cadeira ----------
     {
-      const tot = linhasDe(C.q1b), part = linhasDe(C.q1);
+      const tot = linhasDe(C.q1b), part = linhasDe(C.q1), med = linhasDe(C.q1c);
       const t = (a, cg) => tot.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const f22 = t(2022, "DEPUTADO FEDERAL"), f18 = t(2018, "DEPUTADO FEDERAL"), v24 = t(2024, "VEREADOR"), p24 = t(2024, "PREFEITO");
+      // a conta do enunciado: Σ gastos ÷ número de candidatos do cargo (gasto médio para disputar), ao lado do custo por cadeira
+      const m = (a, cg) => med.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
+      const mF = m(2022, "DEPUTADO FEDERAL"), mV = m(2024, "VEREADOR");
+      const CG_MED = [[2022, "PRESIDENTE"], [2022, "GOVERNADOR"], [2022, "SENADOR"], [2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2024, "PREFEITO"], [2024, "VEREADOR"]];
+      const vistaMedia = (campo, rot, nt) => ({ rot, graf: () => barras(CG_MED.map(([a, cg]) => m(a, cg)).filter((r) => r[campo] != null).map((r) => ({ rot: `${CARGO[r.ds_cargo] || r.ds_cargo} ${r.nr_ano_eleicao}`, sub: `${V.int(r.qt_candidatos)} candidatos · ${V.int(r.qt_eleitos)} eleitos`, v: r[campo], vTxt: V.brl(r[campo]) })),
+        { cor: COR.terra, cols: ["Cargo", "Candidatos e eleitos", rot] }), nota: nt });
       const vista = (a, cg) => ({ rot: `${CARGO[cg]} ${a}`, graf: () => {
         // os 12 partidos com mais cadeiras, do mais caro para o mais barato
         const ps = part.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg).sort((x, y) => y.qt_cadeiras - x.qt_cadeiras).slice(0, 12).sort((x, y) => y.vr_custo_por_cadeira - x.vr_custo_por_cadeira);
@@ -76,10 +86,13 @@
       }, nota: "Os 12 partidos que ganharam mais cadeiras, do mais caro para o mais barato. A consulta traz todos os partidos com pelo menos 5." });
       blocos.push({ id: "q1", n: 1, num: V.brl(f22.vr_custo_por_cadeira), numRot: "por cadeira de deputado federal em 2022", medida: "Despesa de campanha por cadeira conquistada", tabelas: ["vw_candidatura_resumo", "candidatura", "despesa", "situacao_totalizacao", "partido"], tema: "Dinheiro", pergunta: "Quanto custa uma cadeira?",
         tit: `Em 2022, cada cadeira de deputado federal custou ${reais(f22.vr_custo_por_cadeira)} em despesas de campanha: ${vezes(f22.vr_custo_por_cadeira, f18.vr_custo_por_cadeira)} o custo de 2018`,
-        sub: `É tudo o que os candidatos do partido gastaram, eleitos ou não, dividido pelas cadeiras que ganharam. Para vereador, em 2024, foram ${reais(v24.vr_custo_por_cadeira)} por cadeira; para prefeito, ${reais(p24.vr_custo_por_cadeira)}.`,
-        vistas: [vista(2022, "DEPUTADO FEDERAL"), vista(2018, "DEPUTADO FEDERAL"), vista(2024, "PREFEITO"), vista(2024, "VEREADOR")],
-        como: "Soma das despesas contratadas declaradas ao TSE por todos os candidatos de cada partido no cargo, dividida pelo número de eleitos do partido. Valores da época, sem correção pela inflação. A prestação de contas é a final, entregue depois da eleição.",
-        consultas: ["q1", "q1b"], fonte: "TSE, prestação de contas eleitorais" });
+        sub: `É tudo o que os candidatos do partido gastaram, eleitos ou não, dividido pelas cadeiras que ganharam. Para vereador, em 2024, foram ${reais(v24.vr_custo_por_cadeira)} por cadeira; para prefeito, ${reais(p24.vr_custo_por_cadeira)}.${mF.vr_gasto_medio_candidato ? ` Pela conta do gasto médio (soma dos gastos dividida pelo número de candidatos do cargo), cada candidato a deputado federal gastou ${reais(mF.vr_gasto_medio_candidato)} em 2022 e cada candidato a vereador ${reais(mV.vr_gasto_medio_candidato)} em 2024. Por mês de mandato, a cadeira de deputado federal custou ${reais(mF.vr_custo_por_mes_mandato)}.` : ""}`,
+        vistas: [vista(2022, "DEPUTADO FEDERAL"), vista(2018, "DEPUTADO FEDERAL"), vista(2024, "PREFEITO"), vista(2024, "VEREADOR"),
+          vistaMedia("vr_gasto_medio_candidato", "Gasto médio por candidato", "Σ gastos ÷ número de candidatos do cargo: quanto custa, em média, disputar. Inclui quem não declarou gasto nenhum."),
+          vistaMedia("vr_custo_por_cadeira", "Custo por cadeira, cargo a cargo", "Σ gastos de todos os candidatos ÷ número de eleitos: quanto custa vencer."),
+          vistaMedia("vr_custo_por_mes_mandato", "Por mês de mandato", "Custo por cadeira dividido pelos meses de mandato: 48 meses, 96 para senador.")],
+        como: "Soma das despesas contratadas declaradas ao TSE por todos os candidatos de cada partido no cargo, dividida pelo número de eleitos do partido. A consulta q1c faz as duas contas para cada cargo: o gasto médio por candidato (Σ gastos ÷ nº de candidatos, quanto custa disputar) e o custo por cadeira (Σ gastos ÷ nº de eleitos, quanto custa vencer), e divide o custo por cadeira pelos meses de mandato. Valores da época, sem correção pela inflação. A prestação de contas é a final, entregue depois da eleição.",
+        consultas: ["q1", "q1b", "q1c"], fonte: "TSE, prestação de contas eleitorais" });
     }
 
     // ---------- 2. patrimônio, dinheiro de campanha e sucesso ----------
@@ -179,14 +192,40 @@
       const TEMAS = [["pc_racial", "Racismo ou igualdade racial"], ["pc_reforma_agraria", "Reforma agrária"], ["pc_privatizacao", "Privatização"], ["pc_desigualdade", "Desigualdade"], ["pc_agronegocio", "Agronegócio"], ["pc_armas", "Armas"], ["pc_seguranca", "Segurança pública"], ["pc_meio_ambiente", "Meio ambiente"], ["pc_impostos", "Impostos"], ["pc_familia", "Família"]]
         .map(([k, t]) => ({ k, t, dif: e[k] - d[k] })).sort((a, b) => b.dif - a.dif);
       const qt = (b, w) => (W.find((x) => x.ds_bloco === b && x.palavra === w) || {}).qt || 0;
+      // nuvens de palavras: por campo político em cada cargo (q6d) e por partido (q6c)
+      const NB = linhasDe(C.q6d), NP = linhasDe(C.q6c);
+      const BLOCOS = [["esquerda", COR.esq, "Esquerda"], ["centro", COR.cen, "Centro"], ["direita", COR.dir, "Direita"]];
+      const nuvemDe = (ls, cor, rot, n = 40) => G.nuvem(ls.slice(0, n).map((x) => ({ w: x.ds_palavra || x.palavra, q: x.qt, cor, tit: `${x.ds_palavra || x.palavra}: ${V.int(x.qt)} vezes, em ${V.int(x.qt_planos_com_palavra)} planos${x.vr_destaque >= 1.5 ? `; ${N1.format(x.vr_destaque)} vezes mais que a média` : ""}` })), { rot, max: 36 });
+      const tabPal = (grupos) => ({ cols: ["Grupo", "Palavras mais usadas (vezes)"], linhas: grupos.map(([g, ls]) => [g, ls.slice(0, 15).map((x) => `${V.esc(x.ds_palavra || x.palavra)} (${V.int(x.qt)})`).join(", ")]) });
+      const vistaNuvemCargo = (cg) => ({ rot: `Nuvem · ${CARGO[cg]}`, graf: () => {
+        const gs = BLOCOS.map(([b, cor, nome]) => { const ls = NB.filter((x) => x.ds_cargo === cg && x.ds_bloco === b); return { b, cor, nome, ls, n: ls.length ? ls[0].qt_planos : 0 }; }).filter((g) => g.ls.length);
+        return { html: `<div class="nuvens">${gs.map((g) => `<figure class="nuvens__item"><figcaption><b style="color:${g.cor}">${g.nome}</b> · ${V.int(g.n)} planos</figcaption>${nuvemDe(g.ls, g.cor, `Palavras dos planos da ${g.nome.toLowerCase()} para ${CARGO[cg].toLowerCase()}`, 30)}</figure>`).join("")}</div>`,
+          tab: tabPal(gs.map((g) => [`${g.nome} (${V.int(g.n)} planos)`, g.ls])) }; },
+        nota: "As palavras mais usadas nos planos de governo de cada campo político, fora as comuns a qualquer plano (governo, município, programa...). Quanto maior, mais vezes aparece; passe o mouse para ver quantas vezes e em quantos planos." });
+      // palavras típicas (q6e): as que o campo usa bem mais que a média do cargo; o tamanho é o quanto a mais
+      const NT = linhasDe(C.q6e || { colunas: [], linhas: [] });
+      const vistaTipicas = (cg) => ({ rot: `Típicas · ${CARGO[cg]}`, graf: () => {
+        const gs = BLOCOS.map(([b, cor, nome]) => ({ b, cor, nome, ls: NT.filter((x) => x.ds_cargo === cg && x.ds_bloco === b) })).filter((g) => g.ls.length);
+        return { html: `<div class="nuvens">${gs.map((g) => `<figure class="nuvens__item"><figcaption><b style="color:${g.cor}">${g.nome}</b> · ${V.int(g.ls[0].qt_planos)} planos</figcaption>${G.nuvem(g.ls.map((x) => ({ w: x.ds_palavra || x.palavra, q: Math.round(100 * x.vr_destaque), cor: g.cor, tit: `${x.ds_palavra || x.palavra}: ${N1.format(x.vr_destaque)} vezes a média do cargo, em ${V.int(x.qt_planos_com_palavra)} planos` })), { rot: `Palavras típicas da ${g.nome.toLowerCase()} para ${CARGO[cg].toLowerCase()}`, max: 32 })}</figure>`).join("")}</div>`,
+          tab: { cols: ["Grupo", "Palavras típicas (vezes a média do cargo)"], linhas: gs.map((g) => [`${g.nome} (${V.int(g.ls[0].qt_planos)} planos)`, g.ls.slice(0, 15).map((x) => `${V.esc(x.ds_palavra || x.palavra)} (${N1.format(x.vr_destaque)})`).join(", ")]) } }; },
+        nota: "As palavras que cada campo usa bem mais que a média do cargo, entre as que aparecem em pelo menos 3% dos seus planos. O tamanho é o quanto a mais: 2 vezes, 3 vezes... Mostra o que separa os campos; a nuvem das mais usadas mostra o que eles têm em comum." });
+      const partidosN = [...new Set(NP.map((x) => x.sg_partido))].slice(0, 12);
+      const vistaNuvemPartido = { rot: "Nuvem · por partido", graf: () => {
+        const gs = partidosN.map((sg) => { const ls = NP.filter((x) => x.sg_partido === sg), n = ls[0].vr_nota_partido; return { sg, ls, cor: n == null ? COR.escuro : V.ESPC[n < -0.5 ? "ESQUERDA" : n < -0.25 ? "CENTRO-ESQUERDA" : n <= 0.25 ? "CENTRO" : n <= 0.5 ? "CENTRO-DIREITA" : "DIREITA"] }; });
+        return { html: `<div class="nuvens nuvens--partidos">${gs.map((g) => `<figure class="nuvens__item"><figcaption><b style="color:${g.cor}">${V.esc(V.nomePartido(g.sg))}</b> · ${V.int(g.ls[0].qt_planos)} planos</figcaption>${nuvemDe(g.ls, g.cor, `Palavras dos planos do ${g.sg}`, 20)}</figure>`).join("")}</div>`,
+          tab: tabPal(gs.map((g) => [`${V.nomePartido(g.sg)} (${V.int(g.ls[0].qt_planos)} planos)`, g.ls])) }; },
+        nota: "Os 12 partidos com mais planos de governo entregues (presidente, governador e prefeito, 2018 a 2026), cada um na cor do seu lado na eleição mais recente. As 20 palavras mais usadas por cada um." };
       blocos.push({ id: "q6", n: 6, num: `${pct(e.pc_racial, 0)} × ${pct(d.pc_racial, 0)}`, numRot: "dos planos da esquerda × da direita falam de racismo", medida: "Parte dos planos de governo que cita cada tema", recorte: "Candidatos a presidente em 2018, 2022 e 2026", tabelas: ["proposta_governo", "candidatura", "partido", "eleicao"], tema: "Partidos", pergunta: "Do que falam os planos de governo?",
         tit: `${pct(e.pc_racial, 0)} dos planos da esquerda para presidente falam de racismo ou igualdade racial; na direita, ${pct(d.pc_racial, 0)}. Com a reforma agrária, é ${pct(e.pc_reforma_agraria, 0)} contra ${pct(d.pc_reforma_agraria, 0)}`,
         sub: `Todos falam de família, impostos e meio ambiente. A diferença está no resto: a direita escreveu "segurança" ${V.int(qt("direita", "seguranca"))} vezes em ${d.qt_planos} planos, a esquerda ${V.int(qt("esquerda", "seguranca"))} em ${e.qt_planos}. "Trabalhadores", "direitos" e "mulheres" estão entre as palavras mais usadas só na esquerda.`,
-        legenda: leg([[COR.esq, `Esquerda (${e.qt_planos} planos)`], [COR.dir, `Direita (${d.qt_planos} planos)`]]),
-        grafico: () => pares(TEMAS.map((x) => ({ rot: x.t, v: [e[x.k], d[x.k]] })), { nomes: ["esquerda", "direita"], cores: [COR.esq, COR.dir], max: 100, fmt: (v) => pct(v, 0), cols: ["Tema"] }),
-        nota: "Parte dos planos que cita o tema pelo menos uma vez. Do tema em que a esquerda mais se destaca para aquele em que a direita mais se destaca.",
-        como: `Planos de governo entregues ao TSE pelos candidatos a presidente de 2018, 2022 e 2026 (${R.reduce((s, r) => s + r.qt_planos, 0)} planos), convertidos de PDF para texto. A busca ignora acento e maiúscula. Citar um tema não diz se o plano é a favor ou contra: a esquerda cita "privatização" mais vezes, muitas vezes para criticar. O centro (${R.find((r) => r.ds_bloco === "centro").qt_planos} planos) está na consulta.`,
-        consultas: ["q6", "q6b"], fonte: "TSE, propostas de governo" });
+        vistas: [{ rot: "Temas · presidente", legenda: leg([[COR.esq, `Esquerda (${e.qt_planos} planos)`], [COR.dir, `Direita (${d.qt_planos} planos)`]]),
+            graf: () => pares(TEMAS.map((x) => ({ rot: x.t, v: [e[x.k], d[x.k]] })), { nomes: ["esquerda", "direita"], cores: [COR.esq, COR.dir], max: 100, fmt: (v) => pct(v, 0), cols: ["Tema"] }),
+            nota: "Parte dos planos de presidente que cita o tema pelo menos uma vez. Do tema em que a esquerda mais se destaca para aquele em que a direita mais se destaca." },
+          ...["PREFEITO", "GOVERNADOR", "PRESIDENTE"].filter((cg) => NB.some((x) => x.ds_cargo === cg)).map(vistaNuvemCargo),
+          ...["PREFEITO", "GOVERNADOR"].filter((cg) => NT.some((x) => x.ds_cargo === cg)).map(vistaTipicas),
+          ...(NP.length ? [vistaNuvemPartido] : [])],
+        como: `Planos de governo entregues ao TSE pelos candidatos a presidente (2018, 2022 e 2026), governador (2018, 2022 e 2026) e prefeito (2020 e 2024), convertidos de PDF para texto; plano escaneado como imagem fica de fora. Os temas usam só os ${R.reduce((s, r) => s + r.qt_planos, 0)} planos de presidente; a busca ignora acento e maiúscula. Citar um tema não diz se o plano é a favor ou contra: a esquerda cita "privatização" mais vezes, muitas vezes para criticar. As nuvens contam, em cada plano, as 80 palavras mais usadas com 4 letras ou mais, fora as comuns a qualquer plano (tabela proposta_palavra), e somam por campo político e por partido. O centro (${R.find((r) => r.ds_bloco === "centro").qt_planos} planos de presidente) está na consulta. Cada candidato tem a nuvem do próprio plano na ficha do político.`,
+        consultas: ["q6", "q6b", "q6c", "q6d", ...(C.q6e ? ["q6e"] : [])], fonte: "TSE, propostas de governo" });
     }
 
     // ---------- 7. idade: jovem vota em jovem? ----------
@@ -266,20 +305,27 @@
 
     // ---------- 10. dinheiro público ----------
     {
-      const R = linhasDe(C.q10);
+      const R = linhasDe(C.q10), F = linhasDe(C.q10b);
       const g = (a, cg, res) => R.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_resultado === res);
       const fe = g(2022, "DEPUTADO FEDERAL", "eleito"), fn = g(2022, "DEPUTADO FEDERAL", "não eleito");
+      // taxa de sucesso pela faixa de dinheiro público (q10b)
+      const fx = (a, cg) => F.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
+      const fF = fx(2022, "DEPUTADO FEDERAL"), f0 = fF.find((r) => r.nr_faixa === 0), f5 = fF.find((r) => r.nr_faixa === 5);
+      const vistaFaixa = (a, cg) => ({ rot: `Sucesso · ${CARGO[cg]} ${a}`, legenda: leg([[COR.escuro, "Parte dos candidatos que se elegeu"]]), graf: () => barras(fx(a, cg).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos · média de ${V.brl(r.vr_publico_medio)}`, v: r.pc_taxa_sucesso })),
+        { cor: COR.escuro, max: 100, cols: ["Dinheiro público recebido", "Candidatos e média", "Eleitos"] }),
+        nota: "A barra vai até 100%: a parte dos candidatos de cada faixa que se elegeu. Quem recebeu algum dinheiro público está em cinco grupos do mesmo tamanho; quem não recebeu nada, à parte." });
       const vista = (a, cg) => ({ rot: `${CARGO[cg]} ${a}`, graf: () => barras(["eleito", "não eleito"].map((res) => { const r = g(a, cg, res);
           return { rot: res === "eleito" ? "Eleitos" : "Não eleitos", sub: `${V.int(r.qt_candidatos)} candidatos · ${pct(r.pc_publico, 0)} público`, v: r.vr_publico_medio + r.vr_privado_medio, vTxt: V.brl(r.vr_publico_medio + r.vr_privado_medio),
             partes: [{ v: r.vr_publico_medio, cor: COR.escuro, tit: `Dinheiro público: ${V.brl(r.vr_publico_medio)} em média` }, { v: r.vr_privado_medio, cor: COR.cinza, tit: `Dinheiro privado: ${V.brl(r.vr_privado_medio)} em média` }] }; }), { cols: ["Resultado", "Candidatos"], nomesPartes: ["Dinheiro público, média", "Dinheiro privado, média"], fmtParte: V.brl }),
         nota: "Dinheiro público: Fundo Especial de Financiamento de Campanha e Fundo Partidário." });
       blocos.push({ id: "q10", n: 10, num: V.brl(fe.vr_publico_medio), numRot: "de dinheiro público, em média, para cada deputado federal eleito (2022)", medida: "Receita média por candidato", tabelas: ["vw_candidatura_resumo", "candidatura", "receita", "situacao_totalizacao"], tema: "Dinheiro", pergunta: "Quem vive de dinheiro público?",
         tit: `Em 2022, um deputado federal eleito recebeu em média ${reais(fe.vr_publico_medio)} de dinheiro público. Quem perdeu, ${reais(fn.vr_publico_medio)}: ${vezes(fe.vr_publico_medio, fn.vr_publico_medio)} menos`,
-        sub: `Os fundos eleitoral e partidário pagam a maior parte das campanhas, e o partido escolhe para quem vai. Quem perde depende ainda mais deles: ${pct(fn.pc_publico, 0)} do dinheiro dos não eleitos era público, contra ${pct(fe.pc_publico, 0)} dos eleitos.`,
+        sub: `Os fundos eleitoral e partidário pagam a maior parte das campanhas, e o partido escolhe para quem vai. Quem perde depende ainda mais deles: ${pct(fn.pc_publico, 0)} do dinheiro dos não eleitos era público, contra ${pct(fe.pc_publico, 0)} dos eleitos.${f0 && f5 ? ` E o dinheiro público anda junto com a vitória: entre os candidatos a deputado federal que mais receberam dos fundos em 2022, ${pct(f5.pc_taxa_sucesso, 0)} se elegeram; entre os ${V.int(f0.qt_candidatos)} que não receberam nada, ${pct(f0.pc_taxa_sucesso)}.` : ""}`,
         legenda: leg([[COR.escuro, "Dinheiro público (fundos)"], [COR.cinza, "Dinheiro privado"]]),
-        vistas: [vista(2022, "DEPUTADO FEDERAL"), vista(2022, "DEPUTADO ESTADUAL"), vista(2024, "PREFEITO"), vista(2024, "VEREADOR")],
-        como: "Receita pública: a que o candidato declarou como vinda do Fundo Especial de Financiamento de Campanha (FEFC) ou do Fundo Partidário. O resto é privado: pessoas, recursos próprios e outras fontes (TSE).",
-        consultas: ["q10"], fonte: "TSE, prestação de contas eleitorais" });
+        vistas: [vista(2022, "DEPUTADO FEDERAL"), vista(2022, "DEPUTADO ESTADUAL"), vista(2024, "PREFEITO"), vista(2024, "VEREADOR"),
+          ...(F.length ? [vistaFaixa(2022, "DEPUTADO FEDERAL"), vistaFaixa(2024, "VEREADOR"), vistaFaixa(2024, "PREFEITO")] : [])],
+        como: "Receita pública: a que o candidato declarou como vinda do Fundo Especial de Financiamento de Campanha (FEFC) ou do Fundo Partidário. O resto é privado: pessoas, recursos próprios e outras fontes (TSE). A consulta q10b separa os candidatos de cada cargo pelo dinheiro público que receberam (NTILE em cinco grupos, mais quem não recebeu nada) e mostra a parte que se elegeu em cada grupo. É associação, não causa: o partido manda mais dinheiro para quem já tem mais chance.",
+        consultas: ["q10", "q10b"], fonte: "TSE, prestação de contas eleitorais" });
     }
 
     // ---------- 11. despesas ----------
@@ -290,12 +336,29 @@
       const NOME = (s) => s.replace("Despesa com Impulsionamento de Conteúdos", "Impulsionamento nas redes").replace("Publicidade por materiais impressos", "Material impresso").replace("Atividades de militância e mobilização de rua", "Militância e cabos eleitorais").replace("Produção de programas de rádio, televisão ou vídeo", "Rádio, TV e vídeo").replace("Doações financeiras a outros candidatos/partidos", "Repasse a outros candidatos");
       const vista = (a) => ({ rot: String(a), graf: () => barras(ano(a).slice(0, 8).map((r) => ({ rot: NOME(r.ds_origem_despesa), sub: reais(r.vr_total), v: r.pc_ano })), { cor: COR.escuro, max: 25, cols: ["Despesa", "Valor", "Parte do total"] }),
         nota: "As oito maiores categorias, em parte do total gasto no ano. A barra vai até 25%." });
+      // propaganda por cargo (q11b) e por campo político (q11c), com as categorias juntadas em grupos (view vw_despesa_tipo)
+      const TB = linhasDe(C.q11b), TC = linhasDe(C.q11c);
+      const COR_T = [null, "#16181d", "#0f5fb5", "#7a5aa6", "#d96a12", "#c99a52", "#2f7d5b", "#9c5d16", "#8b929c", "#b7bcc4", "#d6dae0", "#e9ebee"];
+      const tipos = (ls) => [...new Map(ls.map((r) => [r.nr_tipo, r.ds_tipo])).entries()].sort((x, y) => x[0] - y[0]);
+      const pilha = (ls, campo, chave, rots, a) => { const ts = tipos(ls.filter((r) => r.nr_ano_eleicao === a));
+        return barras(rots.map(([k, rot]) => { const rs = ls.filter((r) => r.nr_ano_eleicao === a && r[chave] === k); const prop = rs.filter((r) => r.nr_tipo <= 7).reduce((s, r) => s + r[campo], 0);
+          return rs.length ? { rot, sub: `${reais(rs.reduce((s, r) => s + r.vr_total, 0))}${campo === "pc_cargo" ? ` · ${pct(prop, 0)} em propaganda` : ""}`, v: 100, vTxt: pct((rs.find((r) => r.nr_tipo === 1) || {})[campo] || 0, 0),
+            partes: ts.map(([t, nome]) => { const r = rs.find((x) => x.nr_tipo === t); return { v: r ? r[campo] : 0, cor: COR_T[t], tit: `${nome}: ${pct(r ? r[campo] : 0)}` }; }) } : null; }).filter(Boolean),
+          { max: 100, cols: ["", "Total"], nomesPartes: ts.map(([, n]) => n) }); };
+      const legT = (ls, a) => leg(tipos(ls.filter((r) => r.nr_ano_eleicao === a)).map(([t, n]) => [COR_T[t], n]));
+      const CGS = (a) => (a % 4 ? [["PRESIDENTE", "Presidente"], ["GOVERNADOR", "Governador"], ["SENADOR", "Senador"], ["DEPUTADO FEDERAL", "Deputado federal"], ["DEPUTADO ESTADUAL", "Deputado estadual"]] : [["PREFEITO", "Prefeito"], ["VEREADOR", "Vereador"]]);
+      const vistaCargo = (a) => ({ rot: `Por cargo ${a}`, legenda: legT(TB, a), graf: () => pilha(TB, "pc_cargo", "ds_cargo", CGS(a), a),
+        nota: "Cada barra é todo o gasto do cargo, dividido pelo tipo de despesa; o número à direita é a parte do material impresso. Os sete primeiros tipos, do impresso aos jornais, são propaganda." });
+      const vistaBloco = (a) => ({ rot: `Por lado ${a}`, legenda: legT(TC, a), graf: () => pilha(TC, "pc_propaganda", "ds_bloco", [["esquerda", "Esquerda"], ["centro", "Centro"], ["direita", "Direita"]], a),
+        nota: "Só o gasto com propaganda, dividido pelo tipo, para os candidatos de cada campo político; o número à direita é a parte do material impresso." });
+      const p24 = (cg, t) => (TB.find((r) => r.nr_ano_eleicao === 2024 && r.ds_cargo === cg && r.nr_tipo === t) || {}).pc_cargo;
+      const net = (b, a) => (TC.find((r) => r.nr_ano_eleicao === a && r.ds_bloco === b && r.nr_tipo === 2) || {}).pc_propaganda;
       blocos.push({ id: "q11", n: 11, num: pct(top.pc_ano, 0), numRot: "do gasto das campanhas foi com material impresso (2024)", medida: "Parte do gasto total, por tipo de despesa", tabelas: ["despesa", "candidatura", "eleicao"], tema: "Dinheiro", pergunta: "Onde vai o dinheiro da campanha?",
         tit: `Em 2024, ${pct(top.pc_ano, 0)} do dinheiro das campanhas foi para material impresso: ${reais(top.vr_total)}. É a maior despesa em todas as eleições desde 2018`,
-        sub: `Santinho, panfleto e adesivo ainda ganham da internet. O impulsionamento de conteúdo nas redes cresceu de ${pct(imp18.pc_ano)} em 2018 para ${pct(imp.pc_ano)} em 2024.`,
-        vistas: [vista(2024), vista(2022), vista(2020), vista(2018)],
-        como: "Despesas contratadas declaradas pelos candidatos ao TSE, fora presidente, pela categoria que o próprio candidato escolhe na prestação de contas. Militância inclui o pagamento de cabos eleitorais e de quem distribui material na rua.",
-        consultas: ["q11"], fonte: "TSE, prestação de contas eleitorais" });
+        sub: `Santinho, panfleto e adesivo ainda ganham da internet. O impulsionamento de conteúdo nas redes cresceu de ${pct(imp18.pc_ano)} em 2018 para ${pct(imp.pc_ano)} em 2024.${p24("VEREADOR", 1) != null ? ` Cada cargo investe de um jeito: em 2024, o vereador pôs ${pct(p24("VEREADOR", 1), 0)} do gasto em material impresso e ${pct(p24("VEREADOR", 4), 0)} em militância de rua; o prefeito, ${pct(p24("PREFEITO", 3), 0)} em rádio, TV e vídeo.` : ""}${net("direita", 2022) != null ? ` A internet pesa mais na propaganda da ${net("direita", 2022) > net("esquerda", 2022) ? "direita" : "esquerda"}: em 2022, ${pct(Math.max(net("direita", 2022), net("esquerda", 2022)), 0)} contra ${pct(Math.min(net("direita", 2022), net("esquerda", 2022)), 0)}.` : ""}`,
+        vistas: [vista(2024), vista(2022), vista(2020), vista(2018), ...(TB.length ? [vistaCargo(2024), vistaCargo(2022)] : []), ...(TC.length ? [vistaBloco(2024), vistaBloco(2022)] : [])],
+        como: "Despesas contratadas declaradas pelos candidatos ao TSE, pela categoria que o próprio candidato escolhe na prestação de contas (q11: fora presidente). Militância inclui o pagamento de cabos eleitorais e de quem distribui material na rua. Nas consultas q11b e q11c, as categorias do TSE são juntadas em onze tipos pela view vw_despesa_tipo (material impresso; internet e redes; rádio, TV e vídeo; militância; adesivos, placas e carro de som; comícios e eventos; jornais e revistas, que são propaganda; e pessoal, veículos, repasses e outras, que não são) e somadas por cargo e por campo político. Cada candidato tem o próprio gasto, por tipo, na ficha do político.",
+        consultas: ["q11", "q11b", "q11c"], fonte: "TSE, prestação de contas eleitorais" });
     }
 
     // ---------- 12. carreira ----------
@@ -305,14 +368,31 @@
       const tot = B.reduce((s, r) => s + r.qt_pessoas, 0), um = B.find((r) => r.qt_vitorias === 1).qt_pessoas, oito = B.find((r) => r.qt_vitorias === 8).qt_pessoas;
       const ger = R.filter((r) => r.tp_abrangencia === "GERAL"), mun = R.filter((r) => r.tp_abrangencia === "MUNICIPAL");
       const graf = (L) => () => pares(L.map((r) => ({ rot: String(r.nr_ano), sub: `${V.int(r.qt_eleitos)} eleitos`, v: [r.pc_eleito_de_novo_4_anos, r.pc_eleito_de_novo_8_anos] })), { nomes: ["4 anos depois", "8 anos depois"], cores: [COR.escuro, COR.azul], max: 100, fmt: (v) => pct(v, 0), cols: ["Eleitos em", "Eleitos"] });
-      blocos.push({ id: "q12", n: 12, num: pct(g18.pc_eleito_de_novo_4_anos, 0), numRot: "dos deputados, senadores e governadores de 2018 se elegeram de novo em 2022", medida: "Eleitos que voltaram a se eleger", tabelas: ["candidatura", "pessoa", "situacao_totalizacao", "eleicao", "cargo", "partido"], tema: "Carreira", pergunta: "Quanto dura uma carreira política?",
+      // como cada bancada vota na Câmara (q12e): quanto segue a orientação do próprio partido e a do governo
+      const K = linhasDe(C.q12e || { colunas: [], linhas: [] });
+      const vistaCam = (gov) => ({ rot: `Câmara · ${gov.split(" ")[0]}`, legenda: leg([[COR.cinza, "Segue o próprio partido"], [COR.escuro, "Segue o governo"]]),
+        graf: () => pares(K.filter((r) => r.ds_governo === gov).sort((a, b) => b.pc_segue_governo - a.pc_segue_governo).map((r) => ({ rot: V.nomePartido(r.sg_partido), sub: `${V.int(r.qt_deputados)} deputados`, v: [r.pc_segue_partido, r.pc_segue_governo] })),
+          { nomes: ["partido", "governo"], cores: [COR.cinza, COR.escuro], max: 100, fmt: (v) => pct(v, 0), cols: ["Partido", "Deputados"] }),
+        nota: `Votos dos deputados de cada partido iguais à orientação da própria bancada e à do líder do governo, nas votações de mérito do Plenário no governo ${gov}. Obstrução conta como não. Na ficha de cada deputado estão os votos dele, um a um.` });
+      const govs = [...new Set(K.map((r) => r.ds_governo))].sort().reverse();
+      blocos.push({ id: "q12", n: 12, num: pct(g18.pc_eleito_de_novo_4_anos, 0), numRot: "dos deputados, senadores e governadores de 2018 se elegeram de novo em 2022", medida: "Eleitos que voltaram a se eleger",
+        tabelas: ["candidatura", "pessoa", "situacao_totalizacao", "eleicao", "cargo", "partido", "vw_partido_ano", "votacao_candidato", "vw_candidatura_resumo", "vw_patrimonio_candidato", "votacao_camara", "voto_deputado", "orientacao_bancada", "deputado_camara"],
+        tema: "Carreira", pergunta: "Qual é o histórico eleitoral de cada político?",
         tit: `De cada 100 deputados, senadores e governadores eleitos em 2018, ${Math.round(g18.pc_eleito_de_novo_4_anos)} se elegeram de novo em 2022 e ${Math.round(g18.pc_eleito_de_novo_8_anos)} em 2026`,
         sub: `Na política da cidade a carreira é mais curta: dos prefeitos e vereadores de 2016, ${pct(m16.pc_eleito_de_novo_4_anos, 0)} voltaram em 2020 e ${pct(m16.pc_eleito_de_novo_8_anos, 0)} em 2024 (de 2020 para 2024, ${pct(m20.pc_eleito_de_novo_4_anos, 0)}). De 1994 a 2026, ${V.int(tot)} pessoas venceram alguma eleição; ${pct((100 * um) / tot, 0)} venceram uma só, e ${V.int(oito)} venceram oito ou mais.`,
         legenda: leg([[COR.escuro, "Eleito de novo 4 anos depois"], [COR.azul, "8 anos depois"]]),
-        vistas: [{ rot: "Deputado, senador e governador", graf: graf(ger), nota: "Eleito de novo na eleição geral seguinte, para qualquer desses cargos. Quem virou prefeito dois anos depois não entra na conta." }, { rot: "Prefeito e vereador", graf: graf(mun), nota: "Para 2020, a volta de 8 anos depois ainda não aconteceu (2028)." }],
-        extra: `<details class="pq-origem"><summary>Quem mais venceu de 1994 a 2026</summary><ol class="pq__lista">${T.slice(0, 5).map((r) => `<li><b>${V.esc(r.nm_pessoa)}</b>: ${r.qt_vitorias} vitórias em ${r.qt_candidaturas} eleições<small>${V.esc(r.ds_trajetoria)}</small></li>`).join("")}</ol></details>`,
-        como: "A mesma pessoa é seguida pelo título de eleitor declarado no registro da candidatura (TSE), que muda menos que o nome na urna. 1996 fica de fora: os arquivos daquele ano não trazem o título. Conta qualquer cargo de deputado, senador, governador, prefeito ou vereador (a carreira pode mudar de cargo); suplentes que assumiram depois não contam. Senador tem mandato de oito anos: quem se elegeu em 2018 só voltaria a disputar em 2026, o que puxa para baixo a volta de 4 anos.",
-        consultas: ["q12", "q12b", "q12c"], fonte: "TSE" });
+        vistas: [{ rot: "Deputado, senador e governador", graf: graf(ger), nota: "Eleito de novo na eleição geral seguinte, para qualquer desses cargos. Quem virou prefeito dois anos depois não entra na conta." }, { rot: "Prefeito e vereador", graf: graf(mun), nota: "Para 2020, a volta de 8 anos depois ainda não aconteceu (2028)." },
+          ...govs.map(vistaCam)],
+        extra: `<section class="pq-painel" aria-labelledby="pq-pol-tit"><div class="pq-painel__cab"><div><h2 class="pq-painel__tit" id="pq-pol-tit">O histórico de cada político</h2>
+            <p class="pq-painel__rec">Todos os candidatos de 1994 a 2026: cada eleição, o partido e o lado dele, votos, dinheiro, bens, plano de governo e, para deputado federal, como votou</p></div></div>
+            <div class="pol-busca" role="search"><label for="pq-pol-busca">Nome do político</label><input id="pq-pol-busca" type="search" autocomplete="off" spellcheck="false" placeholder="Nome civil ou nome na urna, pelo começo"></div>
+            <ol class="pol-lista" id="pq-pol-lista">${T.slice(0, 5).map((r) => `<li><span class="pq-nota"><b>${V.esc(V.titulo(r.nm_pessoa))}</b>: ${r.qt_vitorias} vitórias em ${r.qt_candidaturas} eleições. ${V.esc(r.ds_trajetoria)}</span></li>`).join("")}</ol>
+            <p class="pq-nota"><a href="#/politicos">Abrir a busca de políticos</a>. A lista acima, até a busca, são os que mais venceram eleições de 1994 a 2026 (consulta q12c).</p></section>`,
+        ligar: async () => { const inp = document.getElementById("pq-pol-busca"); if (!inp) return; const BR = await V.baseBR(); let tmr;
+          inp.addEventListener("input", () => { clearTimeout(tmr); tmr = setTimeout(async () => { const t = inp.value, r = await V.buscaPoliticos(t, 10); if (inp.value !== t) return;
+            document.getElementById("pq-pol-lista").innerHTML = r.map((e) => `<li><a href="#/politico/${e.id}"><span class="busca__ico" style="background:#5f6672">${V.esc(V.iniciais(e.civil))}</span><span><b>${V.esc(V.titulo(e.urna || e.civil))}</b><small>${V.esc(V.descrPol(e, BR))}</small></span></a></li>`).join("") || '<li class="pq-nota">Ninguém com esse começo de nome.</li>'; }, 150); }); },
+        como: "A mesma pessoa é seguida pelo título de eleitor declarado no registro da candidatura (TSE), que muda menos que o nome na urna. 1996 fica de fora: os arquivos daquele ano não trazem o título. Conta qualquer cargo de deputado, senador, governador, prefeito ou vereador (a carreira pode mudar de cargo); suplentes que assumiram depois não contam. Senador tem mandato de oito anos: quem se elegeu em 2018 só voltaria a disputar em 2026, o que puxa para baixo a volta de 4 anos. A ficha de cada político junta, para a pessoa, todas as candidaturas com o lado do partido naquela eleição (q12d mostra a consulta, com o exemplo de quem mais venceu). Votos na Câmara: dados abertos da Câmara dos Deputados, 2019 a 2026, ligados ao TSE pelo nome civil e pela data de nascimento (q12e).",
+        consultas: ["q12", "q12b", "q12c", "q12d", ...(C.q12e ? ["q12e"] : [])], fonte: "TSE e Câmara dos Deputados" });
     }
     return blocos;
   }
@@ -382,6 +462,17 @@
     document.querySelectorAll("#pq-painel [data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.modo === modo)));
   }
 
+  /* "Os números em detalhe": grupos de frases montados por js/detalhes.js a partir das linhas das consultas */
+  function detalheHTML(b, C) {
+    const f = V.detalhes && V.detalhes[b.id];
+    if (!f) return "";
+    let grupos = [];
+    try { grupos = f(C).filter((g) => g && g.itens && g.itens.filter(Boolean).length); } catch (e) { console.error(e); return ""; }
+    if (!grupos.length) return "";
+    return `<section class="pq-detalhe" aria-labelledby="pq-det-tit"><h2 class="pq-painel__tit" id="pq-det-tit">Os números em detalhe</h2>
+      ${grupos.map((g) => `<div class="pq-detalhe__grupo"><h3>${g.tit}</h3>${g.texto ? `<p>${g.texto}</p>` : ""}<ul>${g.itens.filter(Boolean).map((i) => `<li>${i}</li>`).join("")}</ul></div>`).join("")}</section>`;
+  }
+
   function paginaPergunta(b, blocos, C) {
     const vs = vistasDe(b), i = blocos.indexOf(b), ant = blocos[i - 1], prox = blocos[i + 1];
     return `<div class="pagina pq-pagina">
@@ -402,6 +493,7 @@
         <p class="pq-nota" id="pq-nota"></p>
       </section>
       ${b.extra || ""}
+      ${detalheHTML(b, C)}
       <details class="pq-origem"><summary>De onde vêm esses números</summary>
         <p>${b.como}</p>
         <p><b>Tabelas do banco usadas:</b> ${b.tabelas.map((t) => `<code>${t}</code>`).join(", ")}.</p>

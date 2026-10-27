@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/AMANU"]=[["AMANUA",526731,"AMANUÁ SEUS","AMANUA",2004,13,90824,1,1505],[0,526731,"AMANUÁ SEUS","AMANUA",2004,13,90824,1,1505]];

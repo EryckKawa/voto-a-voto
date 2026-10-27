@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/HELIOP"]=[[0,1184240,"HELIOPOLIS GLEIBISON ALVES DE AMORIM","GLEIBINHO",2012,12,23027,0,0]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOAO_CARB"]=[[0,2336139,"JOAO CARBO GUTIERREZ","",1996,13,79391,0,61],[0,526677,"JOÃO CARBONI","BEM TE VI",2020,13,89656,0,26]];

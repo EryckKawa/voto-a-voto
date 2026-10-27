@@ -47,11 +47,11 @@
           const s = sg + " · " + (cg === "PREF" ? `eleito prefeito de ${c ? c.nome + " (" + uf + ")" : uf} em ${ano}` : `${V.CARGOS[cg]} ${ano}${uf ? " · " + uf : ""}${el ? " · eleito" : ""}`);
           return { h, v: r[6], ico: '<span class="busca__ico" style="background:' + V.corPartido(sg) + '">' + V.esc(V.iniciais(nome)) + "</span>", t: V.titulo(nome), s };
         });
-        // seis estados do grupo: deputados e vereadores, com a ficha do candidato
-        const B = await V.dados("busca");
-        const seis = B.filter((r) => !["PRES", "GOV", "SEN", "PREF"].includes(r[3]) && V.norm(r[1]).includes(t)).sort((a, b) => b[6] - a[6]).slice(0, 6)
-          .map((r) => ({ h: "#/candidato/" + r[5] + "/" + r[0], v: r[6], ico: '<span class="busca__ico" style="background:' + V.corPartido(r[2]) + '">' + V.esc(V.iniciais(r[1])) + "</span>", t: V.titulo(r[1]), s: r[2] + " · " + V.CARGOS_CURTO[r[3]] + " " + r[4] + " · " + r[5] }));
-        cand = nac.concat(seis).sort((a, b) => b.v - a.v).slice(0, 7);
+        // todos os candidatos de 1994 a 2026, pelo começo do nome: levam à ficha do político (js/politico.js)
+        const pol = V.buscaPoliticos ? (await V.buscaPoliticos(input.value, 7)).map((e) => ({ h: "#/politico/" + e.id, v: e.votos, ico: '<span class="busca__ico" style="background:#5f6672">' + V.esc(V.iniciais(e.civil)) + "</span>",
+          t: V.titulo(e.urna || e.civil), s: V.descrPol(e, BR) })) : [];
+        // a ficha vem primeiro; a eleição no mapa completa quando a busca pelo começo do nome acha pouco
+        cand = pol.length >= 4 ? pol : pol.concat(nac.sort((a, b) => b.v - a.v)).slice(0, 7);
       } catch (e) {}
       if (V.norm(input.value.trim()) === t) pinta(cid.concat(cand));
     }
@@ -85,7 +85,7 @@
     await V.carregarBase();
     await Promise.all([2018, 2022, 2024, 2026].map(V.carregarFotos));   // fotos do TSE dos anos desta base
     const c = V.porIbge.get(ibge);
-    if (!c) throw new Error("Cidade não encontrada");
+    if (!c) { const b = (await V.baseBR()).porIbge.get(ibge); if (b) { location.replace("#/mapa/br/" + b.uf + "/c/" + ibge); return; } throw new Error("Cidade não encontrada"); }
     if (ano && V.cargosDoAno(+ano).includes(cargo)) { V.escolha = { ano: +ano, cargo }; V.salvarEscolha(); }
     const UF = await V.dados("uf/" + c.uf);
     const dadosCid = UF.mun[String(c.tse)] || {};

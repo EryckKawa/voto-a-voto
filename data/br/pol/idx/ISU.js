@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ISU"]=[[0,711078,"ISUET LEITE","",2004,13,79570,0,59],[0,97624,"ISULINA SOARES","PROFESSORA ISA",2012,13,74071,0,94]];

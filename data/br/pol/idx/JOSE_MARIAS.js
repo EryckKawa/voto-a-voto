@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOSE_MARIAS"]=[[0,1012837,"JOSÉ MARIAS FERRAZ DE SOUZA FILHO","JOHNSON SOUZA",2020,13,8958,0,39]];

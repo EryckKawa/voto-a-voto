@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/RAIMUNC"]=[[0,435086,"RAIMUNCO LOURENCO DE SOUSA","RAIMUNDO LOURENCO",2008,13,4006,0,176]];

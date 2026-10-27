@@ -5,16 +5,26 @@
 
   /* ---------- dados: carregados como <script> para funcionar também ao abrir o arquivo direto do disco ---------- */
   const pend = {};
+  // Dados grandes usam gzip em base64 dentro do .js, inclusive quando abertos por file://.
+  V.descompactar = async (texto) => {
+    const bytes = Uint8Array.from(atob(texto), (c) => c.charCodeAt(0));
+    const fluxo = new Blob([bytes]).stream().pipeThrough(new DecompressionStream("gzip"));
+    return JSON.parse(await new Response(fluxo).text());
+  };
   V.dados = function (chave) {
     window.__D = window.__D || {};
     if (window.__D[chave]) return Promise.resolve(window.__D[chave]);
     if (pend[chave]) return pend[chave];
+    // rede instável (Wi-Fi de sala, celular): tenta de novo duas vezes antes de desistir
     pend[chave] = new Promise((ok, falha) => {
-      const s = document.createElement("script");
-      s.src = "data/" + chave + ".js";
-      s.onload = () => (window.__D[chave] ? ok(window.__D[chave]) : falha(new Error("Arquivo sem dados: " + chave)));
-      s.onerror = () => { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); };
-      document.head.appendChild(s);
+      const tentar = (n) => {
+        const s = document.createElement("script");
+        s.src = "data/" + chave + ".js?v=20261027-nuvens" + (n ? "&t=" + n : "");
+        s.onload = () => (window.__D[chave] ? ok(window.__D[chave]) : falha(new Error("Arquivo sem dados: " + chave)));
+        s.onerror = () => { s.remove(); if (n < 2) setTimeout(() => tentar(n + 1), 600 * (n + 1)); else { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); } };
+        document.head.appendChild(s);
+      };
+      tentar(0);
     });
     return pend[chave];
   };
@@ -53,8 +63,9 @@
   /* ---------- fotos dos candidatos (TSE): img/fotos/<ano>/<sq>.jpg ----------
      data/br/fotos/<ano> lista os sequenciais que têm foto (feito por scripts/lista_fotos.py e baixar_fotos_site.ps1).
      Quem não tem foto (ou cuja foto não carrega) fica com as iniciais na cor do partido. */
-  const FOTO_SETS = {};
+  const FOTO_SETS = {}, ANOS_FOTO = [2010, 2014, 2018, 2022, 2024];   // anos com índice em data/br/fotos
   V.carregarFotos = async (ano) => {
+    if (!FOTO_SETS[ano] && !ANOS_FOTO.includes(+ano)) FOTO_SETS[ano] = new Set();
     if (!FOTO_SETS[ano]) { try { FOTO_SETS[ano] = new Set((await V.dados("br/fotos/" + ano)).map(String)); } catch (e) { FOTO_SETS[ano] = new Set(); } }
     return FOTO_SETS[ano];
   };
@@ -116,6 +127,7 @@
   V.ir = (h) => { if (location.hash === h) dispara(); else location.hash = h; };
   async function dispara() {
     const h = location.hash.replace(/^#/, "") || "/";
+    if (h === "/apertadas") { location.replace("#/mapa"); return; }
     const main = document.getElementById("conteudo");
     for (const [re, fn, op] of V.rotas) {
       const m = h.match(re);
@@ -126,13 +138,13 @@
         document.querySelectorAll(".nav a").forEach((a) => a.removeAttribute("aria-current"));
         if (!mesma) main.innerHTML = '<div class="carregando">Carregando…</div>';
         delete main.dataset.erro;
-        try { await fn(main, ...m.slice(1), mesma); } catch (err) { console.error(err); main.dataset.erro = "1"; main.innerHTML = '<div class="pagina"><p class="aviso">' + V.esc(err.message) + '. <a href="#/">Voltar ao mapa</a>.</p></div>'; main.dataset.rota = ""; }
+        try { await fn(main, ...m.slice(1), mesma); } catch (err) { console.error(err); main.dataset.erro = "1"; main.innerHTML = '<div class="pagina"><p class="aviso">' + V.esc(err.message) + '. <a href="#/">Voltar ao início</a>.</p></div>'; main.dataset.rota = ""; }
         if (!V.semRolar && !mesma) scrollTo(0, 0); V.semRolar = false;
         dispatchEvent(new CustomEvent("vav:pronto", { detail: h }));   // a página terminou de montar (usado pelos testes)
         return;
       }
     }
-    main.innerHTML = '<div class="pagina"><p class="vazio">Página não encontrada. <a href="#/">Voltar ao mapa</a>.</p></div>';
+    main.innerHTML = '<div class="pagina"><p class="vazio">Página não encontrada. <a href="#/">Voltar ao início</a>.</p></div>';
   }
   V.iniciarRotas = () => { addEventListener("hashchange", dispara); dispara(); };
   V.marcarNav = (k) => { const a = document.querySelector('.nav a[data-nav="' + k + '"]'); if (a) a.setAttribute("aria-current", "page"); };

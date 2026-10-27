@@ -749,7 +749,10 @@
     let cargo = cg || "PREF", ano = an ? +an : 2024;
     if (!ELEICOES[cargo] || !ELEICOES[cargo].prontos.includes(ano)) { cargo = "PREF"; ano = 2024; }
     BR.venc = await V.dados("br/venc/" + cargo + ano); BR.eleicao = { cargo, ano };
-    if (ib && !uf) uf = BR.porIbge.get(ib) && BR.porIbge.get(ib).uf;
+    // endereço digitado à mão: estado ou cidade inexistente cai no Brasil, e a cidade decide o estado
+    if (uf && !V.UFN[uf]) uf = undefined;
+    if (ib && !BR.porIbge.get(ib)) ib = undefined;
+    if (ib) uf = BR.porIbge.get(ib).uf;
     const nova = !mesma || !H || !document.getElementById("mapa-br");
     if (nova) montar(main);
     const rever = await atualizar(uf, ib, cargo, ano, cam || "venc");

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ALCC"]=[[0,1347437,"ALCCIONIDES GONÇALVES DE ALMEIDA","PAULISTINHA",2016,13,41718,0,113]];

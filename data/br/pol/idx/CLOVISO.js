@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CLOVISO"]=[[0,866909,"CLÓVISON PIRES","SÃO PIRES",2016,13,58246,0,94],[0,2241884,"CLOVISON PIRES","",1996,13,58246,0,61]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ATV"]=[["ATVIR MASCATE",366083,"ATIVIR JOSE ALVES CARNEIRO","ATVIR MASCATE",2020,13,84573,0,87]];

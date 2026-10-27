@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/REGINA_Y"]=[[0,467063,"REGINA YOLANDA ARLOTA CARQUEJO","REGINA CARQUEJO",2018,7,"RJ",0,1066]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CIJ"]=[["CIJAY OFICIAL",1797465,"CHRISTIAN JESUS DA SILVA","CIJAY OFICIAL",2020,13,35734,0,315]];

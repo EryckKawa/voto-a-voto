@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/GILBEM"]=[[0,2080272,"GILBEM ALVES FERREIRA","",1996,13,2593,0,31],[0,2102695,"GILBEM DIAS DE SOUSA","",1996,13,10685,0,285]];

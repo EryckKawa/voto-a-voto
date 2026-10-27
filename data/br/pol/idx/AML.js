@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/AML"]=[[0,480479,"AMLETO DOMINGOS BATTISTONE","BATTISTONE ITALIANO",2000,13,66354,0,144]];

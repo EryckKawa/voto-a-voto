@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARIA_LUCIAD"]=[[0,1938312,"MARIA LUCIADORA PACHECO ROLIM","LUCIA PACHECO",2024,13,69418,0,22]];

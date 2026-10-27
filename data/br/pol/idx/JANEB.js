@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JANEB"]=[[0,664358,"JANEBERG CAMILO DE VASCONCELOS","BERG LOCUTOR",2020,13,16691,0,80]];

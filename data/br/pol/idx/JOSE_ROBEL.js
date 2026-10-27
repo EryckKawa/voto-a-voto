@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOSE_ROBEL"]=[[0,363519,"JOSÉ ROBEL LOPES DE VASCONCELOS","ZEZINHO DO ROBEMAR",2024,13,56677,1,466]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VALDEMIA"]=[[0,503282,"VALDEMIAS DOS SANTOS MARTINS","JUNIOR MECÂNICO",2020,13,2771,0,49]];

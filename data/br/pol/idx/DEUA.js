@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/DEUA"]=[[0,1311153,"DEUANDERSON PEREIRA DESTERRO","DELL DO AROCHA",2020,13,7129,0,48]];

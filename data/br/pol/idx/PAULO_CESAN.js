@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/PAULO_CESAN"]=[[0,1013877,"PAULO CESANIR TAVARES DE CARVALHO","PAULINHO DA SÉ",2020,13,14192,0,163]];

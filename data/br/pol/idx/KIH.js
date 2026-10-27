@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/KIH"]=[["KIHARA",2291593,"PEDRO KOITIRO KIHARA","",1996,13,67750,1,212],["KIHN",2343570,"VANDERLEI KIHN","",1996,13,81604,1,97]];

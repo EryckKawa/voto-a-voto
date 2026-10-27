@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/IRIG"]=[["IRIGARAY",768319,"RUY ALMEIDA IRIGARAY","RUY IRIGARAY BOLSONARO",2022,7,"RS",0,17109]];

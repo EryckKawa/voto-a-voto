@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/NATS"]=[[0,1292038,"NATSON KESSIO SOUSA TEIXEIRA","KESSINHO DE ZEQUINHA",2008,13,34029,0,13]];

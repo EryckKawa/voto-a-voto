@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SELMAG"]=[[0,1419806,"SELMAGNA EVANGELISTA SOUZA","MAGDA DA FARMÁCIA",2024,13,61484,0,225]];

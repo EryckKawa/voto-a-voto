@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CLEIP"]=[[0,1859259,"CLEIPETERSON REMO SELARO","CLEI DA AMBULÂNCIA",2016,13,66818,0,112]];

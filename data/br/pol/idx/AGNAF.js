@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/AGNAF"]=[["AGNAFON CANTOR",1506523,"ANTONIO CARDOSO DA SILVA","AGNAFON CANTOR",2004,13,39098,0,5]];

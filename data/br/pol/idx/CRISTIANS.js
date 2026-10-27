@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CRISTIANS"]=[[0,711897,"CRISTIANS FELIS SALES ANDRADES","DR CRISTIANO",2020,13,56251,0,21]];

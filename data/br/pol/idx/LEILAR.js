@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LEILAR"]=[[0,776991,"LEILARLEI MONTEIRO DE JESUS SANTOS","LEILA",2012,13,94579,0,140]];

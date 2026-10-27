@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/AUGUST_"]=[[0,1935421,"AUGUST STANISLAW LUDKIEWICZ OLEJNIK","DR. AUGUST.",2016,13,67237,0,3]];

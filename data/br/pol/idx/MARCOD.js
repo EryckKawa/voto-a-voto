@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARCOD"]=[[0,568813,"MARCODES NUNES DE MAGALHÃES","MARCONDES MAGALHAES",2016,13,5894,0,56]];

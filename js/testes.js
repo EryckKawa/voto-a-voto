@@ -91,9 +91,9 @@
   });
 
   // FUNCIONAMENTO
-  teste("Funcionamento", "Menu com as cinco seções (sem Disputas apertadas)", async () => {
+  teste("Funcionamento", "Menu com as seis seções (sem Disputas apertadas)", async () => {
     const ls = qq(".nav a").map((a) => a.textContent.trim());
-    return R(ls.length === 5 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos");
+    return R(ls.length === 6 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos");
   });
   teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
     location.hash = "#/apertadas";
@@ -162,7 +162,7 @@
   });
 
   // ACESSIBILIDADE
-  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "12 perguntas"], ["#/perguntas/q3", "Uma pergunta (Q3)"], ["#/partidos", "Partidos"]];
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "12 perguntas"], ["#/perguntas/q3", "Uma pergunta (Q3)"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
   for (const [h, nome] of PAGS_A11Y) {
     teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
       await carregarAxe(); await irPara(h); await quadros(3);
@@ -292,7 +292,7 @@
     });
   }
   teste("Preenchimento", "Textos sem campo vazio em todas as páginas", async () => {
-    const pags = ["#/", "#/mapa", "#/mapa/e/PRES1994", "#/mapa/e/PREF1996/br/MA", "#/mapa/e/DF2022", "#/mapa/e/DE2014/br/BA", "#/mapa/e/VER2024/br/PI/c/2211001", "#/mapa/v/abst", "#/mapa/v/bn", "#/mapa/v/vira", "#/revela", "#/perguntas", ...Array.from({ length: 12 }, (_, i) => "#/perguntas/q" + (i + 1)), "#/partidos"];
+    const pags = ["#/", "#/mapa", "#/mapa/e/PRES1994", "#/mapa/e/PREF1996/br/MA", "#/mapa/e/DF2022", "#/mapa/e/DE2014/br/BA", "#/mapa/e/VER2024/br/PI/c/2211001", "#/mapa/v/abst", "#/mapa/v/bn", "#/mapa/v/vira", "#/revela", "#/perguntas", ...Array.from({ length: 12 }, (_, i) => "#/perguntas/q" + (i + 1)), "#/partidos", "#/politicos"];
     const ruins = [], RUIM = /\b(undefined|NaN|null|Infinity)\b|\[object |R\$ ?NaN/;
     for (const h of pags) {
       await irPara(h); await quadros(2);
@@ -349,12 +349,12 @@
     const casos = [["lula", /Lula/i, /Presidente/], ["silvio mendes", /Silvio Mendes/i, /Teresina/], ["tarcisio", /Tarc[ií]sio/i, /Governador|SP/]];
     const ruins = [];
     for (const [t, re, re2] of casos) { const li = await buscar(t); if (!li.some((l) => re.test(l.textContent) && re2.test(l.textContent))) ruins.push(`“${t}”`); }
-    // e o resultado leva para o mapa daquela eleição
+    // e o resultado leva para a ficha do político
     const li = (await buscar("silvio mendes")).find((l) => /Teresina/.test(l.textContent));
     const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
-    if (li) { li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true })); await pronto; await ate(() => /Teresina/.test(txt("#manchete")), 8000).catch(() => {}); }
-    const foi = /Teresina/.test(txt("#manchete"));
-    return R(ruins.length === 0 && foi, (ruins.length ? "não achou: " + ruins.join(", ") + " · " : `${casos.length} candidatos achados · `) + (foi ? "abriu Teresina" : "não abriu a cidade"), "acha presidente, prefeito e governador e abre o mapa da eleição");
+    if (li) { li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true })); await pronto; await ate(() => qq(".pol-hist li").length, 8000).catch(() => {}); }
+    const foi = /^#\/politico\//.test(location.hash) && /Silvio Mendes/i.test(txt(".pol-nome"));
+    return R(ruins.length === 0 && foi, (ruins.length ? "não achou: " + ruins.join(", ") + " · " : `${casos.length} candidatos achados · `) + (foi ? "abriu a ficha" : "não abriu a ficha"), "acha presidente, prefeito e governador e abre a ficha do político");
   });
   teste("Preenchimento", "Busca: texto estranho não quebra nem injeta código", async () => {
     await irPara("#/");
@@ -380,6 +380,87 @@
   });
 
   // por último: nada quebrou durante todos os testes acima
+  // FICHA DO POLÍTICO, NUVENS E CÂMARA
+  const fichaDe = async (nome, re) => { const r = await V.buscaPoliticos(nome, 10); const e = r.find((x) => re.test(x.civil + " " + (x.urna || ""))); return e ? "#/politico/" + e.id : null; };
+  teste("Velocidade", "Busca de políticos abre", () => medirPagina("#/politicos", () => !!q("#pol-busca"), 1200, 300));
+  teste("Funcionamento", "Ficha do político: histórico, lado político e votos na Câmara (Arthur Lira)", async () => {
+    const h = await fichaDe("arthur lira", /LIRA/);
+    if (!h) return R(false, "não achou na busca", "acha e abre a ficha");
+    await irPara(h); await ate(() => qq(".pol-hist li").length, 8000).catch(() => {});
+    const n = qq(".pol-hist li").length, regua = !!q("svg.pol-regua circle"), votos = qq(".pol-votos li").length;
+    return R(n >= 3 && regua && votos >= 10, `${n} candidaturas · régua ${regua ? "com pontos" : "vazia"} · ${votos} votos na lista`, "3 ou mais candidaturas, régua com pontos e votos na Câmara");
+  });
+  teste("Funcionamento", "Ficha: votações da mais recente para a mais antiga", async () => {
+    const datas = qq(".pol-votos__data").map((e) => e.textContent.split("/").reverse().join("-"));
+    const ok = datas.length >= 10 && datas.every((d, i) => !i || datas[i - 1] >= d);
+    return R(ok, datas.slice(0, 3).join(", "), "datas em ordem decrescente");
+  });
+  teste("Dados", "Ementas da Câmara sem CPF ou CNPJ", async () => {
+    const votacoes = await V.dados("br/pol/cam/votacoes"), texto = JSON.stringify(votacoes);
+    const docs = texto.match(/\b\d{3}\.\d{3}\.\d{3}-\d{2}\b|\b\d{2}\.\d{3}\.\d{3}\/\d{4}-\d{2}\b/g) || [];
+    return R(docs.length === 0, docs.length ? `${docs.length} documentos expostos` : "nenhum documento exposto", "nenhum CPF ou CNPJ");
+  });
+  teste("Funcionamento", "Ficha: procurar uma votação filtra a lista", async () => {
+    const f = q("#pol-cam-filtro"); if (!f) return R(false, "sem a lista de votos", "lista de votos na ficha");
+    const antes = qq(".pol-votos li").length; f.value = "PEC"; f.dispatchEvent(new Event("input", { bubbles: true }));
+    await ate(() => /PEC/.test(txt(".pol-cam [aria-live]")), 4000).catch(() => {});
+    const ls = qq(".pol-votos li"), todos = ls.length && ls.every((l) => /PEC/i.test(l.textContent));
+    return R(!!todos, `${antes} → ${ls.length} votações, ${todos ? "todas de PEC" : "nem todas de PEC"}`, "só votações com “PEC”");
+  });
+  teste("Dados", "Ficha de Lula: eleito presidente em 2002, 2006 e 2022", async () => {
+    const h = await fichaDe("lula", /LUIZ IN[AÁ]CIO/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h); await ate(() => qq(".pol-hist li").length, 8000).catch(() => {});
+    const anos = qq(".pol-hist li").filter((l) => /Presidente/.test(l.textContent) && /Eleito/.test(l.textContent)).map((l) => +l.querySelector(".pol-hist__ano").textContent);
+    const ok = [2002, 2006, 2022].every((a) => anos.includes(a));
+    return R(ok, "eleito presidente em " + anos.sort().join(", "), "inclui 2002, 2006 e 2022");
+  });
+  teste("Funcionamento", "Q6: nuvem de palavras por cargo e por partido", async () => {
+    await irPara("#/perguntas/q6");
+    const bs = qq("#pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · Prefeito/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
+    if (!bc || !bp) return R(false, "sem os botões das nuvens", "nuvem por cargo e por partido");
+    bc.click(); await quadros(2); const nc = qq("#pq-graf .nuvem span").length;
+    bp.click(); await quadros(2); const np = qq("#pq-graf .nuvem").length;
+    return R(nc >= 30 && np >= 6, `${nc} palavras nas nuvens de prefeito · ${np} nuvens de partido`, "30 ou mais palavras; 6 ou mais partidos");
+  });
+  teste("Funcionamento", "Nuvem individual: projetos e discursos de Arthur Lira", async () => {
+    const h = await fichaDe("arthur lira", /LIRA/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h);
+    const botoes = qq("#pol-plano [data-plano]"), pr = botoes.find((b) => /Projetos.*Câmara/.test(b.textContent)), di = botoes.find((b) => /^Discursos.*Câmara/.test(b.textContent));
+    if (!pr || !di) return R(false, "sem as duas fontes", "projetos e discursos individuais");
+    pr.click(); await ate(() => /ementas/.test(txt("#pol-plano .pol-fonte")));
+    const a = txt("#pol-plano .nuvem"); di.click(); await ate(() => /transcrições/.test(txt("#pol-plano .pol-fonte")));
+    const n = qq("#pol-plano .nuvem span").length;
+    return R(n >= 10 && a !== txt("#pol-plano .nuvem"), `${n} palavras nos discursos; trocar a fonte mudou a nuvem`, "fontes próprias, nuvens diferentes e 10 ou mais palavras");
+  });
+  teste("Funcionamento", "Nuvem individual: resumos oficiais do Senado", async () => {
+    const h = await fichaDe("alessandro vieira", /ALESSANDRO VIEIRA/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h);
+    const b = qq("#pol-plano [data-plano]").find((e) => /Resumos de discursos.*Senado/.test(e.textContent));
+    if (b) b.click();
+    await ate(() => /resumos oficiais de discursos/.test(txt("#pol-plano .pol-fonte")));
+    const n = qq("#pol-plano .nuvem span").length;
+    return R(n >= 10 && !!q("#pol-plano .pol-fonte a"), `${n} palavras e link da fonte oficial`, "resumos identificados e fonte consultável");
+  });
+  teste("Funcionamento", "Nuvem individual: plano de governo de Lula preservado", async () => {
+    const h = await fichaDe("lula", /LUIZ IN[AÁ]CIO/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h);
+    const b = qq("#pol-plano [data-plano]").find((e) => /^Plano/.test(e.textContent)); if (b) b.click();
+    await ate(() => /TSE, plano de governo individual/.test(txt("#pol-plano .pol-fonte")));
+    const n = qq("#pol-plano .nuvem span").length;
+    return R(n >= 20, `${n} palavras do plano individual`, "plano identificado e 20 ou mais palavras");
+  });
+  teste("Funcionamento", "Nuvem individual: candidato sem texto tem aviso explícito", async () => {
+    const h = await fichaDe("carlos nantes", /CARLOS NANTES BOLSONARO/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h);
+    const aviso = txt("#pol-plano .vazio");
+    return R(/Não há texto disponível/.test(aviso) && !q("#pol-plano .nuvem"), aviso, "aviso de ausência, sem inventar palavras");
+  });
+  teste("Acessibilidade", "Ficha do político: regras de acessibilidade (axe)", async () => {
+    const h = await fichaDe("arthur lira", /LIRA/); if (!h) return R(false, "não achou", "acha a ficha");
+    await carregarAxe(); await irPara(h); await ate(() => qq(".pol-hist li").length, 8000).catch(() => {}); await quadros(3);
+    const v = (await window.axe.run(document, { exclude: [["#testes-painel"]], resultTypes: ["violations"] })).violations;
+    return R(v.length === 0, v.length ? v.map((x) => `${x.id} (${x.nodes.length})`).join(", ") : "nenhum problema", "nenhum problema", v.length ? v[0].help : "");
+  });
   teste("Funcionamento", "Nenhum erro de JavaScript durante os testes", async () => R(ERROS.length === 0, ERROS.length ? ERROS.length + ": " + ERROS[0].slice(0, 90) : "nenhum", "nenhum"));
 
   /* ---------- execução e relatório ---------- */

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ALINEL"]=[[0,1645012,"ALINELIA DE OLIVEIRA SANTOS CURCIO","ALINE CÚRCIO",2024,13,33634,0,14]];

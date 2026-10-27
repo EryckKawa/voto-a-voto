@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CHICOG"]=[["CHICOGUNHA",626238,"RAFAEL RAMOS DE SOUZA MOURA","CHICOGUNHA",2020,13,31950,0,79]];

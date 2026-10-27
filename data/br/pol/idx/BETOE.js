@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/BETOE"]=[[0,985249,"BETOEL DA COSTA CIRQUEIRA","BETUEL SIQUEIRA",2016,13,92410,0,122]];

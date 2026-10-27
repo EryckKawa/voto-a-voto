@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LAII"]=[["LAIINHA",1794008,"LAILZETE DE FATIMA TRINDADE OLIVEIRA","LAIINHA",2020,13,37737,0,2]];

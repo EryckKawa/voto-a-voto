@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SANDROE"]=[[0,1047590,"SANDROELMA TAVARES LIMA LEITE","IRMÃ SANDROELMA",2012,12,24171,0,0]];

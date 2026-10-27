@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/REGINAU"]=[[0,979446,"REGINAURO SOUSA NASCIMENTO","SARGENTO REGINAURO",2026,7,"CE",3,41635]];

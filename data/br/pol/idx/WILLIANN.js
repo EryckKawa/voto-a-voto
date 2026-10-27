@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/WILLIANN"]=[[0,952784,"WILLIANNA MARQUES DE MOURA PAIVA","LANA SINDÔ",2024,13,10057,3,1514]];

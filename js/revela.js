@@ -38,7 +38,18 @@
     </svg>`;
   }
   const leg = (itens) => `<p class="achado__leg">${itens.map(([cor, t, vazio]) => `<span><i style="background:${vazio ? "#fff" : cor};${vazio ? `border:2px solid ${cor};border-radius:50%` : ""}"></i>${t}</span>`).join("")}</p>`;
-  V.graf = { barras, linhas, leg };   // usados também na página das 12 perguntas
+
+  /* nuvem de palavras: o tamanho é a raiz da contagem; as maiores ficam no meio (ordem fixa, sem sorteio, para a nuvem
+     não mudar a cada visita). itens: [{ w (palavra), q (contagem), cor? , tit? }]. A mesma lista vai para o leitor de tela. */
+  function nuvem(itens, { rot = "Nuvem de palavras", min = 14, max = 46, cor = "#16181d" } = {}) {
+    if (!itens.length) return '<p class="vazio">Sem palavras para mostrar.</p>';
+    const ord = [...itens].sort((a, b) => b.q - a.q), qm = ord[0].q, q0 = ord[ord.length - 1].q;
+    const tam = (q) => (qm === q0 ? (min + max) / 2 : min + (max - min) * Math.sqrt((q - q0) / (qm - q0)));
+    const meio = []; ord.forEach((it, i) => (i % 2 ? meio.push(it) : meio.unshift(it)));
+    return `<p class="nuvem" role="img" aria-label="${V.esc(rot)}: ${ord.map((it) => `${it.w} (${V.int(it.q)})`).join(", ")}">${meio.map((it) =>
+      `<span style="font-size:${tam(it.q).toFixed(1)}px;color:${it.cor || cor}" title="${V.esc(it.tit || `${it.w}: ${V.int(it.q)} vezes`)}">${V.esc(it.w)}</span>`).join(" ")}</p>`;
+  }
+  V.graf = { barras, linhas, leg, nuvem };   // usados também na página das 12 perguntas e na ficha do político
 
   const bloco = (b) => `<article class="achado" id="${b.id}">
       <h2 class="achado__titulo">${b.tit}</h2>

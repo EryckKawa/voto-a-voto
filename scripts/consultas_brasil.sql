@@ -30,6 +30,17 @@ FROM vw_candidatura_resumo
 WHERE nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND cd_cargo IN (3, 5, 6, 7, 11, 13)
 GROUP BY nr_ano_eleicao, ds_cargo ORDER BY ds_cargo, nr_ano_eleicao;
 
+-- @q1c | Gasto médio por candidato (Σ gastos ÷ nº de candidatos do cargo), custo por cadeira (Σ gastos ÷ eleitos) e custo por mês de mandato
+SELECT nr_ano_eleicao, ds_cargo, cd_cargo, COUNT(*) AS qt_candidatos, COUNT_IF(vr_despesa_total > 0) AS qt_com_despesa, COUNT_IF(fl_eleito) AS qt_eleitos,
+       ROUND(SUM(vr_despesa_total), 0)                                                    AS vr_gasto_total,
+       ROUND(SUM(vr_despesa_total) / COUNT(*), 0)                                         AS vr_gasto_medio_candidato,
+       ROUND(SUM(vr_despesa_total) / NULLIF(COUNT_IF(fl_eleito), 0), 0)                   AS vr_custo_por_cadeira,
+       ROUND(SUM(vr_despesa_total) / NULLIF(COUNT_IF(fl_eleito), 0) / (CASE WHEN cd_cargo = 5 THEN 8 ELSE 4 END * 12), 0) AS vr_custo_por_mes_mandato  -- senador: 8 anos
+FROM vw_candidatura_resumo
+WHERE nr_ano_eleicao >= 2010 AND cd_cargo IN (1, 3, 5, 6, 7, 11, 13)
+GROUP BY nr_ano_eleicao, ds_cargo, cd_cargo HAVING SUM(vr_despesa_total) > 0
+ORDER BY cd_cargo, nr_ano_eleicao;
+
 -- @q2 | Taxa de sucesso x dinheiro: candidatos em cinco grupos de receita (1 = menos dinheiro)
 WITH base AS (
     SELECT nr_ano_eleicao, ds_cargo, fl_eleito, vr_receita_total,
@@ -229,7 +240,9 @@ SELECT e.nr_ano_eleicao, cg.ds_cargo, SUM(vp.qt_votos_legenda) AS qt_votos_legen
        ROUND(100 * SUM(vp.qt_votos_legenda) / NULLIF(SUM(vp.qt_votos_legenda + vp.qt_votos_nominais), 0), 2) AS pc_legenda
 FROM votacao_partido vp JOIN eleicao e ON e.id_eleicao = vp.id_eleicao JOIN cargo cg ON cg.cd_cargo = vp.cd_cargo
 WHERE vp.nr_turno = 1 AND vp.cd_cargo IN (6, 7, 13) AND vp.qt_votos_legenda IS NOT NULL
-GROUP BY e.nr_ano_eleicao, cg.ds_cargo ORDER BY cg.ds_cargo, e.nr_ano_eleicao;
+GROUP BY e.nr_ano_eleicao, cg.ds_cargo
+HAVING SUM(vp.qt_votos_legenda) > 0   -- antes de 2000 o TSE não separa a legenda (vem zerada)
+ORDER BY cg.ds_cargo, e.nr_ano_eleicao;
 
 -- @q5b | Quem ainda vive de legenda: deputado federal 2022, partidos com mais de 500 mil votos
 SELECT p.sg_partido, pa.ds_espectro, SUM(vp.qt_votos_legenda) AS qt_votos_legenda, SUM(vp.qt_votos_legenda + vp.qt_votos_nominais) AS qt_votos_total,
@@ -248,6 +261,7 @@ WITH pl AS (
     FROM proposta_governo pg JOIN candidatura c ON c.id_candidatura = pg.id_candidatura
     JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN partido p ON p.id_partido = c.id_partido
     LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE c.cd_cargo = 1
 )
 SELECT ds_bloco, COUNT(*) AS qt_planos,
        ROUND(100 * AVG(CAST(tx LIKE '%seguranca publica%' AS INT)), 0) AS pc_seguranca,
@@ -268,6 +282,7 @@ WITH pl AS (
            lower(strip_accents(pg.tx_proposta)) AS tx
     FROM proposta_governo pg JOIN candidatura c ON c.id_candidatura = pg.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
     LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE c.cd_cargo = 1
 ),
 palavras AS (SELECT ds_bloco, unnest(regexp_extract_all(tx, '[a-z]{6,}')) AS palavra FROM pl),
 cont AS (
@@ -279,6 +294,62 @@ cont AS (
     GROUP BY 1, 2
 )
 SELECT * FROM (SELECT *, ROW_NUMBER() OVER (PARTITION BY ds_bloco ORDER BY qt DESC) AS rk FROM cont) WHERE rk <= 25 ORDER BY ds_bloco, rk;
+
+-- @q6c | Nuvem de palavras de cada partido: as palavras mais usadas nos planos de governo dos seus candidatos a presidente, governador e prefeito (2018 a 2026)
+WITH pp AS (
+    SELECT p.sg_partido, w.palavra, mode(w.ds_palavra) AS ds_palavra, SUM(w.qt) AS qt, COUNT(DISTINCT w.id_candidatura) AS qt_planos_com_palavra
+    FROM proposta_palavra w JOIN candidatura c ON c.id_candidatura = w.id_candidatura JOIN partido p ON p.id_partido = c.id_partido
+    GROUP BY 1, 2
+),
+tot AS (SELECT p.sg_partido, COUNT(DISTINCT w.id_candidatura) AS qt_planos, SUM(w.qt) AS qt_palavras
+        FROM proposta_palavra w JOIN candidatura c ON c.id_candidatura = w.id_candidatura JOIN partido p ON p.id_partido = c.id_partido GROUP BY 1),
+geral AS (SELECT palavra, SUM(qt) AS qt FROM proposta_palavra GROUP BY 1)
+SELECT pp.sg_partido, t.qt_planos, pp.palavra, pp.ds_palavra, pp.qt, pp.qt_planos_com_palavra,
+       -- destaque: quantas vezes a palavra é mais usada pelo partido do que por todos os partidos juntos (1 = igual)
+       ROUND((pp.qt / t.qt_palavras) / (g.qt / (SELECT SUM(qt) FROM proposta_palavra)), 2) AS vr_destaque,
+       (SELECT pa.vr_nota FROM vw_partido_ano pa JOIN partido p2 ON p2.id_partido = pa.id_partido WHERE p2.sg_partido = pp.sg_partido AND pa.vr_nota IS NOT NULL
+        ORDER BY pa.nr_ano_eleicao DESC LIMIT 1) AS vr_nota_partido   -- a nota mais recente do partido, para a cor da nuvem
+FROM pp JOIN tot t ON t.sg_partido = pp.sg_partido JOIN geral g ON g.palavra = pp.palavra
+WHERE t.qt_planos >= 30
+QUALIFY ROW_NUMBER() OVER (PARTITION BY pp.sg_partido ORDER BY pp.qt DESC) <= 40
+ORDER BY t.qt_planos DESC, pp.sg_partido, pp.qt DESC;
+
+-- @q6d | As palavras de cada campo político, cargo a cargo: esquerda, centro e direita (planos de presidente, governador e prefeito)
+WITH b AS (
+    SELECT cg.ds_cargo, CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                             WHEN pa.ds_espectro = 'CENTRO' THEN 'centro' END AS ds_bloco, w.id_candidatura, w.palavra, w.ds_palavra, w.qt
+    FROM proposta_palavra w JOIN candidatura c ON c.id_candidatura = w.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+    JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+),
+pb AS (SELECT ds_cargo, ds_bloco, palavra, mode(ds_palavra) AS ds_palavra, SUM(qt) AS qt, COUNT(DISTINCT id_candidatura) AS qt_planos_com_palavra FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2, 3),
+tb AS (SELECT ds_cargo, ds_bloco, COUNT(DISTINCT id_candidatura) AS qt_planos, SUM(qt) AS qt_palavras FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2),
+tc AS (SELECT ds_cargo, palavra, SUM(qt) AS qt FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2),
+tcc AS (SELECT ds_cargo, SUM(qt) AS qt FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1)
+SELECT pb.ds_cargo, pb.ds_bloco, tb.qt_planos, pb.palavra, pb.ds_palavra, pb.qt, pb.qt_planos_com_palavra,
+       ROUND((pb.qt / tb.qt_palavras) / (tc.qt / tcc.qt), 2) AS vr_destaque
+FROM pb JOIN tb USING (ds_cargo, ds_bloco) JOIN tc USING (ds_cargo, palavra) JOIN tcc USING (ds_cargo)
+QUALIFY ROW_NUMBER() OVER (PARTITION BY pb.ds_cargo, pb.ds_bloco ORDER BY pb.qt DESC) <= 40
+ORDER BY pb.ds_cargo, pb.ds_bloco, pb.qt DESC;
+
+-- @q6e | As palavras típicas de cada campo político, cargo a cargo: as que ele usa bem mais que a média do cargo (presentes em pelo menos 3% dos seus planos)
+WITH b AS (
+    SELECT cg.ds_cargo, CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                             WHEN pa.ds_espectro = 'CENTRO' THEN 'centro' END AS ds_bloco, w.id_candidatura, w.palavra, w.ds_palavra, w.qt
+    FROM proposta_palavra w JOIN candidatura c ON c.id_candidatura = w.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+    JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+),
+pb AS (SELECT ds_cargo, ds_bloco, palavra, mode(ds_palavra) AS ds_palavra, SUM(qt) AS qt, COUNT(DISTINCT id_candidatura) AS qt_planos_com_palavra FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2, 3),
+tb AS (SELECT ds_cargo, ds_bloco, COUNT(DISTINCT id_candidatura) AS qt_planos, SUM(qt) AS qt_palavras FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2),
+tc AS (SELECT ds_cargo, palavra, SUM(qt) AS qt FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1, 2),
+tcc AS (SELECT ds_cargo, SUM(qt) AS qt FROM b WHERE ds_bloco IS NOT NULL GROUP BY 1)
+SELECT pb.ds_cargo, pb.ds_bloco, tb.qt_planos, pb.palavra, pb.ds_palavra, pb.qt, pb.qt_planos_com_palavra,
+       ROUND((pb.qt / tb.qt_palavras) / (tc.qt / tcc.qt), 2) AS vr_destaque
+FROM pb JOIN tb USING (ds_cargo, ds_bloco) JOIN tc USING (ds_cargo, palavra) JOIN tcc USING (ds_cargo)
+WHERE pb.qt_planos_com_palavra >= 0.03 * tb.qt_planos
+QUALIFY ROW_NUMBER() OVER (PARTITION BY pb.ds_cargo, pb.ds_bloco ORDER BY (pb.qt / tb.qt_palavras) / (tc.qt / tcc.qt) DESC) <= 30
+ORDER BY pb.ds_cargo, pb.ds_bloco, vr_destaque DESC;
 
 -- @q7 | Jovens (até 29 anos na posse) x mais velhos: taxa de sucesso por ano
 SELECT r.nr_ano_eleicao, CASE WHEN r.nr_idade_posse <= 29 THEN 'jovem' ELSE 'não jovem' END AS ds_faixa,
@@ -417,6 +488,20 @@ FROM vw_candidatura_resumo
 WHERE nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND cd_cargo IN (6, 7, 11, 13)
 GROUP BY 1, 2, 3 ORDER BY 1, 2, 3;
 
+-- @q10b | Recursos públicos x sucesso eleitoral: taxa de sucesso pela faixa de dinheiro público recebido (fundos eleitoral e partidário)
+WITH base AS (
+    SELECT nr_ano_eleicao, ds_cargo, fl_eleito, vr_receita_publica,
+           CASE WHEN vr_receita_publica = 0 THEN 0
+                ELSE NTILE(5) OVER (PARTITION BY nr_ano_eleicao, cd_cargo, vr_receita_publica > 0 ORDER BY vr_receita_publica) END AS nr_faixa
+    FROM vw_candidatura_resumo
+    WHERE nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND cd_cargo IN (6, 7, 11, 13)
+)
+SELECT nr_ano_eleicao, ds_cargo, nr_faixa,
+       CASE nr_faixa WHEN 0 THEN 'nenhum dinheiro público' WHEN 1 THEN '20% que receberam menos' WHEN 5 THEN '20% que receberam mais' ELSE nr_faixa || 'º grupo' END AS ds_faixa,
+       COUNT(*) AS qt_candidatos, COUNT_IF(fl_eleito) AS qt_eleitos, ROUND(100 * AVG(CAST(fl_eleito AS INT)), 2) AS pc_taxa_sucesso,
+       ROUND(AVG(vr_receita_publica), 0) AS vr_publico_medio
+FROM base GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3;
+
 -- @q11 | Onde o candidato gasta: categorias de despesa contratada, por ano
 SELECT e.nr_ano_eleicao, d.ds_origem_despesa, COUNT(*) AS qt_lancamentos, ROUND(SUM(d.vr_despesa), 0) AS vr_total,
        ROUND(100 * SUM(d.vr_despesa) / SUM(SUM(d.vr_despesa)) OVER (PARTITION BY e.nr_ano_eleicao), 2) AS pc_ano
@@ -424,6 +509,26 @@ FROM despesa d JOIN candidatura c ON c.id_candidatura = d.id_candidatura JOIN el
 WHERE e.nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND c.cd_cargo <> 1
 GROUP BY 1, 2 QUALIFY ROW_NUMBER() OVER (PARTITION BY e.nr_ano_eleicao ORDER BY SUM(d.vr_despesa) DESC) <= 12
 ORDER BY 1, vr_total DESC;
+
+-- @q11b | Onde cada cargo investe em propaganda: parte do gasto de campanha por tipo de despesa (view vw_despesa_tipo), 2018 a 2024
+SELECT e.nr_ano_eleicao, cg.ds_cargo, t.nr_tipo, t.ds_tipo, t.fl_propaganda, ROUND(SUM(t.vr_despesa), 0) AS vr_total,
+       ROUND(100 * SUM(t.vr_despesa) / SUM(SUM(t.vr_despesa)) OVER (PARTITION BY e.nr_ano_eleicao, cg.ds_cargo), 2) AS pc_cargo
+FROM vw_despesa_tipo t JOIN candidatura c ON c.id_candidatura = t.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+WHERE e.nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13)
+GROUP BY 1, 2, 3, 4, 5 ORDER BY 1, 2, 3;
+
+-- @q11c | Onde cada campo político investe em propaganda: parte do gasto de propaganda por tipo, esquerda, centro e direita (2018 a 2024)
+WITH t AS (
+    SELECT e.nr_ano_eleicao, CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                                  WHEN pa.ds_espectro = 'CENTRO' THEN 'centro' END AS ds_bloco, t.nr_tipo, t.ds_tipo, t.vr_despesa
+    FROM vw_despesa_tipo t JOIN candidatura c ON c.id_candidatura = t.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE t.fl_propaganda AND e.nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13)
+)
+SELECT nr_ano_eleicao, ds_bloco, nr_tipo, ds_tipo, ROUND(SUM(vr_despesa), 0) AS vr_total,
+       ROUND(100 * SUM(vr_despesa) / SUM(SUM(vr_despesa)) OVER (PARTITION BY nr_ano_eleicao, ds_bloco), 2) AS pc_propaganda
+FROM t WHERE ds_bloco IS NOT NULL GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3;
 
 -- @q12 | Sobrevivência na carreira: dos eleitos no ano X, quantos se elegem de novo (qualquer cargo) 4 e 8 anos depois
 WITH eleitos AS (
@@ -458,3 +563,41 @@ FROM pessoa ps JOIN candidatura c ON c.id_pessoa = ps.id_pessoa JOIN eleicao e O
 JOIN partido pt ON pt.id_partido = c.id_partido LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
 WHERE c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13) AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%'
 GROUP BY ps.id_pessoa, ps.nm_pessoa ORDER BY qt_vitorias DESC, qt_candidaturas ASC LIMIT 10;
+
+-- @q12d | Histórico eleitoral de um político (a consulta da ficha de cada um; exemplo: quem mais venceu eleições de 1994 a 2026)
+WITH alvo AS (
+    SELECT c.id_pessoa FROM candidatura c JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    WHERE st.fl_eleito AND c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13) AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%'
+    GROUP BY 1 ORDER BY COUNT(*) DESC, MIN(c.id_candidatura) LIMIT 1
+)
+SELECT ps.nm_pessoa, e.nr_ano_eleicao, cg.ds_cargo, COALESCE(m.nm_municipio || '/' || m.sg_uf, c.sg_uf, 'Brasil') AS ds_lugar, c.nm_urna, pt.sg_partido,
+       pa.vr_nota AS vr_nota_partido, pa.ds_espectro, st.ds_sit_tot_turno,
+       (SELECT SUM(v.qt_votos_nominais) FROM votacao_candidato v WHERE v.id_candidatura = c.id_candidatura AND v.nr_turno = 1) AS qt_votos_1t,
+       r.vr_receita_total, r.vr_receita_publica, r.vr_despesa_total, pt2.vr_patrimonio
+FROM alvo JOIN pessoa ps ON ps.id_pessoa = alvo.id_pessoa
+JOIN candidatura c ON c.id_pessoa = ps.id_pessoa JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+JOIN partido pt ON pt.id_partido = c.id_partido LEFT JOIN municipio m ON m.cd_municipio_tse = c.cd_municipio_tse
+LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+LEFT JOIN vw_candidatura_resumo r ON r.id_candidatura = c.id_candidatura
+LEFT JOIN vw_patrimonio_candidato pt2 ON pt2.id_candidatura = c.id_candidatura
+ORDER BY e.nr_ano_eleicao, c.cd_cargo;
+
+-- @q12e | Como os deputados federais votam: quanto cada bancada segue a orientação do próprio partido e a do governo (Plenário, votações de mérito, 2019 a 2026)
+WITH v AS (
+    SELECT vd.id_votacao, vd.id_deputado, vd.sg_partido, vd.ds_voto,
+           CASE WHEN vc.dt_votacao < DATE '2023-01-01' THEN 'Bolsonaro (2019-2022)' ELSE 'Lula (2023-2026)' END AS ds_governo
+    FROM voto_deputado vd JOIN votacao_camara vc ON vc.id_votacao = vd.id_votacao
+    WHERE vc.fl_merito AND vc.sg_orgao = 'PLEN' AND vd.ds_voto IN ('Sim', 'Não', 'Obstrução')   -- obstrução conta como não
+),
+op AS (SELECT id_votacao, upper(strip_accents(sg_bancada)) AS sg, ANY_VALUE(ds_orientacao) AS o FROM orientacao_bancada
+       WHERE ds_orientacao IN ('Sim', 'Não', 'Obstrução') GROUP BY 1, 2),
+gov AS (SELECT id_votacao, ANY_VALUE(ds_orientacao) AS o FROM orientacao_bancada
+        WHERE sg_bancada IN ('Governo', 'GOV.') AND ds_orientacao IN ('Sim', 'Não', 'Obstrução') GROUP BY 1)
+SELECT v.ds_governo, v.sg_partido, COUNT(DISTINCT v.id_deputado) AS qt_deputados, COUNT(*) AS qt_votos,
+       ROUND(100 * AVG(CASE WHEN op.o IS NOT NULL THEN CAST((v.ds_voto = 'Sim') = (op.o = 'Sim') AS INT) END), 1) AS pc_segue_partido,
+       ROUND(100 * AVG(CASE WHEN gov.o IS NOT NULL THEN CAST((v.ds_voto = 'Sim') = (gov.o = 'Sim') AS INT) END), 1) AS pc_segue_governo
+FROM v LEFT JOIN op ON op.id_votacao = v.id_votacao AND op.sg = upper(strip_accents(v.sg_partido))
+LEFT JOIN gov ON gov.id_votacao = v.id_votacao
+GROUP BY 1, 2 HAVING COUNT(DISTINCT v.id_deputado) >= 5
+ORDER BY 1, pc_segue_governo DESC;

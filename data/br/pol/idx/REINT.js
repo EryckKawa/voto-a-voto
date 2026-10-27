@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/REINT"]=[[0,220968,"REINTRAUD MENESTRINA","PROFESSORA TRAUDI",2000,13,80870,0,65]];

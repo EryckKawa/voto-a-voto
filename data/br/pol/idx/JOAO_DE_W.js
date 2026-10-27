@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOAO_DE_W"]=[["JOAO DE WERNECK",852372,"JOÃO SERVULO LIMA BRAGA","JOAO DE WERNECK",2000,13,58734,0,32]];

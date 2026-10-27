@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LAZD"]=[[0,1164344,"LAZDONIZETE ALVES DE SOUZA","LAZÃO-CANDIDATO DO POVÃO",2012,13,95230,0,111]];

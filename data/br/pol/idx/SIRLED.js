@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SIRLED"]=[[0,1496120,"SIRLEDE CARDOSO SANTOS TERTULIANO","PROFESSORA SIL",2024,13,30058,0,0]];

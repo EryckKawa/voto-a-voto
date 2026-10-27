@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/WAX"]=[["WAXIMAN TENORIO",1058736,"UAXIMAN SOARES TENORIO","WAXIMAN TENORIO ",2020,13,27510,0,30]];

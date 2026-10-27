@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/NASCM"]=[["NASCMENTO",389688,"RAFAEL ALMEIDA NASCMENTO","RAFAEL VIEIRA",2024,13,353,1,369]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CLOVIR"]=[["CLOVIR QUIQUI",360108,"CLODOVIR DA COSTA PEREIRA","CLOVIR - QUIQUI",2012,13,83259,0,140]];

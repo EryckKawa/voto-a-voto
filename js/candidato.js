@@ -5,7 +5,8 @@
   V.rota(/^\/candidato\/([A-Z]{2})\/(\d+)$/, async function (main, uf, id) {
     await V.carregarBase();
     await Promise.all([2018, 2022, 2024, 2026].map(V.carregarFotos));   // fotos do TSE dos anos desta base
-    const UF = await V.dados("uf/" + uf);
+    const UF = await V.dados("uf/" + uf).catch(() => null);
+    if (!UF) throw new Error("Esta ficha é da primeira versão, que só cobre seis estados. Procure o candidato na página Políticos");
     const k = UF.cand[id];
     if (!k) throw new Error("Candidato não encontrado nesta base");
     const [nome, pa, nr, el, cg, ano, pe] = k;

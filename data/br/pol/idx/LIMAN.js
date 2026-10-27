@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LIMAN"]=[["LIMANSKI LIMANSKAO",1068717,"GENESIO LIMANSKI","LIMANSKI - LIMANSKÃO",2008,13,77550,0,3]];

@@ -853,3 +853,74 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 /* sete cargos: no celular os botões quebram em linhas (todos à vista); o botão de passar os anos não quebra o texto */
 .tempo__play { white-space: nowrap; flex: none; }
 @media (max-width: 560px) { .controles__linha .chip { padding: 9px 12px; font-size: 14px; } }
+
+/* ---------- ficha do político (js/politico.js) ---------- */
+.pol { display: grid; gap: 22px; }
+.pol-cab { display: grid; grid-template-columns: 120px minmax(0, 1fr); gap: 22px; align-items: start; }
+.pol-foto { width: 120px; height: 150px; border-radius: 10px; overflow: hidden; background: var(--fundo); display: grid; place-items: center; border: 1px solid var(--linha); }
+.pol-foto img { width: 100%; height: 100%; object-fit: cover; }
+.pol-nome { font: 700 clamp(34px, 4.6vw, 54px)/1 var(--num); }
+.pol-sub { color: var(--tinta-2); margin-top: 6px; }
+.pol-banco { margin-top: 14px; }
+.pol-cartao { display: grid; gap: 12px; }
+.pol-cartao .cartao__sub { margin-bottom: 0; max-width: 80ch; }
+.pol-regua { width: 100%; max-width: 820px; height: auto; }
+.pol-regua__eixo { font: 400 13px var(--fonte); fill: var(--tinta-3); }
+.pol-regua__sg { font: 700 14px var(--fonte); fill: var(--tinta); }
+.pol-regua__anos { font-weight: 400; fill: var(--tinta-3); font-size: 12.5px; }
+.pol-trajeto { line-height: 2; }
+.pol-trajeto small { color: var(--tinta-3); }
+.selo--sup { background: #e3e8f2; color: #26407a; }
+.selo--nao { background: var(--fundo); color: var(--tinta-2); }
+.pol-hist { list-style: none; margin: 0; padding: 0; display: grid; }
+.pol-hist li { display: grid; grid-template-columns: 58px minmax(180px, 1.3fr) minmax(110px, .6fr) minmax(0, 2fr); gap: 6px 16px; align-items: start; padding: 12px 0; border-top: 1px solid var(--linha); }
+.pol-hist li:first-child { border-top: 0; }
+.pol-hist--eleito { box-shadow: inset 4px 0 0 var(--confirma); padding-left: 10px !important; }
+.pol-hist__ano { font: 700 24px/1 var(--num); }
+.pol-hist__cargo small, .pol-hist__partido small { display: block; color: var(--tinta-3); font-size: 14px; }
+.pol-hist__cargo .selo { margin-left: 4px; }
+.pol-hist__num { display: flex; flex-wrap: wrap; gap: 4px 22px; }
+.pol-hist__num > span { display: grid; font: 700 19px/1.15 var(--num); }
+.pol-hist__num small { font: 400 13px var(--fonte); color: var(--tinta-3); }
+.pol-pilha { display: flex; height: 26px; border-radius: 6px; overflow: hidden; background: var(--fundo); }
+.pol-pilha i { display: block; min-width: 2px; }
+.nuvem { display: flex; flex-wrap: wrap; justify-content: center; align-items: baseline; gap: 2px 14px; line-height: 1.1; padding: 12px 4px; margin: 0; font-family: var(--num); font-weight: 600; text-align: center; }
+.nuvem span { white-space: nowrap; }
+.pol-cam__busca { display: grid; gap: 6px; max-width: 560px; }
+.pol-cam__busca label, .pol-busca label { font-weight: 700; font-size: 15px; }
+.pol-cam__busca input, .pol-busca input { width: 100%; font: inherit; font-size: 16px; padding: 10px 14px; min-height: 44px; border: 2px solid var(--linha-forte); border-radius: 10px; background: var(--papel); color: var(--tinta); }
+.pol-cam__busca input:focus, .pol-busca input:focus { border-color: var(--link); outline: none; box-shadow: 0 0 0 3px rgba(15,95,181,.2); }
+.pol-busca { display: grid; gap: 6px; max-width: 620px; }
+.pol-votos { list-style: none; margin: 0; padding: 0; display: grid; }
+.pol-votos li { display: grid; grid-template-columns: 92px minmax(0, 1fr) 190px; gap: 6px 16px; padding: 12px 0; border-top: 1px solid var(--linha); align-items: start; }
+.pol-votos__data { font: 600 17px/1.2 var(--num); color: var(--tinta-2); }
+.pol-votos__txt { font-size: 15.5px; }
+.pol-votos__txt small, .pol-votos__voto small { display: block; color: var(--tinta-3); font-size: 13.5px; margin-top: 2px; }
+.pol-voto { display: inline-block; font-weight: 700; font-size: 14px; padding: 2px 9px; border-radius: 4px; }
+.pol-voto--sim { background: var(--confirma); color: #fff; }
+.pol-voto--nao { background: #b8232f; color: #fff; }
+.pol-voto--outro { background: var(--fundo); color: var(--tinta-2); }
+.pol-lista { list-style: none; margin: 0; padding: 0; display: grid; gap: 2px; max-width: 760px; }
+.pol-lista a { display: grid; grid-template-columns: 34px 1fr; gap: 12px; align-items: center; padding: 10px; border-radius: 8px; text-decoration: none; color: var(--tinta); }
+.pol-lista a:hover, .pol-lista a:focus-visible { background: var(--papel); }
+.pol-lista small { display: block; color: var(--tinta-3); font-size: 14px; }
+@media (max-width: 760px) {
+  .pol-cab { grid-template-columns: 84px minmax(0, 1fr); gap: 14px; }
+  .pol-foto { width: 84px; height: 105px; }
+  .pol-hist li { grid-template-columns: 50px minmax(0, 1fr); }
+  .pol-hist__partido, .pol-hist__num { grid-column: 2; }
+  .pol-votos li { grid-template-columns: minmax(0, 1fr); gap: 4px; }
+}
+.nuvens { display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 14px; }
+.nuvens__item { margin: 0; border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; display: grid; align-content: start; }
+.nuvens__item figcaption { font-size: 15px; color: var(--tinta-2); }
+.nuvens--partidos { grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); }
+/* "Os números em detalhe" (js/detalhes.js) */
+.pq-detalhe { background: var(--papel); border: 1px solid var(--linha); border-radius: 14px; padding: 22px 26px; display: grid; gap: 18px; }
+.pq-detalhe__grupo h3 { font: 700 21px/1.15 var(--num); margin-bottom: 4px; }
+.pq-detalhe__grupo p { color: var(--tinta-3); font-size: 15px; max-width: 80ch; margin-bottom: 6px; }
+.pq-detalhe__grupo ul { margin: 0; padding-left: 20px; display: grid; gap: 6px; max-width: 95ch; }
+.pq-detalhe__grupo li { font-size: 16px; color: var(--tinta-2); }
+.pq-detalhe__grupo li b { color: var(--tinta); }
+.pq-detalhe__grupo small { color: var(--tinta-3); }
+@media (max-width: 600px) { .pq-detalhe { padding: 16px; } }

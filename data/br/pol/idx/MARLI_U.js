@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARLI_U"]=[[0,1355537,"MARLI ULBINSKI","MARLI",2016,13,75337,0,82],[0,391513,"MARLI URBAINSKI","",2024,13,80438,0,15]];

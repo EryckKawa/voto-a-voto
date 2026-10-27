@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/EDUT"]=[[0,3725,"EDUTINA PASSOS DA SILVA","TINA",2004,13,3123,0,53],[0,2082437,"EDUTINA PASSOS DA SILVA","",1996,13,3123,0,23]];

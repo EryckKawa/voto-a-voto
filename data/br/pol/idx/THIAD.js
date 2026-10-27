@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/THIAD"]=[["THIADO DO MOXOTO",611208,"THIAGO DE LIMA BORBOREMA","THIADO DO MOXOTO",2012,13,24317,0,160]];

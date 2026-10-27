@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/RITA_DE_CL"]=[["RITA DE CLOVIN",1564335,"RITA APARECIDA BARBOSA SILVA","RITA DE CLOVIN",2012,13,40932,0,0]];

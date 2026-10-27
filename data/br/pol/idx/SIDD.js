@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SIDD"]=[[0,1656222,"SIDDHARTHA CARNEIRO LEÃO","",2012,13,66397,0,735],[0,2067678,"SIDDHARTHA FERRAZ","",1994,6,"PR",0,299]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MOAH"]=[["MOAH DO SALAO",2042985,"MOACIR PALAZZOLLI FERREIRA","MOAH DO SALÃO",2024,13,68837,0,0]];

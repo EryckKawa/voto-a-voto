@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/FRANCJ"]=[[0,1168225,"FRANCJADISON DA SILVA","FRANC DO ZINHO ( FRANC DA NANÁ",2008,13,46019,0,94]];

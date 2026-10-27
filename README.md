@@ -1,6 +1,6 @@
 # Voto a voto: o que o voto revela sobre o Brasil
 
-Site sobre as eleições brasileiras de 1994 a 2026, nas 5.570 cidades, feito para o trabalho de **Banco de Dados Relacional (BDR 2026.2) da UFPI, Grupo 5**. O tema é o ato de votar e o que ele revela sobre o país: quem vota, quem falta, para que lado cada cidade foi e quanto custa uma eleição.
+Site sobre as eleições brasileiras de 1994 a 2026, nas 5.570 cidades, feito para o trabalho de **Banco de Dados Relacional (BDR 2026.2) da UFPI, Grupo 6**. O tema é o ato de votar e o que ele revela sobre o país: quem vota, quem falta, para que lado cada cidade foi e quanto custa uma eleição.
 
 **Site no ar:** https://eryckkawa.github.io/voto-a-voto/
 
@@ -15,6 +15,7 @@ O site é estático (HTML, CSS e JavaScript, sem servidor e sem banco no navegad
 | O que o voto revela | `#/revela` | Oito achados de trinta anos de eleições, cada um com o título que já diz o dado. |
 | 12 perguntas | `#/perguntas` | As 12 perguntas de pesquisa do trabalho, respondidas com o Brasil inteiro. Cada resposta traz o gráfico, a tabela e a consulta SQL que a produziu. |
 | Partidos | `#/partidos` | Onde fica cada partido entre esquerda e direita em cada eleição, segundo três estudos acadêmicos e o voto na Câmara. |
+| Políticos | `#/politicos` | A ficha de cada um dos 2,4 milhões de candidatos de 1994 a 2026: cada eleição, o partido e o lado dele, votos, dinheiro, bens, onde gastou, nuvens de palavras dos planos e dos projetos/discursos oficiais disponíveis, e, para deputado federal, como votou na Câmara. |
 | Testes | `#/testes` | Testes de velocidade, funcionamento, acessibilidade e conferência dos dados com os números oficiais do TSE. |
 
 ## Como abrir
@@ -44,7 +45,7 @@ docs/               documentação
 
 1. [Arquitetura do site](docs/arquitetura.md): rotas, carregamento dos dados, páginas e desempenho.
 2. [Dados e banco](docs/dados-e-banco.md): de onde vêm os dados, como viram arquivos do site, e o banco nacional em DuckDB no modelo relacional do trabalho.
-3. [As 12 perguntas](docs/12-perguntas.md): o que cada consulta faz, o que ela responde e os limites de cada resposta.
+3. [As 12 perguntas](docs/12-perguntas.md): onde está cada pergunta do enunciado, o que cada consulta faz, o que ela responde e os limites de cada resposta.
 4. [A régua dos partidos](docs/regua-dos-partidos.md): como cada partido é posto entre esquerda e direita, com as referências.
 5. [Testes](docs/testes.md): o que é testado e como rodar.
 
@@ -53,7 +54,7 @@ docs/               documentação
 - **Tribunal Superior Eleitoral (TSE), Portal de Dados Abertos:** candidatos, bens declarados, perfil do eleitorado, votação por município e zona, comparecimento, prestação de contas (receitas e despesas) e propostas de governo, de 1994 a 2026.
 - **IBGE:** municípios, Censo 2022 (população) e PIB dos municípios (2021).
 - **Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e Fundação João Pinheiro),** pela API do IpeaData: IDHM, escolaridade dos adultos e renda por habitante de cada município (Censos 1991, 2000 e 2010).
-- **Câmara dos Deputados, dados abertos:** orientação das bancadas nas votações do Plenário, de 2019 a 2026.
+- **Câmara dos Deputados, dados abertos:** orientação das bancadas e voto de cada deputado nas votações do Plenário, de 2019 a 2026.
 - **Estudos acadêmicos sobre a posição dos partidos:**
   - Zucco e Power (2024), *Latin American Politics and Society*; dados no Harvard Dataverse, doi:10.7910/DVN/6KVTUV.
   - Bolognesi, Ribeiro e Codato (2023), revista *Dados*.
@@ -63,4 +64,4 @@ O site não mostra CPF, título de eleitor nem e-mail de ninguém. Os nomes de c
 
 ## Licenças
 
-O código do site é do Grupo 5. As fontes Atkinson Hyperlegible e Barlow Condensed estão sob a licença SIL Open Font License (`fonts/LICENSE-*.txt`). D3, topojson-client e axe-core mantêm as licenças dos seus autores.
+O código do site é do Grupo 6. As fontes Atkinson Hyperlegible e Barlow Condensed estão sob a licença SIL Open Font License (`fonts/LICENSE-*.txt`). D3, topojson-client e axe-core mantêm as licenças dos seus autores.

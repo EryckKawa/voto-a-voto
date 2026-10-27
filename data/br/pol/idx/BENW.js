@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/BENW"]=[[0,1161833,"BEN-WILSON BRITO DE SOUZA JUNIOR","BEN WILSON JUNIOR",2020,12,37516,2,0]];

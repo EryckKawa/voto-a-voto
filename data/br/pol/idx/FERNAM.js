@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/FERNAM"]=[["FERNAMIDIA",834084,"FERNANDO LIMA DE ARAUJO","FERNAMÍDIA",2024,13,11134,0,359]];

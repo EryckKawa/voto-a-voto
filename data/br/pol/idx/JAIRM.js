@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JAIRM"]=[[0,2232909,"JAIRMAR CIPRIANO","",1996,13,56316,0,107],[0,243994,"JAIRMAR CIPRIANO","",2000,13,56316,0,48]];

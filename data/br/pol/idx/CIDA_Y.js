@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CIDA_Y"]=[["CIDA YAMADA",1475969,"APARECIDA IOKIE YAMADA","CIDA YAMADA",2024,13,79537,0,223]];

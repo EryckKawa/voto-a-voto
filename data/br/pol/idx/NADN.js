@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/NADN"]=[[0,2188623,"NADNA MEIRE DE SOUSA PEREIRA","",1996,13,42234,0,67],[0,1924091,"NADNA OYAKAWA MARIANO","",2002,6,"SP",0,696]];

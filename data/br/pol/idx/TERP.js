@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/TERP"]=[[0,297612,"TERPSICORE FILOMENA DE OLIVEIRA MENDONCA","TÊ DO BALLET",2020,13,52230,0,25]];

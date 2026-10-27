@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/THIA_"]=[["THIA NILMA",1045603,"NILMA MARIA JURACI DE ASSUMPÇÃO LIMA","THIA NILMA",2020,13,58327,0,266]];

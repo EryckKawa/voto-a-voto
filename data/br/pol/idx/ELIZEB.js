@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ELIZEB"]=[[0,415926,"ELIZEBERG FERNANDES DE FREITAS","BERGUINHO ALEJADO",2020,13,18694,0,14]];

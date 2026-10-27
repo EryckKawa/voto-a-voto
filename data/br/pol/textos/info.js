@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/textos/info"]=V.descompactar("H4sIAAAAAAAACm2P0QqDMAxF/yXPFppW2+rPjFDr1qFWWt2L+O/rHBMZQl5ycsNJVri7SG2ABgQXiiFnQkMBfvTWfynWjGOuTDs//Acnl1KgBE1tzNHdbBhuE/X0ivtIl3k3jLPLzQqWBorEphiebg4ZGSmLH219sktMO0ZeQHJjPu8URmkOegqjrLcC2mCXwY178EKkpeL8SoWIlbq06aq89IlKaZONHfWPz498ewNKwqoRSwEAAA==");

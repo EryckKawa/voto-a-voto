@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CELIOE"]=[[0,1223711,"CELIOENES DE GOUVEIA ALVES","CELINE GOUVEIA",2020,13,93734,0,1016]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/PIH"]=[["PIHURSKI",1249682,"JOELMA REGINA DE SOUZA PIHURSKI","PIHURSKI",2000,13,78115,0,19]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LUCIOE"]=[[0,717269,"LUCIOENEIAS FERREIRA SOUZA LOPES","NÉIA DA OFICINA",2004,13,40975,0,85]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/GEOA"]=[["GEOAVANE SEGURANCA",1286765,"GEOVANE COSTA ARAÚJO","GEOAVANE SEGURANÇA",2024,13,9059,0,0]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ALC_"]=[["ALC IDES DO SOM",207421,"ALCIDES ZACARIAS SOBRINHO","ALC IDES DO SOM",2024,11,531,4,1456]];

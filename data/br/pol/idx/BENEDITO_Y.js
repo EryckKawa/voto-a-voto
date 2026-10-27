@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/BENEDITO_Y"]=[[0,655541,"BENEDITO YOLANDO DE ALMEIDA","DITINHO LEONOR",2000,13,62014,0,65]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MOACR"]=[[0,1182016,"MOACRE CHATEAUBRIAND PEREIRA FALCAO","NENE CARNIÇA",2020,13,24899,0,10]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOAOG"]=[[0,1235843,"JOAOGULART GABRIEL DA PAZ","MISSIONARIO JOAO GULART",2020,12,23574,0,0]];

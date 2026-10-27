@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SILVANAO"]=[["SILVANAO",1252125,"SILVANO RODRIGUES DE AQUINO","SILVANÃO",2020,13,49395,0,29]];

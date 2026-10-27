@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LUIS_CAU"]=[["LUIS CAUAUA",153998,"LUIZ DA CONCEIÇÃO DE SOUZA COSTA","LUIS CAUAUA",2016,12,4057,2,1055]];

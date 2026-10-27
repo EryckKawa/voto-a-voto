@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JURAH"]=[["JURAH CERDEIRA",828375,"JURAILSON DE SOUSA CERDEIRA","JURAH CERDEIRA",2018,7,"PA",0,175]];

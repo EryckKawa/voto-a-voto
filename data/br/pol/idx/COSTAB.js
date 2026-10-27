@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/COSTAB"]=[[0,1938611,"COSTABILE GIOVANI DI SESSA","GIOVANI DO FRANGO",2008,13,49573,0,69]];

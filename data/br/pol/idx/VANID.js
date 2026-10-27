@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VANID"]=[["VANIDO DE CUMARU",243239,"IVANILDO VITOR DOS SANTOS","VANIDO DE CUMARU",2012,13,24872,0,87]];

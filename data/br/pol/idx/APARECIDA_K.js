@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/APARECIDA_K"]=[[0,120737,"APARECIDA KUSTER SIQUEIRA DA SILVA","CIDA KÜSTER",2020,13,78859,0,7]];

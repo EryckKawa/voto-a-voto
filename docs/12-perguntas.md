@@ -13,6 +13,26 @@ Os números abaixo são os da última rodada das consultas. Os títulos do site 
 
 As consultas q2b, q2c, q3b, q3c, q4b, q4c, q7c, q7d e q9b (bens declarados, IDHM, escolaridade das cidades, idade do eleitorado e nota média por cargo) foram acrescentadas em 22/10/2026, a partir das anotações do grupo. Elas rodaram num banco montado com as etapas `base`, `cand` (2018 a 2024), `partido_votos`, `idhm`, `bens`, `eleitorado`, `notas` e `views` de `banco_brasil.py`; as outras consultas são as da última rodada completa.
 
+## As perguntas do enunciado e onde estão respondidas
+
+As perguntas que o grupo anotou em 24/09/2026 têm outra numeração que a do site. Cada uma está assim:
+
+| Enunciado | O que pede | No site | Consultas |
+|---|---|---|---|
+| 1 | Quanto custa uma cadeira (mandato): Σ gastos do cargo ÷ nº de candidatos do cargo | Q1 | q1, q1b, **q1c** (gasto médio por candidato, custo por cadeira e por mês de mandato) |
+| 2 | Sucesso eleitoral pelo patrimônio declarado (TSE, bens) | Q2 | q2b, q2c, q2 |
+| 3 | IDHM e renda per capita × viés ideológico | Q3 | q3b, q3c, q3 |
+| 4 | Escolaridade da região (IDHM) × escolaridade do eleito | Q4 | q4b, q4c, q4 |
+| 6 | Idade do eleitorado × idade do eleito ("jovem vota em jovem?") | Q7 | q7c, q7d, q7, q7b |
+| 7 | Viés político do município na linha do tempo: Σ votos do partido × viés do partido (prefeito, vereador, deputado) | Q9 | q9b, q9 e a linha de cada cidade |
+| 8 | Recursos públicos × sucesso eleitoral | Q10 | q10, **q10b** (taxa de sucesso por faixa de dinheiro público) |
+| 9 | Onde o candidato investe em propaganda | Q11 | q11, **q11b** (por cargo), **q11c** (por campo político) e o gasto de cada candidato na ficha |
+| 10 | Histórico eleitoral de cada político | Q12 e a página **Políticos** (`#/politicos`) | q12, q12b, q12c, **q12d** (a ficha), **q12e** (como cada bancada vota) |
+
+Além delas, o site responde três perguntas a mais: o voto de legenda (Q5), do que falam os planos de governo, agora com **nuvens de palavras por cargo, por campo político e por partido** (Q6: q6, q6b, **q6c**, **q6d** e **q6e**, as palavras típicas de cada campo), e o dinheiro de empresas (Q8).
+
+A ficha de cada político (página Políticos e busca do topo) existe para os 2,4 milhões de candidatos de 1994 a 2026: cada candidatura com o partido e a nota dele naquela eleição, votos, resultado, receita (e quanto foi público), gasto, bens declarados, onde gastou, a nuvem de palavras do plano de governo e, para os deputados federais de 2019 a 2026, cada voto no Plenário da Câmara, quanto segue o partido e o governo e o lado dele pelo próprio voto.
+
 Mudanças em relação ao MySQL da versão dos 6 estados: `COUNT_IF` e `CAST(... AS INT)` no lugar de somar booleano, `string_agg` no lugar de `GROUP_CONCAT`, e `strip_accents` no lugar da collation sem acento.
 
 | | Pergunta | Consultas | Resposta |
@@ -44,6 +64,11 @@ Mudanças em relação ao MySQL da versão dos 6 estados: `COUNT_IF` e `CAST(...
 - **Q8:** em 2010, 2012 e 2014, dinheiro de empresa repassado pelo partido aparece como receita do partido. A parte das empresas é, então, no mínimo a mostrada.
 - **Q9 (nota média):** usa os votos por partido (nominais e de legenda) do arquivo `votacao_partido_munzona`, que não traz presidente, governador e senador em 1994, nem presidente em 1998; nesses anos vale a série por campo político (q9), que usa os votos por candidato. Na linha de cada cidade só entram as eleições em que pelo menos 80% dos votos foram para partidos com nota.
 - **Q12:** 1996 fica de fora, porque os arquivos daquele ano não trazem o título de eleitor. Senador tem mandato de oito anos, o que puxa para baixo a volta de 4 anos nas eleições gerais.
+- **Q1 (q1c):** o gasto médio por candidato divide pelo número de candidatos, inclusive quem não declarou gasto nenhum; mede quanto custa disputar. O custo por cadeira divide pelos eleitos; mede quanto custa vencer. O custo por mês divide a cadeira por 48 meses (96 para senador).
+- **Q6 (nuvens):** as nuvens das mais usadas mostram o que os planos têm em comum; as típicas (q6e) mostram o que separa um campo do outro (palavras usadas bem mais que a média do cargo, em pelo menos 3% dos planos do campo). Em cada plano entram as 80 palavras mais usadas com 4 letras ou mais, fora uma lista de palavras comuns a qualquer plano (governo, município, programa, desenvolvimento...). Plano escaneado como imagem não tem texto e fica de fora. Uma palavra muito usada não diz se o plano é a favor ou contra.
+- **Q10 (q10b):** o partido manda mais dinheiro para quem já tem mais chance, então a relação entre fundo e vitória vale nos dois sentidos.
+- **Q11 (q11b, q11c):** os tipos de despesa são as categorias que o próprio candidato escolhe na prestação de contas, juntadas pela view `vw_despesa_tipo`; "Outras despesas" junta o que não se encaixa em nenhum grupo.
+- **Q12 (ficha e Câmara):** sem o título de eleitor (1996 e registros incompletos), a mesma pessoa pode aparecer em mais de uma ficha. O deputado da Câmara é ligado à pessoa do TSE pelo nome civil e pela data de nascimento; quem mudou de nome entre um cadastro e outro fica sem os votos na ficha. Os votos são só os nominais do Plenário, de 2019 a 2026.
 
 ## A primeira versão (6 estados)
 

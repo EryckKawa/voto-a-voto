@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ODID"]=[[0,2323306,"ODIDE MASAR SODA","",1996,13,75310,1,123],[0,672161,"ODIDE MASAR SODA","SODA",2000,13,75310,1,119]];

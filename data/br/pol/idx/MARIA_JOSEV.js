@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARIA_JOSEV"]=[[0,1283701,"MARIA JOSEVALDA LIMA MAGALHÃES","VALDA DO PIQUIÁ",2020,13,4634,0,28]];

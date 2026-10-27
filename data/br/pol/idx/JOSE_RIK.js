@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOSE_RIK"]=[[0,809559,"JOSE RIKCHER DO NASCIMENTO PINTO","JUNIOR PINTO",2012,12,2674,0,0]];

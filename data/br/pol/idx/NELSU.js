@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/NELSU"]=[["NELSU",989658,"ANTONIA ENELSUITA DE FREITAS CARDOSO","NELSU",2016,13,38237,0,3]];

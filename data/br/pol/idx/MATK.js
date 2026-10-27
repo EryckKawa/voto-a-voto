@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MATK"]=[[0,626597,"MATKIARA FRANCY CAMPOS DE CARVALHO","KIARA CARVALHO",2016,13,12190,0,0]];

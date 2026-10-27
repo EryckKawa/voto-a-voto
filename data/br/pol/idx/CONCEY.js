@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CONCEY"]=[[0,1245187,"CONCEYÇÃO APARECIDA QUINTINO DA SILVA","BETE QUINTINO",2024,13,23612,0,33]];

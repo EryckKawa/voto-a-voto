@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LUIS_CAC"]=[["LUIS CACETADA",514558,"LUIS CORDEIRO DA SILVA","LUIS CACETADA",2004,13,23418,0,29]];

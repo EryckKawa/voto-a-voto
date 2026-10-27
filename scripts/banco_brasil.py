@@ -7,7 +7,7 @@ Etapas: base (uf, município, indicadores, eleição, cargo...), cand (pessoa e 
         contas ANO (receita e despesa), propostas (texto dos planos de governo),
         idhm (Atlas do Desenvolvimento Humano por município: IDHM e escolaridade dos adultos, 1991-2010),
         bens (bens declarados pelos candidatos, 2006-2026), eleitorado (perfil do eleitorado por idade e escolaridade),
-        notas (posição ideológica de cada partido em cada eleição), views.
+        notas (posição ideológica de cada partido em cada eleição), camara (votos de cada deputado no Plenário, 2019-2026), views.
 Caminhos (variáveis de ambiente, opcionais): BANCO (arquivo .duckdb), WEB (pasta data/br do site),
         IBGE (pasta com pib_2021.json), TMPBR (pasta para arquivos temporários).
 Decisões (as mesmas do trabalho dos 6 estados, com o que muda no Brasil inteiro):
@@ -59,6 +59,18 @@ def le(arqs, extra=''):
     lista = "[" + ",".join("'" + a + "'" for a in arqs) + "]"
     return f"read_csv({lista}, delim=';', quote='\"', header=true, all_varchar=true, union_by_name=true, ignore_errors=true, null_padding=true, strict_mode=false, max_line_size=4000000, parallel=false{extra})"
 
+
+# ------------------------------------------------------------------ arquivos grandes vêm cortados em partes (.zip.001, .002...): junta antes de abrir
+def juntar(nome):
+    partes = sorted(glob.glob(f'{P}/{nome}.zip.[0-9][0-9][0-9]'))
+    if not partes: return None
+    if len(partes) == 1: return partes[0]
+    alvo = os.path.join(TMP, nome + '.zip')
+    if not os.path.exists(alvo):
+        with open(alvo, 'wb') as o:
+            for p_ in partes:
+                with open(p_, 'rb') as a: shutil.copyfileobj(a, o)
+    return alvo
 
 # ------------------------------------------------------------------ base: dimensões
 if 'base' in ETAPAS:
@@ -177,18 +189,39 @@ if 'votos' in ETAPAS:
         WITH k AS (SELECT sq, cargo, nr, nome, CASE WHEN cargo IN (11, 12, 13) THEN ue WHEN cargo = 1 THEN 'BR' ELSE uf END alcance
                    FROM read_parquet('{PQ}/cand_{ano}.parquet') WHERE cargo IN (1, 3, 5, 6, 7, 8, 11, 13)),
         liga AS (
-          SELECT k.sq, ca.id_candidatura,
-                 ROW_NUMBER() OVER (PARTITION BY k.sq ORDER BY (ca.sq_candidato = k.sq) DESC, (ca.nm_urna = k.nome) DESC, st.fl_eleito DESC NULLS LAST, ca.id_candidatura) rk
+          SELECT k.sq, k.cargo, k.alcance, ca.id_candidatura,
+                 ROW_NUMBER() OVER (PARTITION BY k.sq, k.cargo, k.alcance ORDER BY (ca.sq_candidato = k.sq) DESC, (ca.nm_urna = k.nome) DESC, st.fl_eleito DESC NULLS LAST, ca.id_candidatura) rk
           FROM k JOIN eleicao e ON e.nr_ano_eleicao = {ano}
           JOIN candidatura ca ON ca.id_eleicao = e.id_eleicao AND ca.cd_cargo = k.cargo AND ca.sg_ue = k.alcance
                AND (ca.sq_candidato = k.sq OR ca.nr_candidato = TRY_CAST(k.nr AS INTEGER))
           LEFT JOIN situacao_totalizacao st ON st.id_situacao = ca.id_situacao)
         SELECT l.id_candidatura, v.turno, v.cd_mun, 0, SUM(v.votos)
-        FROM read_parquet('{PQ}/votos_{ano}.parquet') v JOIN liga l ON l.sq = v.sq AND l.rk = 1
+        -- o voto vai para o candidato do mesmo sequencial, cargo e alcance (o município nas municipais, a UF nas gerais)
+        FROM read_parquet('{PQ}/votos_{ano}.parquet') v JOIN liga l ON l.sq = v.sq AND l.cargo = v.cargo AND l.rk = 1
+             AND l.alcance = CASE WHEN v.cargo IN (11, 12, 13) THEN l.alcance WHEN v.cargo = 1 THEN 'BR' ELSE v.uf END
+             AND (v.cargo NOT IN (11, 12, 13) OR TRY_CAST(l.alcance AS INTEGER) = v.cd_mun)
         GROUP BY 1, 2, 3""")
         tot = con.execute(f"select sum(votos) from read_parquet('{PQ}/votos_{ano}.parquet') where cargo in (1,3,5,6,7,8,11,13)").fetchone()[0]
         ok = con.execute(f"select sum(qt_votos_nominais) from votacao_candidato vc join candidatura c using(id_candidatura) join eleicao e using(id_eleicao) where e.nr_ano_eleicao={ano}").fetchone()[0]
         log('votos', ano, f'{ok:,} de {tot:,} votos ligados a uma candidatura ({100*ok/tot:.2f}%)')
+
+# O registro de candidatura de presidente em 2006 deixa o resultado dos finalistas vazio.
+# Nos casos sem situação, o 2º turno nacional permite recuperar eleito/não eleito.
+if 'votos' in ETAPAS or 'situacoes' in ETAPAS:
+    con.execute("""
+    WITH finais AS (
+      SELECT ca.id_candidatura, ca.id_eleicao,
+             ROW_NUMBER() OVER (PARTITION BY ca.id_eleicao ORDER BY SUM(v.qt_votos_nominais) DESC) pos
+      FROM candidatura ca JOIN votacao_candidato v USING (id_candidatura)
+      WHERE ca.cd_cargo = 1 AND v.nr_turno = 2
+      GROUP BY 1, 2 HAVING SUM(v.qt_votos_nominais) > 0)
+    UPDATE candidatura ca SET id_situacao = st.id_situacao
+    FROM finais f, situacao_totalizacao st, situacao_totalizacao antiga
+    WHERE ca.id_candidatura = f.id_candidatura AND antiga.id_situacao = ca.id_situacao
+      AND antiga.ds_sit_tot_turno LIKE '#NULO%'
+      AND st.ds_sit_tot_turno = CASE WHEN f.pos = 1 THEN 'ELEITO' ELSE 'NÃO ELEITO' END
+    """)
+    log('situações de presidente sem resultado: conferidas pelo segundo turno')
 
 # ------------------------------------------------------------------ partido_votos: votacao_partido (votos nominais e de legenda)
 if 'partido_votos' in ETAPAS:
@@ -257,15 +290,15 @@ if 'contas' in ETAPAS:
     con.execute("""CREATE TABLE IF NOT EXISTS despesa (id_despesa BIGINT, id_candidatura INTEGER, ds_origem_despesa VARCHAR, ds_despesa VARCHAR,
                    nr_cpf_cnpj_fornecedor VARCHAR, nm_fornecedor VARCHAR, vr_despesa DECIMAL(16,2), dt_despesa DATE, nr_ano_eleicao SMALLINT)""")
     for ano in ANOS_CONTAS:
-        z = f'{P}/contas_{ano}.zip'
-        if not os.path.exists(z): log('sem', z); continue
+        z = juntar(f'contas_{ano}')
+        if not z: log('sem contas', ano); continue
         con.execute(f"DELETE FROM receita WHERE nr_ano_eleicao = {ano}; DELETE FROM despesa WHERE nr_ano_eleicao = {ano}")
         tmp = tempfile.mkdtemp(dir=TMP)
         # liga o lançamento à candidatura: pelo sequencial no ano (e pela UF quando o sequencial só é único na UF)
         cand = f"""(SELECT ca.id_candidatura, ca.sq_candidato, COALESCE(ca.sg_uf, 'BR') sg_uf FROM candidatura ca JOIN eleicao e USING (id_eleicao) WHERE e.nr_ano_eleicao = {ano})"""
         por_uf = ano < 2012 or ano == 2014 and False
         chave = "c.sq_candidato = TRY_CAST(r.SQ AS BIGINT)" + (" AND c.sg_uf = r.UF" if por_uf else "")
-        if ano >= 2016:
+        if ano >= 2018:
             rec = extrai(z, rf'^receitas_candidatos_{ano}_[A-Z]{{2}}\.csv$', tmp)
             con.execute(f"""INSERT INTO receita
                 SELECT NULL, c.id_candidatura, DS_FONTE_RECEITA, DS_ORIGEM_RECEITA, {tipo_doador_sql('DS_ORIGEM_RECEITA', 'NR_CPF_CNPJ_DOADOR')},
@@ -280,9 +313,10 @@ if 'contas' in ETAPAS:
                 FROM (SELECT *, SQ_CANDIDATO SQ, SG_UF UF FROM {le(des)}) r JOIN {cand} c ON {chave}""")
             for a in des: os.remove(a)
         else:
-            # formato antigo (.txt): cabeçalho por extenso; normaliza os nomes das colunas
-            rec = extrai(z, r'^(?!.*brasil)(.*/)?receitas_?candidatos', tmp)
-            des = extrai(z, r'^(?!.*brasil)(.*/)?despesas_?candidatos', tmp)
+            # formato antigo (.txt, 2010 a 2016): cabeçalho por extenso; normaliza os nomes das colunas. O arquivo _sup (entregas
+            # suplementares, depois do prazo) fica de fora, para não contar duas vezes
+            rec = extrai(z, r'^(?!.*(brasil|_sup))(.*/)?receitas_?candidatos', tmp)
+            des = extrai(z, r'^(?!.*(brasil|_sup))(.*/)?despesas_?candidatos', tmp)
             def colmap(arq):
                 cab = open(arq, encoding='utf-8').readline().replace('"', '').strip().split(';')
                 n = lambda t: re.sub(r'[^a-z]', '', __import__('unicodedata').normalize('NFD', t.strip().lower()).encode('ascii', 'ignore').decode())
@@ -314,39 +348,113 @@ if 'contas' in ETAPAS:
         log('contas', ano, con.execute(f"select count(*), round(sum(vr_receita)/1e9, 2) from receita where nr_ano_eleicao={ano}").fetchone(),
             con.execute(f"select count(*), round(sum(vr_despesa)/1e9, 2) from despesa where nr_ano_eleicao={ano}").fetchone())
 
-# ------------------------------------------------------------------ propostas: texto dos planos de governo (presidente)
-# O TSE publica os planos como PDF, um por candidato; o nome do arquivo traz o sequencial. Texto extraído com pdftotext.
-if 'propostas' in ETAPAS:
-    import subprocess
-    con.execute("CREATE TABLE IF NOT EXISTS proposta_governo (id_candidatura INTEGER PRIMARY KEY, tx_proposta VARCHAR)")
-    for ano in (2018, 2022, 2026):
-        z = f'{P}/../../propostas/proposta_governo_{ano}_BR.zip'
-        if not os.path.exists(z): log('sem', z); continue
-        tmp = tempfile.mkdtemp(dir=TMP)
-        with zipfile.ZipFile(z) as zz:
-            for n in zz.namelist():
-                m = re.search(r'(\d{4})BR(\d+)(_\d+)?\.pdf$', n)
-                if not m: continue
-                pdf = os.path.join(tmp, 'p.pdf')
-                with zz.open(n) as a_, open(pdf, 'wb') as b_: shutil.copyfileobj(a_, b_)
-                txt = subprocess.run(['pdftotext', '-q', '-enc', 'UTF-8', pdf, '-'], capture_output=True).stdout.decode('utf-8', 'ignore')
-                idc = con.execute(f"select id_candidatura from candidatura join eleicao using(id_eleicao) where nr_ano_eleicao={ano} and cd_cargo=1 and sq_candidato={int(m.group(2))}").fetchone()
-                if idc and len(txt.strip()) > 200:
-                    con.execute("INSERT OR REPLACE INTO proposta_governo VALUES (?, ?)", [idc[0], txt])
-        shutil.rmtree(tmp, ignore_errors=True)
-        log('propostas', ano, con.execute(f"select count(*), sum(length(tx_proposta)) from proposta_governo join candidatura using(id_candidatura) join eleicao using(id_eleicao) where nr_ano_eleicao={ano}").fetchone())
+# ------------------------------------------------------------------ propostas: texto dos planos de governo (presidente, governador e prefeito)
+# O TSE publica os planos como PDF, um por candidato (às vezes em partes: _1, _2...), num zip por ano e UF; o nome do arquivo
+# traz o ano, a UF e o sequencial (2022BR280001677435.pdf ou proposta_governo_2018_SP_250000601522.pdf). Texto extraído com pdftotext; PDF escaneado, sem texto, fica de fora.
+# proposta_palavra guarda as palavras mais usadas em cada plano (sem acento, 4 letras ou mais, fora as palavras comuns):
+# é a base das nuvens de palavras por candidato e por partido.
+from palavras_texto import PALAVRAS_COMUNS
 
-# ------------------------------------------------------------------ arquivos grandes vêm cortados em partes (.zip.001, .002...): junta antes de abrir
-def juntar(nome):
-    partes = sorted(glob.glob(f'{P}/{nome}.zip.[0-9][0-9][0-9]'))
-    if not partes: return None
-    if len(partes) == 1: return partes[0]
-    alvo = os.path.join(TMP, nome + '.zip')
-    if not os.path.exists(alvo):
-        with open(alvo, 'wb') as o:
-            for p_ in partes:
-                with open(p_, 'rb') as a: shutil.copyfileobj(a, o)
-    return alvo
+if 'propostas' in ETAPAS:
+    import subprocess, unicodedata
+    import pandas as pd
+    from collections import Counter
+    from concurrent.futures import ThreadPoolExecutor
+    con.execute("CREATE TABLE IF NOT EXISTS proposta_governo (id_candidatura INTEGER PRIMARY KEY, tx_proposta VARCHAR)")
+    con.execute("CREATE TABLE IF NOT EXISTS proposta_palavra (id_candidatura INTEGER, palavra VARCHAR, ds_palavra VARCHAR, qt INTEGER)")   # palavra: sem acento; ds_palavra: a grafia mais usada
+    con.execute("CREATE TABLE IF NOT EXISTS proposta_carga (ds_arquivo VARCHAR PRIMARY KEY, qt_pdfs INTEGER, qt_planos INTEGER)")   # zips já lidos
+    PROP = os.path.join(P, '..', '..', 'propostas')
+    sem_acento = lambda t: unicodedata.normalize('NFD', t.lower()).encode('ascii', 'ignore').decode()
+
+    def texto_pdf(arg):
+        zz_nome, nome, pasta = arg
+        pdf = os.path.join(pasta, re.sub(r'\W', '_', nome))
+        with zipfile.ZipFile(zz_nome) as zz, zz.open(nome) as a_, open(pdf, 'wb') as b_: shutil.copyfileobj(a_, b_)
+        txt = subprocess.run(['pdftotext', '-q', '-enc', 'UTF-8', pdf, '-'], capture_output=True).stdout.decode('utf-8', 'ignore')
+        os.remove(pdf)
+        return nome, txt
+
+    for ano in (2018, 2020, 2022, 2024, 2026):
+        for z in sorted(glob.glob(os.path.join(PROP, f'proposta_governo_{ano}_[A-Z][A-Z].zip'))):
+            arq = os.path.basename(z)
+            if con.execute("SELECT 1 FROM proposta_carga WHERE ds_arquivo = ?", [arq]).fetchone(): continue
+            try: nomes = zipfile.ZipFile(z).namelist()
+            except zipfile.BadZipFile: log('zip com defeito', arq); continue
+            # sequencial -> partes do plano
+            por_sq = {}
+            for n in nomes:
+                # 2018CE60000621447.pdf ou proposta_governo_2018_SP_250000601522.pdf (o mesmo ano, UF e sequencial, com _)
+                m = re.search(r'(\d{4})_?([A-Z]{2})_?(\d{6,})(?:_\d+)?\.pdf$', n, re.I)
+                if m: por_sq.setdefault(int(m.group(3)), []).append(n)
+            cargos = '1' if arq.endswith('_BR.zip') else ('11' if ano % 4 == 0 else '3')
+            uf = arq[-6:-4]
+            ids = dict(con.execute(f"""SELECT c.sq_candidato, c.id_candidatura FROM candidatura c JOIN eleicao e USING (id_eleicao)
+                                       WHERE e.nr_ano_eleicao = {ano} AND c.cd_cargo IN ({cargos}) AND {"true" if uf == 'BR' else f"c.sg_uf = '{uf}'"}""").fetchall())
+            tmp = tempfile.mkdtemp(dir=TMP)
+            with ThreadPoolExecutor(12) as ex:
+                textos = dict(ex.map(texto_pdf, [(z, n, tmp) for ns in por_sq.values() for n in ns]))
+            shutil.rmtree(tmp, ignore_errors=True)
+            planos, palavras = [], []
+            for sq, ns in por_sq.items():
+                idc, txt = ids.get(sq), '\n'.join(textos.get(n, '') for n in sorted(ns))
+                if not idc or len(txt.strip()) < 200: continue
+                planos.append((idc, txt))
+                grafias = Counter(re.findall(r'[a-záàâãéêíóôõúüç]{4,}', txt.lower()))
+                cont, forma = Counter(), {}
+                for g, q in grafias.most_common():
+                    w = sem_acento(g)
+                    if w in PALAVRAS_COMUNS: continue
+                    cont[w] += q; forma.setdefault(w, g)   # most_common: a primeira grafia vista é a mais usada
+                palavras += [(idc, w, forma[w], q) for w, q in cont.most_common(80) if q >= 2]
+            df_planos = pd.DataFrame(planos, columns=['id_candidatura', 'tx_proposta'])
+            df_palavras = pd.DataFrame(palavras, columns=['id_candidatura', 'palavra', 'ds_palavra', 'qt'])
+            con.execute("BEGIN")
+            con.execute("DELETE FROM proposta_palavra WHERE id_candidatura IN (SELECT id_candidatura FROM df_planos)")
+            con.execute("INSERT OR REPLACE INTO proposta_governo SELECT * FROM df_planos")
+            con.execute("INSERT INTO proposta_palavra SELECT * FROM df_palavras")
+            con.execute("INSERT INTO proposta_carga VALUES (?, ?, ?)", [arq, len(por_sq), len(planos)])
+            con.execute("COMMIT")
+            log('propostas', arq, f'{len(planos)} planos com texto de {len(por_sq)} candidatos')
+
+# ------------------------------------------------------------------ camara: como cada deputado federal votou no Plenário (2019-2026)
+# Dados abertos da Câmara (baixar_votos_propostas.ps1): votações, voto de cada deputado, orientação de cada bancada e a
+# proposição votada. O deputado da Câmara é ligado à pessoa do TSE pelo nome civil e pela data de nascimento.
+# fl_merito: fora requerimentos, recursos, preferências e redação final, como na régua pelo voto (regua_voto.py).
+if 'camara' in ETAPAS:
+    CAM = os.path.join(P, '..', '..', 'camara').replace('\\', '/')
+    csvs = lambda t: "[" + ",".join(f"'{a.replace(chr(92), '/')}'" for a in sorted(glob.glob(f'{CAM}/{t}-*.csv'))) + "]"
+    lc = lambda arqs: f"read_csv({arqs}, delim=';', header=true, all_varchar=true, union_by_name=true, max_line_size=10000000)"
+    norm = lambda c: f"upper(strip_accents(trim({c})))"
+    con.execute(f"""
+    CREATE OR REPLACE TABLE votacao_camara AS
+      SELECT v.id id_votacao, TRY_CAST(v.data AS DATE) dt_votacao, v.siglaOrgao sg_orgao, v.descricao ds_votacao, v.aprovacao = '1' fl_aprovacao,
+             TRY_CAST(v.votosSim AS INTEGER) qt_sim, TRY_CAST(v.votosNao AS INTEGER) qt_nao, TRY_CAST(v.votosOutros AS INTEGER) qt_outros,
+             p.proposicao_titulo sg_proposicao, p.proposicao_ementa ds_ementa,
+             NOT regexp_matches(coalesce(v.descricao, ''), '[Rr]equerimento|[Rr]ecurso|[Pp]refer[êe]ncia|Redação Final') fl_merito
+      FROM (SELECT * FROM {lc(csvs('votacoes'))} QUALIFY ROW_NUMBER() OVER (PARTITION BY id) = 1) v
+      LEFT JOIN (SELECT * FROM {lc(csvs('votacoesProposicoes'))}
+                 -- a proposição principal: emenda constitucional e lei antes de requerimento e parecer
+                 QUALIFY ROW_NUMBER() OVER (PARTITION BY idVotacao ORDER BY CASE proposicao_siglaTipo WHEN 'PEC' THEN 1 WHEN 'PLP' THEN 2 WHEN 'PL' THEN 3
+                         WHEN 'MPV' THEN 4 WHEN 'PLV' THEN 5 WHEN 'PDL' THEN 6 ELSE 9 END, proposicao_id) = 1) p ON p.idVotacao = v.id
+      WHERE v.id IN (SELECT DISTINCT idVotacao FROM {lc(csvs('votacoesVotos'))});
+    CREATE OR REPLACE TABLE voto_deputado AS
+      SELECT idVotacao id_votacao, TRY_CAST(deputado_id AS INTEGER) id_deputado, deputado_siglaPartido sg_partido, deputado_siglaUf sg_uf, voto ds_voto
+      FROM {lc(csvs('votacoesVotos'))} QUALIFY ROW_NUMBER() OVER (PARTITION BY idVotacao, deputado_id ORDER BY dataHoraVoto DESC) = 1;
+    CREATE OR REPLACE TABLE orientacao_bancada AS
+      SELECT DISTINCT idVotacao id_votacao, siglaBancada sg_bancada, orientacao ds_orientacao FROM {lc(csvs('votacoesOrientacoes'))}
+      WHERE idVotacao IN (SELECT id_votacao FROM votacao_camara);
+    CREATE OR REPLACE TABLE deputado_camara AS
+      WITH d AS (SELECT TRY_CAST(regexp_extract(uri, '(\\d+)$', 1) AS INTEGER) id_deputado, nome nm_parlamentar, nomeCivil nm_civil,
+                        TRY_CAST(dataNascimento AS DATE) dt_nascimento, ufNascimento sg_uf_nascimento FROM {lc("'" + CAM + "/deputados.csv'")}),
+           liga AS (SELECT d.id_deputado, pe.id_pessoa,
+                           ROW_NUMBER() OVER (PARTITION BY d.id_deputado ORDER BY EXISTS (SELECT 1 FROM candidatura c WHERE c.id_pessoa = pe.id_pessoa AND c.cd_cargo = 6) DESC, pe.id_pessoa) rk
+                    FROM d JOIN pessoa pe ON {norm('pe.nm_pessoa')} = {norm('d.nm_civil')} AND pe.dt_nascimento = d.dt_nascimento)
+      SELECT d.*, l.id_pessoa FROM d LEFT JOIN liga l ON l.id_deputado = d.id_deputado AND l.rk = 1
+      WHERE d.id_deputado IN (SELECT DISTINCT id_deputado FROM voto_deputado);
+    """)
+    log('camara:', con.execute("SELECT COUNT(*), COUNT_IF(fl_merito) FROM votacao_camara").fetchone(), 'votações;',
+        con.execute("SELECT COUNT(*) FROM voto_deputado").fetchone()[0], 'votos;',
+        con.execute("SELECT COUNT(*), COUNT(id_pessoa) FROM deputado_camara").fetchone(), 'deputados (ligados ao TSE)')
 
 # valor em reais: o TSE grava "80000,00" nos anos novos e "80000.00" em alguns antigos
 reais = lambda c: f"CASE WHEN {c} LIKE '%,%' THEN TRY_CAST(REPLACE(REPLACE({c}, '.', ''), ',', '.') AS DECIMAL(16,2)) ELSE TRY_CAST({c} AS DECIMAL(16,2)) END"
@@ -390,8 +498,9 @@ if 'bens' in ETAPAS:
         cols = set(open(arqs[0], encoding='utf-8').readline().replace('"', '').strip().split(';'))
         tipo = "(CD_TIPO_ELEICAO = '2' OR NM_TIPO_ELEICAO ILIKE 'ORDIN%')" if 'NM_TIPO_ELEICAO' in cols else "true"
         con.execute(f"CREATE OR REPLACE TEMP TABLE b AS SELECT * FROM {le(arqs)} WHERE {tipo}")
+        ordem = 'NR_ORDEM_BEM_CANDIDATO' if 'NR_ORDEM_BEM_CANDIDATO' in cols else 'NR_ORDEM_CANDIDATO'   # o nome da coluna muda entre os anos
         con.execute(f"""INSERT INTO bem_candidato
-            SELECT c.id_candidatura, TRY_CAST(b.NR_ORDEM_BEM_CANDIDATO AS SMALLINT), TRY_CAST(b.CD_TIPO_BEM_CANDIDATO AS SMALLINT), b.DS_TIPO_BEM_CANDIDATO,
+            SELECT c.id_candidatura, TRY_CAST(b.{ordem} AS SMALLINT), TRY_CAST(b.CD_TIPO_BEM_CANDIDATO AS SMALLINT), b.DS_TIPO_BEM_CANDIDATO,
                    b.DS_BEM_CANDIDATO, {reais('b.VR_BEM_CANDIDATO')}, {ano}
             FROM b JOIN eleicao e ON e.nr_ano_eleicao = {ano}
             JOIN candidatura c ON c.id_eleicao = e.id_eleicao AND c.sq_candidato = TRY_CAST(b.SQ_CANDIDATO AS BIGINT) AND c.sg_ue IN (b.SG_UE, b.SG_UF)""")
@@ -486,6 +595,22 @@ if 'views' in ETAPAS:
            100.0 * SUM(CASE WHEN cd_grau_escolaridade = 8 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 8 THEN qt_eleitores END), 0) AS pc_superior,
            100.0 * SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 3 THEN qt_eleitores ELSE 0 END) / NULLIF(SUM(CASE WHEN cd_grau_escolaridade BETWEEN 1 AND 8 THEN qt_eleitores END), 0) AS pc_sem_fundamental
     FROM eleitorado_perfil GROUP BY nr_ano_eleicao, cd_municipio_tse;
+    -- despesa por tipo: a categoria que o candidato escolhe na prestação de contas, juntada em grupos; os 7 primeiros são propaganda
+    CREATE OR REPLACE VIEW vw_despesa_tipo AS
+    SELECT d.id_candidatura, d.nr_ano_eleicao, d.vr_despesa, t.nr_tipo, t.nr_tipo <= 7 AS fl_propaganda,
+           ['Material impresso', 'Internet e redes sociais', 'Rádio, TV e vídeo', 'Militância e cabos eleitorais', 'Adesivos, placas e carro de som',
+            'Comícios e eventos', 'Jornais e revistas', 'Pessoal e serviços', 'Veículos, viagens e combustível', 'Repasse a outros candidatos', 'Outras despesas'][t.nr_tipo] AS ds_tipo
+    FROM despesa d, LATERAL (SELECT lower(strip_accents(coalesce(d.ds_origem_despesa, ''))) AS o) x,
+         LATERAL (SELECT CASE WHEN x.o LIKE '%impress%' THEN 1
+                              WHEN regexp_matches(x.o, 'impulsionamento|internet|pagina|sitio|site|rede social|redes sociais') THEN 2
+                              WHEN regexp_matches(x.o, 'radio|televis|video|jingle|vinheta|slogan') THEN 3
+                              WHEN regexp_matches(x.o, 'militancia|mobilizacao') THEN 4
+                              WHEN regexp_matches(x.o, 'adesivo|carro de som|carros de som|placa|bandeira|faixa|estandarte|cavalete|bottom|brinde|camis') THEN 5
+                              WHEN regexp_matches(x.o, 'comicio|evento') THEN 6
+                              WHEN regexp_matches(x.o, 'jornai|revista') THEN 7
+                              WHEN regexp_matches(x.o, 'pessoal|servicos prestados|terceiros|advoca|contab|pesquisa|consultoria') THEN 8
+                              WHEN regexp_matches(x.o, 'combust|veiculo|transporte|locomocao|passage|hospedage|alimentacao|viage') THEN 9
+                              WHEN regexp_matches(x.o, 'doac|repasse|transfer') THEN 10 ELSE 11 END AS nr_tipo) t;
     """)
 
 con.close()

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MOAS"]=[["MOAS",49345,"MOÁS VICENTE DA SILVA","MOÁS",2004,13,20397,0,73],[0,49345,"MOÁS VICENTE DA SILVA","MOÁS",2004,13,20397,0,73]];

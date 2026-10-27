@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ALDB"]=[[0,595181,"ALDBERGSON GONÇALVES DOS SANTOS","ALDI DE BATISTA",2012,13,23590,0,117]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JUNJ"]=[["JUNJI",814214,"JUNJI ABE","JUNJI",2018,6,"SP",4,113156],[0,814214,"JUNJI ABE","JUNJI",2018,6,"SP",4,113156],[0,2072376,"JUNJI ABE","",1994,7,"SP",1,40073]];

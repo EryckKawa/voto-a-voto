@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/HEH"]=[["HEHE",1612352,"JOSE MAFRA DE FREITAS NETO","HÉHÉ",2004,13,51470,0,0],["HEHR",2233162,"DAVID HEHR","",1996,13,56375,1,524]];

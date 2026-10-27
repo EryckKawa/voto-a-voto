@@ -1,0 +1,14 @@
+{
+  "data": "2026-10-27",
+  "pessoas": 2397835,
+  "candidaturas": 3697353,
+  "prefixos_busca": 24569,
+  "fotos": 81214,
+  "planos": 30346,
+  "site_bytes": 771224561,
+  "arquivos": 118839,
+  "integridade": "cada ficha confere com o banco; manifesto completo; sem NaN; resultado de 2006 conferido",
+  "votacoes_merito": 1860,
+  "cpf_cnpj_ementas": 0,
+  "observacao_privacidade": "Documento omitido na exportação; o banco-fonte mantém o texto público original."
+}

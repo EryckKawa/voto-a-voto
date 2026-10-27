@@ -23,6 +23,7 @@ Se a rota falha, o roteador marca `main.dataset.erro` e mostra a mensagem de err
 | `js/revela.js` | `#/revela` | O que o voto revela |
 | `js/perguntas.js` | `#/perguntas`, `#/perguntas/q1` … `q12` | As 12 perguntas |
 | `js/partidos.js` | `#/partidos` | Posição dos partidos |
+| `js/politico.js` | `#/politicos`, `#/politico/123` | Busca de políticos e a ficha de cada um (todos os candidatos de 1994 a 2026) |
 | `js/testes.js` | `#/testes`, `#/testes/auto` | Testes no navegador |
 | `js/cidade.js`, `js/candidato.js`, `js/mapa.js` | `#/cidade/…`, `#/candidato/…`, `#/seis` | Páginas da primeira versão (6 estados) |
 | `js/app.js` | endereços antigos | Redireciona e liga a busca |
@@ -31,7 +32,7 @@ O mapa usa a opção `{ mantem: true }`: ao trocar de ano ou de estado, o desenh
 
 ## Dados
 
-Os dados ficam em `data/`, já calculados pelos scripts. Cada arquivo existe em duas formas:
+Os dados ficam em `data/`, já calculados pelos scripts. Cada arquivo existe em duas formas (os de `data/br/pol/`, por serem muitos, só em `.js`):
 
 - `arquivo.json`: a origem, gerada pelos scripts;
 - `arquivo.js`: o mesmo conteúdo dentro de `(window.__D=window.__D||{})["chave"]=…;`, feito por `scripts/empacotar.py`.
@@ -57,6 +58,14 @@ Principais pastas de `data/br/`:
 | `busca` | Índice da busca: candidatos a presidente, governador e senador, e prefeitos eleitos, de 1994 a 2026 |
 | `fotos/<ano>` | Sequenciais dos candidatos que têm foto em `img/fotos/<ano>/<sequencial>.jpg` (miniaturas 90×120 das fotos oficiais do TSE). Quem não tem foto aparece com as iniciais na cor do partido |
 | `vies/{UF}` | Nota média dos votos de cada cidade, cargo a cargo, de 1994 a 2026 (Q9) |
+| `pol/f/{id % 2048}` | Ficha de cada político: dados da pessoa e cada candidatura (cargo, lugar, partido e nota, votos, resultado, receita, gasto, bens, onde gastou) |
+| `pol/pal/{id % 512}` | As 40 palavras mais usadas no plano de governo de cada candidatura |
+| `pol/cam/{id % 64}`, `pol/cam/votacoes` | Deputados federais de 2019 a 2026: cada voto no Plenário, quanto segue o partido e o governo, lado pelo próprio voto |
+| `pol/idx/…`, `pol/idx/manifesto` | Índice da busca de políticos, cortado por começo do nome em pedaços pequenos; o manifesto lista os pedaços |
+| `pol/textos/{id % 64}`, `pol/textos/info` | Palavras individuais de projetos e discursos, com proveniência, período e número de documentos |
+| `pol/fotos` | Pessoas com miniatura em `img/pol/{id % 100}/{id}.jpg`; complemento das fotos já usadas pelo mapa |
+
+Os arquivos grandes de `pol/` levam JSON compactado com gzip e codificado em base64 no próprio `.js`. `V.descompactar` usa `DecompressionStream`, e `V.dados` espera a descompactação antes de entregar o objeto à página. Isso reduz o tamanho do site sem precisar de um serviço de banco nem de arquivos buscados por `fetch`. Requer navegador atual com `DecompressionStream`.
 
 ## Os sete cargos do mapa
 

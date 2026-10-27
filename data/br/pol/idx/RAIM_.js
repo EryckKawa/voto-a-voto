@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/RAIM_"]=[[0,2373790,"RAIM DIAS DE MESQUITA","",1996,13,90697,0,129],[0,229653,"RAIM DIAS DE MESQUITA","RAI",2000,13,90697,0,83]];

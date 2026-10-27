@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/WAGNERP"]=[["WAGNERPIMENTA",1774144,"WAGNER MUNIZ SOUSA","WAGNER(PIMENTA)",2016,13,49417,0,51]];

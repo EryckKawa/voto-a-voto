@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/GERAP"]=[[0,1433449,"GERAPOENI DE SOUZA FILHO","GENINHO DA PADARIA",2012,13,47716,0,70]];

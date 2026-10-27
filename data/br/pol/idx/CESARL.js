@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CESARL"]=[[0,2357474,"CESARLEI CARPENEDO","",1996,13,86703,0,80],[0,748015,"CESARLEI CARPENEDO","#NE",2000,12,86703,0,0]];

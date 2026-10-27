@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOSE_FRANG"]=[["JOSE FRANGUEIRO",498214,"JOSÉ GERALDO VIEIRA","JOSÉ FRANGUEIRO",2000,13,51250,0,159]];

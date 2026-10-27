@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/GLAUP"]=[[0,1424112,"GLAUPINER CONCEIÇÃO DE CARVALHO","PROFESSOR GLAUPINHO",2008,13,50350,0,432]];

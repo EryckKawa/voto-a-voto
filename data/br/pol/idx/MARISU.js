@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARISU"]=[[0,1114344,"MARISUZAN AGUILERA MACCAGNINI","SUZI CORRETORA",2000,13,71137,0,14]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/NER_"]=[[0,2075016,"NER FAGUNDES DA SILVA","",1996,13,450,0,71],[0,177726,"NER FAGUNDES DA SILVA","NER",2000,13,787,0,35]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CIRU"]=[[0,1034328,"CIRUS ITIBERE DA CUNHA","",2002,3,"PR",0,3351],[0,2332320,"CIRUS ITIBERE DA CUNHA","",1996,13,77950,1,289]];

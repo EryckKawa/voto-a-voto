@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARIA_DED"]=[[0,378199,"MARIA DEDICE RAMOS TOMAZ","PROFESSORA DEDICE",2016,13,20516,0,377]];

@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/EDNA_Y"]=[["EDNA YAMADA",1749342,"EDNA GENÉSIO DA SILVA YAMADA","EDNA YAMADA",2024,13,71072,0,505]];

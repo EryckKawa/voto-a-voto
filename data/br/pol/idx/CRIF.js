@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CRIF"]=[[0,2042291,"CRIFERSON APARECIDO DE SOUZA FRANCISCO","LOVEER",2024,13,65730,0,1]];

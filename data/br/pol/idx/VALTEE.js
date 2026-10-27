@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VALTEE"]=[[0,270231,"VALTEENE PONCIANO DE SOUZA","VALTINHO DA SANEAGO",2000,13,92258,0,104]];

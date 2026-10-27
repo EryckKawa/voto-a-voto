@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ESTEA"]=[["ESTEANO DA LOTACAO",1668904,"ESTEFANO SILVA DE SOUZA","ESTEANO DA LOTAÇÃO",2020,13,38075,0,358]];

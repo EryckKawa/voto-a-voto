@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VALMIRS"]=[["VALMIRSAO E A SOLUCAO",1249110,"VALMIR LIMA GOMES","VALMIRSÃO E A SOLUÇÃO",2004,13,59013,0,92]];

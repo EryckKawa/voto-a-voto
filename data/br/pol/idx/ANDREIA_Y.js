@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ANDREIA_Y"]=[[0,1761507,"ANDREIA YOSHIE SHIMIZU","ANDREIA PROFESSORA",2020,13,54135,0,230]];

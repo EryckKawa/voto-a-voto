@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/FRANCISCC"]=[[0,765268,"FRANCISCCO FRANCINÉ BRAGA DO NASCIMENTO","FRANCINÉ",2016,13,15954,0,83]];

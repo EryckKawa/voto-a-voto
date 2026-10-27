@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/WELLINGL"]=[[0,1338955,"WELLINGLEIDSON DIOGO LIMA DA PAZ","DIOGO DO RAIO X",2024,13,23280,0,379]];

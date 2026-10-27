@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/PROX"]=[["PROXIMOZER",626098,"LIUDIMILA KATRINI PROXIMOZER","LIU KATRINE",2018,5,"ES",0,24496]];

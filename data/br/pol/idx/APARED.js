@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/APARED"]=[[0,1335521,"APAREDIDO DONIZETTI CORREA","ZEQUINHA DA BEIRA RIO",2024,13,71676,0,96]];

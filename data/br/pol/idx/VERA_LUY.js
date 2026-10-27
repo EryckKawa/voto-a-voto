@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/VERA_LUY"]=[[0,1238948,"VERA LUYZA CAMPESTRINI DE MIRANDA","VERA CAMPESTRINI",2012,13,4081,0,0]];

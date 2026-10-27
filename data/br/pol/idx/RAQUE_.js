@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/RAQUE_"]=[["RAQUE DE CHAPERO",1331885,"RAQUEL DE SOUZA SIQUINELI","RAQUE DE CHAPERÓ",2008,13,58394,0,62]];

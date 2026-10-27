@@ -1,0 +1,760 @@
+{
+  "descricao": "Rodados agora neste navegador, numa tela de 1280 px, em 22 segundos.",
+  "grupos": [
+    {
+      "nome": "Velocidade 12 de 12",
+      "testes": [
+        {
+          "celulas": [
+            "✓",
+            "Página inicial (Ninguém) abre",
+            "221 ms · travou 0 ms",
+            "até 1.500 ms · travar até 300 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "O que o voto revela abre",
+            "32 ms · travou 0 ms",
+            "até 1.200 ms · travar até 300 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa do Brasil abre",
+            "212 ms · travou 185 ms",
+            "até 2.000 ms · travar até 600 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Cidade abre com o histórico (São Paulo)",
+            "170 ms · travou 0 ms",
+            "até 2.000 ms · travar até 600 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Eleição antiga abre (presidente 1994)",
+            "111 ms · travou 61 ms",
+            "até 1.500 ms · travar até 500 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "12 perguntas abre",
+            "86 ms · travou 0 ms",
+            "até 1.500 ms · travar até 400 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Partidos abre",
+            "42 ms · travou 0 ms",
+            "até 1.500 ms · travar até 400 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Trocar de ano no mapa",
+            "210 ms · travou 117 ms",
+            "até 800 ms · travar até 400 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Trocar a régua (voto ↔ Harvard)",
+            "76 ms",
+            "até 700 ms"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Zoom do mapa fluido",
+            "65 quadros/s",
+            "40 ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Memória usada",
+            "55 MB",
+            "até 120 MB"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca de políticos abre",
+            "40 ms · travou 0 ms",
+            "até 1.200 ms · travar até 300 ms"
+          ],
+          "estado": "t--ok"
+        }
+      ]
+    },
+    {
+      "nome": "Funcionamento 20 de 20",
+      "testes": [
+        {
+          "celulas": [
+            "✓",
+            "Menu com as seis seções (sem Disputas apertadas)",
+            "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos",
+            "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Endereço antigo das disputas leva ao mapa",
+            "#/mapa",
+            "#/mapa"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca acha Campinas e abre a cidade",
+            "Brasil › São Paulo › Campinas · Prefeito 2024 Em Campinas, Dário Saadi…",
+            "título fala de Campinas"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Clicar numa cidade do mapa aproxima o estado",
+            "#/mapa/br/SP",
+            "#/mapa/br/SP"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Botões de cargo do maior para o menor, com deputados e vereador",
+            "Presidente · Governador · Senador · Dep. federal · Dep. estadual · Prefeito · Vereador",
+            "Presidente · Governador · Senador · Dep. federal · Dep. estadual · Prefeito · Vereador"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Deputado federal: cidade mostra o partido mais votado",
+            "Em Teresina, o partido mais votado para deputado federal em 2022 foi o PT · 9 partidos",
+            "título com o partido mais votado; lista de partidos no painel"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Fotos dos candidatos no painel da cidade",
+            "10 fotos para 9 candidatos a prefeito de Fortaleza (2024) · foto da urna carregou",
+            "foto na urna (carregada) e em cada candidato da lista"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "▶ Passar os anos avança sozinho",
+            "#/mapa/e/PREF1996",
+            "passa para os anos anteriores"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Histórico da cidade tem os sete cargos, do maior para o menor",
+            "7 cargos, 61 eleições · Presidente, Governador, Senador, Deputado federal, Deputado estadual, Prefeito, Vereador",
+            "7 cargos na ordem Presidente … Vereador, 55 ou mais eleições"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "12 perguntas: recorte, Gráfico | Tabela e SQL",
+            "recorte trocou · tabela com 5 linhas · SQL presente",
+            "troca o gráfico; tabela com 5 grupos; SQL na página"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Régua: o PT não aparece como extremo",
+            "PT -0,65 (esquerda) · PSOL -0,75",
+            "nenhum partido perto de −1"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ficha do político: histórico, lado político e votos na Câmara (Arthur Lira)",
+            "8 candidaturas · régua com pontos · 30 votos na lista",
+            "3 ou mais candidaturas, régua com pontos e votos na Câmara"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ficha: votações da mais recente para a mais antiga",
+            "2026-09-02, 2026-05-27, 2026-05-27",
+            "datas em ordem decrescente"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ficha: procurar uma votação filtra a lista",
+            "30 → 30 votações, todas de PEC",
+            "só votações com “PEC”"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Q6: nuvem de palavras por cargo e por partido",
+            "90 palavras nas nuvens de prefeito · 12 nuvens de partido",
+            "30 ou mais palavras; 6 ou mais partidos"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Nuvem individual: projetos e discursos de Arthur Lira",
+            "40 palavras nos discursos; trocar a fonte mudou a nuvem",
+            "fontes próprias, nuvens diferentes e 10 ou mais palavras"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Nuvem individual: resumos oficiais do Senado",
+            "40 palavras e link da fonte oficial",
+            "resumos identificados e fonte consultável"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Nuvem individual: plano de governo de Lula preservado",
+            "40 palavras do plano individual",
+            "plano identificado e 20 ou mais palavras"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Nuvem individual: candidato sem texto tem aviso explícito",
+            "Não há texto disponível nas fontes consultadas para gerar a nuvem desta pessoa.",
+            "aviso de ausência, sem inventar palavras"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Nenhum erro de JavaScript durante os testes",
+            "nenhum",
+            "nenhum"
+          ],
+          "estado": "t--ok"
+        }
+      ]
+    },
+    {
+      "nome": "Preenchimento 14 de 14",
+      "testes": [
+        {
+          "celulas": [
+            "✓",
+            "Mapa: em todas as 61 eleições (7 cargos), toda cidade tem cor ou motivo\nSem resultado no arquivo do TSE: PRES 1994: 3; PRES 1998: 1; GOV 1998: 2; SEN 1994: 3; SEN 1998: 2; DF 1994: 3; DF 1998: 2; DE 1994: 3; DE 1998: 2; PREF 1996: 98; PREF 2000: 4; PREF 2004: 1; PREF 2008: 1; PREF 2016: 3; PREF 2020: 2; PREF 2024: 8; VER 1996: 99; VER 2000: 3; VER 2004: 2; VER 2016: 3; VER 2020: 1.",
+            "61 eleições, 5.566 desenhos cada",
+            "toda cidade com vencedor, ou marcada como sem resultado oficial ou ainda não criada"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de presidente 1994: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.019 com cor · 547 hachuradas ou pontilhadas · legenda: 551",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de prefeito 1996: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.407 com cor · 159 hachuradas ou pontilhadas · legenda: 161",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de prefeito 2024: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.525 com cor · 41 hachuradas ou pontilhadas · legenda: 39",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de governador 2022: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.566 com cor · 0 hachuradas ou pontilhadas · legenda: 0",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de deputado federal 2022: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.566 com cor · 0 hachuradas ou pontilhadas · legenda: 0",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa de vereador 1996: nenhuma cidade em branco, legenda fecha a conta",
+            "0 em branco · 5.407 com cor · 159 hachuradas ou pontilhadas · legenda: 161",
+            "nenhuma em branco; legenda igual às marcadas (±4)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Textos sem campo vazio em todas as páginas",
+            "26 páginas, nenhum vazio",
+            "sem “undefined”, “NaN” ou título vazio"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Tabelas das 12 perguntas sem célula vazia",
+            "nenhuma célula vazia",
+            "toda célula com valor ou “—”"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Uma cidade de cada estado: painel completo\nSem resultado oficial em 2024, com a explicação no painel: Nossa Senhora do Socorro/SE.",
+            "26 cidades com urna, candidatos e histórico",
+            "urna, lista de candidatos e os sete cargos no histórico"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca: acentos, maiúsculas e espaços não atrapalham",
+            "5 buscas acharam a cidade",
+            "acha a cidade escrita de qualquer jeito"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca: candidatos do Brasil inteiro",
+            "3 candidatos achados · abriu a ficha",
+            "acha presidente, prefeito e governador e abre a ficha do político"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca: texto estranho não quebra nem injeta código",
+            "5 textos estranhos, nenhum problema",
+            "avisa que não achou; não executa código; nenhum erro"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca pelo teclado: Enter abre o primeiro resultado",
+            "Brasil › Paraíba › Campina Grande · Prefeito 2024 Em Campina…",
+            "abre Campina Grande"
+          ],
+          "estado": "t--ok"
+        }
+      ]
+    },
+    {
+      "nome": "Acessibilidade 17 de 17",
+      "testes": [
+        {
+          "celulas": [
+            "✓",
+            "Página inicial: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Página inicial: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Mapa: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Cidade: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Cidade: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "O que o voto revela: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "O que o voto revela: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "12 perguntas: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "12 perguntas: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Uma pergunta (Q3): regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Uma pergunta (Q3): áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Partidos: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Partidos: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca de políticos: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Busca de políticos: áreas de clique grandes o bastante",
+            "todas",
+            "todas com 24 × 24 px ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ficha do político: regras de acessibilidade (axe)",
+            "nenhum problema",
+            "nenhum problema"
+          ],
+          "estado": "t--ok"
+        }
+      ]
+    },
+    {
+      "nome": "Dados 18 de 18",
+      "testes": [
+        {
+          "celulas": [
+            "✓",
+            "Presidente 2022, 2º turno: Lula 60.345.999 × Bolsonaro 58.206.354",
+            "60.345.999 × 58.206.354",
+            "60.345.999 × 58.206.354 (TSE)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "O mapa tem as 5.570 cidades do Brasil",
+            "5.570 cidades",
+            "5.570 (IBGE)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Abstenção no 1º turno de 2022: 20,9%",
+            "20,8%",
+            "20,9% (TSE), tolerância de 0,3 ponto"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Branco e nulo para presidente em 1994: 18,8%",
+            "18,8%",
+            "18,8% (TSE)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Prefeitos eleitos em 2008: PMDB 1.201, PSDB 791, PT 558\nDiferenças de 1 vêm de eleições refeitas depois.",
+            "PMDB 1202, PSDB 791, PT 557",
+            "1.201, 791, 558 (TSE), tolerância de 2"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ninguém em 2024: 42,6 milhões de eleitores",
+            "42.566.403",
+            "42,6 milhões (TSE: faltas + brancos + nulos)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Achado da virada: PT melhor nas ricas em 2002 e nas pobres de 2006 em diante",
+            "2002: 50% × 63% · 2006: 78% × 54%",
+            "mais pobres < mais ricas em 2002; > de 2006 em diante"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Achado das cidades de um lado só: vantagem de 2022 bate com o resultado oficial",
+            "vantagem 1,8 ponto · 2.055 cidades acima de 70%",
+            "1,8 ponto (TSE)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Achado dos prefeitos: conta de reeleitos bate com o arquivo de 2024",
+            "925 de 1.945 reeleitos (de 5.529 eleitos)",
+            "números coerentes entre si"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Banco nacional: 513 deputados federais e 1.035 estaduais eleitos em 2022",
+            "513 e 1035",
+            "513 e 1.035 cadeiras (fora as 24 do DF)"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Banco nacional: doação de empresas some depois da proibição de 2015",
+            "2014: 26,4% · 2018: 0,4%",
+            "mais de 15% em 2014; menos de 1% em 2018"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Banco nacional: o mapa e a consulta contam as mesmas 5.570 cidades",
+            "5.570 no banco; até 5.570 por eleição",
+            "5.570, sem o voto no exterior"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Os três estudos concordam entre si (correlação de 0,9 ou mais)",
+            "ZP-BRC 0,95 (n=20) · ZP-VP 0,96 (n=70) · BRC-VP 0,97 (n=11)",
+            "0,90 ou mais nos três pares"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Consenso: PT à esquerda, PSDB do centro (1994) à centro-direita (2014)",
+            "PT 2022 -0.67 · PSDB 1994 -0.04, 2014 0.39 · PL 2022 0.52",
+            "PT < −0,5; PSDB centro em 1994 e > +0,25 em 2014; PL > +0,25"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Notas recentes: PL de 2026 na direita, todas entre −1 e +1",
+            "PL 2026 0.55 · Novo 0.71 · 0 fora da escala",
+            "PL e Novo acima de +0,5; nenhuma nota fora de −1 a +1"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Régua pelo voto concorda com a de Harvard",
+            "correlação de 0,95 em 15 partidos",
+            "0,90 ou mais"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ementas da Câmara sem CPF ou CNPJ",
+            "nenhum documento exposto",
+            "nenhum CPF ou CNPJ"
+          ],
+          "estado": "t--ok"
+        },
+        {
+          "celulas": [
+            "✓",
+            "Ficha de Lula: eleito presidente em 2002, 2006 e 2022",
+            "eleito presidente em 2002, 2006, 2022",
+            "inclui 2002, 2006 e 2022"
+          ],
+          "estado": "t--ok"
+        }
+      ]
+    }
+  ],
+  "titulo": "Os 81 testes passaram"
+}

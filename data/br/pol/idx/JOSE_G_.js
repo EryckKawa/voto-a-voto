@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOSE_G_"]=[["JOSE G TEIXEIRA ZE GUARDA",238480,"JOSÉ GERALDO TEIXEIRA","JOSÉ G. TEIXEIRA / ZÉ GUARDA",2008,13,40495,0,26]];

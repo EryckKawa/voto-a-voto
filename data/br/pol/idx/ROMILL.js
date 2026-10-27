@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/ROMILL"]=[[0,1232289,"ROMILLA DE MENEZES NASCIMENTO","TIA ROMILLA",2020,13,15857,0,71]];

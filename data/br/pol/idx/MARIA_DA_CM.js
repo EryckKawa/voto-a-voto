@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARIA_DA_CM"]=[["MARIA DA CMEI",982606,"MARIA APARECIDA DA LUZ","MARIA DA CMEI",2020,13,61697,0,39]];

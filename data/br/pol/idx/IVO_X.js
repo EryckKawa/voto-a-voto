@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/IVO_X"]=[[0,30743,"IVO XAVIER DA COSTA","MESTRE IVO",2012,13,28851,0,61],[0,2332195,"IVO XICARELLI","",1996,13,77895,0,109]];

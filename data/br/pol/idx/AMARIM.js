@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/AMARIM"]=[["AMARIM",1610584,"ALCIONE MARIA LOPES AMARIM","PEPICA AMORIM",2024,13,42404,1,214]];

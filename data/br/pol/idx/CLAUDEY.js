@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/CLAUDEY"]=[[0,358975,"CLAUDEY DOS SANTOS PINHEIRO","DÉI PARABOLICA",2016,13,90778,0,103]];

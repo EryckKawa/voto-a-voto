@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LEILL"]=[[0,1987823,"LEILLA JANE PROBO DE CARVALHO","PROFESSORA LEILLA PROBO",2012,12,10987,1,0]];

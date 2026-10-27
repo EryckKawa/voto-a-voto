@@ -1,4 +1,4 @@
-﻿VOTO A VOTO - o que o voto revela sobre o Brasil (Grupo 5, BDR/UFPI)
+﻿VOTO A VOTO - o que o voto revela sobre o Brasil (Grupo 6, BDR/UFPI)
 
 Como abrir
   Dê dois cliques em index.html. Abre em qualquer navegador (Chrome, Edge,
@@ -30,6 +30,8 @@ Páginas
   #/perguntas As 12 perguntas do trabalho, cada uma com gráfico, tabela e SQL
   #/partidos  Onde fica cada partido em cada eleição, segundo três estudos
               acadêmicos e o voto na Câmara
+  #/politicos A ficha de cada candidato de 1994 a 2026 (histórico, lado do
+              partido, dinheiro, bens, plano de governo e votos na Câmara)
   #/testes    Testes do site
 
 No ar: https://eryckkawa.github.io/voto-a-voto/
@@ -39,11 +41,13 @@ Pastas
   css/      estilo.css
   js/       base.js (utilidades e rotas), brasil.js (mapa), ninguem.js (início),
             revela.js (achados), perguntas.js (12 perguntas), partidos.js
-            (partidos), cidade.js (busca), testes.js (testes)
+            (partidos), politico.js (ficha do político), cidade.js (busca),
+            testes.js (testes)
   data/br/  dados já prontos em .js (funcionam sem servidor)
   vendor/   D3 7.9.0, topojson-client 3.1.0 e axe-core 4.10.2 (testes)
   fonts/    Atkinson Hyperlegible e Barlow Condensed (licença OFL)
   scripts/  como os dados foram feitos, a partir dos arquivos do TSE, IBGE e
             Câmara: processa_munzona.py, nacional_venc.py, historico.py,
             regua_voto.py, ideologia_anos.py, achados.py, geo_proj.js,
+            montar_banco.py (banco nacional), ficha_politico.py (fichas),
             empacotar.py (JSON -> .js)

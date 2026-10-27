@@ -29,13 +29,6 @@ def onda_mais_proxima(ano, ondas):
 def nota(sigla, ano, bolognesi):
     """devolve (nota, estimada?, explicação curta)"""
     s = (sigla or '').upper().strip()
-    # siglas que já foram de outro partido
-    if s == 'PP' and ano <= 1994:
-        return NOTAS['PP_ANTIGO'][1993], False, 'Zucco & Power, onda 1993 (PP antigo)'
-    if s == 'PSD' and ano < 2011:
-        return None, True, 'PSD antigo (1987-2003): sem nota'
-    if s == 'PSL' and ano < 2018:
-        return None, True, 'PSL antes de 2018: sem nota'
     if s in ALIAS:
         d = NOTAS[ALIAS[s]]; w = onda_mais_proxima(ano, list(d)); return d[w], abs(w - ano) > 4, f'Zucco & Power, onda {w}'
     if s in FUSOES:

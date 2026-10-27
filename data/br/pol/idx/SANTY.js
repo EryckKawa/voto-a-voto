@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/SANTY"]=[["SANTY ARAUJO",1989995,"APARECIDA SANTIAGO DE ARAUJO","SANTY ARAUJO",2024,13,71072,0,1]];

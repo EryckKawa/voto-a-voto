@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/JOAY"]=[[0,1312971,"JOAYMAR CASTRO GUSMÃO CORDEIRO","JÔ ASSISTENTE SOCIAL",2024,13,7374,0,211]];

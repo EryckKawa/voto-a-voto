@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MARCO_A_"]=[["MARCO A BENEDET PERICO",1030497,"MARCO ANTÔNIO BENEDET PÉRICO","MARCO A BENEDET PÉRICO",2026,7,"SC",0,744]];

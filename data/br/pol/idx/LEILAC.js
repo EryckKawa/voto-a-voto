@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/LEILAC"]=[[0,857915,"LEILACY MARQUES PEREIRA XAVIER","LEILA DO BRITO",2016,13,94692,0,10]];

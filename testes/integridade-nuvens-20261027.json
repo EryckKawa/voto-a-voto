@@ -1,0 +1,26 @@
+{
+  "data": "2026-10-27",
+  "pessoas": 988,
+  "pessoas_com_palavras": 974,
+  "fontes": {
+    "camara-projetos": 833,
+    "camara-discursos": 810,
+    "senado-projetos": 138,
+    "senado-discursos": 139
+  },
+  "documentos": {
+    "camara-projetos": 73600,
+    "camara-discursos": 111560,
+    "senado-projetos": 17548,
+    "senado-discursos": 25678
+  },
+  "palavras_exportadas": 75304,
+  "bytes": 590637,
+  "verificacoes": [
+    "nome civil e nascimento conferidos em todos os vínculos",
+    "sem fontes duplicadas",
+    "frequências positivas e grafia válida",
+    "todos os períodos dentro do intervalo",
+    "nenhuma falha de coleta"
+  ]
+}

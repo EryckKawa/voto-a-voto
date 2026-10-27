@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/GABRIA"]=[[0,1494742,"GABRIANNE DELATTRE DE OLIVEIRA","GABI DELATTRE",2016,13,86835,0,45]];

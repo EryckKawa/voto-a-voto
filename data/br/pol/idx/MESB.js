@@ -1,0 +1,1 @@
+(window.__D=window.__D||{})["br/pol/idx/MESB"]=[["MESBLA KALDAS",36214,"HUMBERTO GONZAGA LIMA","MESBLA KALDAS",2020,13,28754,0,0]];
