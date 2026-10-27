@@ -91,7 +91,7 @@
       ordem.forEach((i, q) => { x1[i] = ox + (q % cols) * s; y1[i] = base - Math.floor(q / cols) * sy; });
       const hl = (Math.ceil(lider[1] / POR_PONTO / cols)) * sy;
       extras = { barra: [W * 0.58, base - hl, cols * s, hl], rotulos: [[ox, base - linhas * sy - 12, `Ninguém: ${V.int(total)}`], [W * 0.58, base - hl - 12, `${V.nomePartido(lider[0])}: ${V.int(lider[1])}`]] };
-      tam = Math.min(s, sy) >= 2 ? Math.floor(Math.min(s, sy)) - 1 : Math.max(1, Math.min(s, sy) * 0.8);
+      tam = Math.min(s, sy) >= 3 ? Math.floor(Math.min(s, sy)) - 1 : Math.max(1, Math.min(s, sy));   // passo pequeno: sem vão, para não formar listras
     }
 
     /* ---------- desenho ---------- */

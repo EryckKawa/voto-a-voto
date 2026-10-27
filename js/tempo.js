@@ -15,19 +15,23 @@
         <p class="manchete__sub">Cada cidade com a cor do lado de quem ficou em primeiro lugar, eleição por eleição. Aperte o play e veja o país mudar.</p></header>
       <div class="vis-controles">${V.chipsVis(["PRES", "GOV", "PREF"], cargo, anos[0])}</div>
       <div class="vis-tempo">
-        <div class="vis-tempo__mapa"><canvas id="tempo-mapa" role="img" aria-label="Mapa das cidades do Brasil"></canvas>
+        <div class="vis-tempo__mapa"><p class="vis-3d__carrega" id="tempo-carrega">Desenhando o mapa…</p><canvas id="tempo-mapa" role="img" aria-label="Mapa das cidades do Brasil"></canvas>
           <p class="vis-ano" id="tempo-ano" aria-hidden="true">${anos[0]}</p></div>
         <div class="vis-tempo__lado">
-          <p><button type="button" class="btn btn--confirma vis-play" id="tempo-play" aria-pressed="false">▶ Passar os anos</button></p>
+          <p><button type="button" class="btn btn--confirma vis-play" id="tempo-play" aria-pressed="false" disabled>Carregando os anos…</button></p>
           <div id="tempo-resumo" aria-live="polite"></div>
           ${V.legendaLados()}
           <p class="pq-nota">Clique numa cidade para abrir o mapa daquela eleição. A cor é a nota do partido de quem venceu na cidade, pela régua do site (<a href="#/partidos">como é feita</a>). Cidades criadas depois de uma eleição aparecem sem resultado nela.</p>
         </div>
       </div></div>`;
     const canvas = document.getElementById("tempo-mapa");
-    const [M, ...vencs] = await Promise.all([V.mapaCanvas(canvas), ...anos.map((a) => V.dados("br/venc/" + cargo + a))]);
-    const cores = vencs.map((v) => M.cids.map((c) => d3.color(V.corVenc(v[c.id]))));
-    const resumos = vencs.map((v) => V.resumoVis(v, cargo));
+    // o primeiro ano aparece logo; os outros chegam pela rede enquanto isso
+    const [M, v0] = await Promise.all([V.mapaCanvas(canvas), V.dados("br/venc/" + cargo + anos[0])]);
+    const vencs = [], cores = [], resumos = [];
+    const preparar = (k, v) => { vencs[k] = v; cores[k] = M.cids.map((c) => d3.color(V.corVenc(v[c.id]))); resumos[k] = V.resumoVis(v, cargo); };
+    preparar(0, v0);
+    const todos = Promise.all(anos.slice(1).map((a, k) => V.dados("br/venc/" + cargo + a).then((v) => preparar(k + 1, v))));
+    document.getElementById("tempo-carrega").remove();
     let i = 0, tocando = false, tmr = null, raf = null;
     const elAno = document.getElementById("tempo-ano"), elRes = document.getElementById("tempo-resumo"), play = document.getElementById("tempo-play");
 
@@ -62,7 +66,7 @@
     play.addEventListener("click", () => (tocando ? parar() : tocar()));
     main.querySelector(".vis-controles").addEventListener("click", (e) => {
       const a = e.target.closest("[data-vis-ano]"), c = e.target.closest("[data-vis-cargo]");
-      if (a) { parar(); ir(anos.indexOf(+a.dataset.visAno)); }
+      if (a) { parar(); todos.then(() => ir(anos.indexOf(+a.dataset.visAno))); }
       if (c && c.dataset.visCargo !== cargo) { parar(); V.ir("#/tempo/" + c.dataset.visCargo); }
     });
     canvas.addEventListener("mousemove", (ev) => {
@@ -74,7 +78,10 @@
     const redimensionar = () => { if (!canvas.isConnected) { removeEventListener("resize", redimensionar); return; } M.medir(); M.pintar((n) => cores[i][n]); };
     addEventListener("resize", redimensionar);
     ir(0);
-    // quem chega pela apresentação já vê o filme rodando
-    if (V.tourAtivo && V.tourAtivo()) tocar();
+    todos.then(() => {
+      if (!canvas.isConnected) return;
+      play.disabled = false; play.textContent = "▶ Passar os anos";
+      if (V.tourAtivo && V.tourAtivo()) tocar();   // quem chega pela apresentação já vê o filme rodando
+    });
   });
 })();
