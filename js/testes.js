@@ -30,6 +30,11 @@
     addEventListener("vav:pronto", fim);
     if (location.hash === h) V.ir(h); else location.hash = h;
   });
+  // próxima página pronta, com limite: se ela não abrir, o teste falha em vez de travar a lista inteira
+  const esperarPronto = (limite = 15000) => new Promise((ok) => {
+    const f = () => { clearTimeout(t); removeEventListener("vav:pronto", f); ok(); }, t = setTimeout(f, limite);
+    addEventListener("vav:pronto", f);
+  });
   const q = (s) => document.querySelector(s), qq = (s) => [...document.querySelectorAll(s)];
   const txt = (s) => (q(s) ? q(s).textContent.replace(/\s+/g, " ").trim() : "");
   const ms = (v) => V.int(Math.round(v)) + " ms";
@@ -104,7 +109,7 @@
     await irPara("#/");
     const inp = q("#busca"); inp.value = "campinas"; inp.dispatchEvent(new Event("input", { bubbles: true }));
     const li = await ate(() => qq("#busca-lista li[data-h]").find((l) => /Campinas/.test(l.textContent)), 6000);
-    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    const pronto = esperarPronto();
     li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true }));
     await pronto; await ate(() => /Campinas/.test(txt("#manchete")), 8000);
     return R(true, txt("#manchete").slice(0, 70) + "…", "título fala de Campinas");
@@ -152,6 +157,7 @@
     const antes = txt("#pq-graf"); q("[data-vista='3']").click(); await quadros(1);
     const trocou = antes !== txt("#pq-graf");
     q("[data-modo='tab']").click(); await quadros(1);
+    await ate(() => qq("#pq-graf tbody tr").length === 5, 3000).catch(() => {});   // computador ocupado: a tabela pode levar alguns quadros
     const linhasTab = qq("#pq-graf tbody tr").length; q("[data-modo='graf']").click();
     const sql = /SELECT/.test(txt("#sql-q2"));
     return R(trocou && linhasTab === 5 && sql, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · SQL ${sql ? "presente" : "ausente"}`, "troca o gráfico; tabela com 5 grupos; SQL na página");
@@ -328,10 +334,11 @@
       explicadas.length ? "Sem resultado oficial em 2024, com a explicação no painel: " + explicadas.join(", ") + "." : "");
   });
   // a busca: o único campo de texto do site
-  const buscar = async (texto, esperar = true) => {
+  // achou: espera um resultado certo (o índice de candidatos chega pela rede depois das cidades)
+  const buscar = async (texto, esperar = true, achou = null) => {
     const inp = q("#busca"); inp.focus(); inp.value = texto; inp.dispatchEvent(new Event("input", { bubbles: true }));
     if (!esperar) { await new Promise((r) => setTimeout(r, 400)); return qq("#busca-lista li"); }
-    await ate(() => !q("#busca-lista").hidden && qq("#busca-lista li").length, 8000).catch(() => {});
+    await ate(() => !q("#busca-lista").hidden && qq("#busca-lista li").length && (!achou || qq("#busca-lista li").some(achou)), 8000).catch(() => {});
     await new Promise((r) => setTimeout(r, 350));   // o índice de candidatos chega depois das cidades
     return qq("#busca-lista li");
   };
@@ -348,10 +355,10 @@
     await irPara("#/");
     const casos = [["lula", /Lula/i, /Presidente/], ["silvio mendes", /Silvio Mendes/i, /Teresina/], ["tarcisio", /Tarc[ií]sio/i, /Governador|SP/]];
     const ruins = [];
-    for (const [t, re, re2] of casos) { const li = await buscar(t); if (!li.some((l) => re.test(l.textContent) && re2.test(l.textContent))) ruins.push(`“${t}”`); }
+    for (const [t, re, re2] of casos) { const ok = (l) => re.test(l.textContent) && re2.test(l.textContent), li = await buscar(t, true, ok); if (!li.some((l) => re.test(l.textContent) && re2.test(l.textContent))) ruins.push(`“${t}”`); }
     // e o resultado leva para a ficha do político
-    const li = (await buscar("silvio mendes")).find((l) => /Teresina/.test(l.textContent));
-    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    const li = (await buscar("silvio mendes", true, (l) => /Teresina/.test(l.textContent))).find((l) => /Teresina/.test(l.textContent));
+    const pronto = esperarPronto();
     if (li) { li.dispatchEvent(new MouseEvent("mousedown", { bubbles: true, cancelable: true })); await pronto; await ate(() => qq(".pol-hist li").length, 8000).catch(() => {}); }
     const foi = /^#\/politico\//.test(location.hash) && /Silvio Mendes/i.test(txt(".pol-nome"));
     return R(ruins.length === 0 && foi, (ruins.length ? "não achou: " + ruins.join(", ") + " · " : `${casos.length} candidatos achados · `) + (foi ? "abriu a ficha" : "não abriu a ficha"), "acha presidente, prefeito e governador e abre a ficha do político");
@@ -373,7 +380,7 @@
   teste("Preenchimento", "Busca pelo teclado: Enter abre o primeiro resultado", async () => {
     await irPara("#/");
     await buscar("campina grande");
-    const pronto = new Promise((ok) => addEventListener("vav:pronto", function f() { removeEventListener("vav:pronto", f); ok(); }));
+    const pronto = esperarPronto();
     q("#busca").dispatchEvent(new KeyboardEvent("keydown", { key: "Enter", bubbles: true }));
     await pronto; await ate(() => /Campina Grande/.test(txt("#manchete")), 8000).catch(() => {});
     return R(/Campina Grande/.test(txt("#manchete")), txt("#manchete").slice(0, 60) + "…", "abre Campina Grande");

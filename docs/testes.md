@@ -75,6 +75,8 @@ Resultado da última rodada (27/10/2026): **81 de 81 testes passaram em 1280 px 
 
 Revisão antes da apresentação (27/10/2026): o robô `testes/rodar_testes.js`, com o Edge em modo headless contra o servidor local, passou em **164 de 164** (82 por tela: os 81 da página mais a ordem do Tab), em duas rodadas seguidas. Também foram testados à mão 44 endereços digitados (UF, cidade, político, pergunta e eleição inexistentes; rotas antigas da primeira versão), 17 buscas no topo e 10 na página Políticos (acentos, maiúsculas, HTML, aspas, texto longo, números) e trocas rápidas de página. Todos terminam numa página válida ou num aviso legível, sem erro de JavaScript e sem rolagem lateral. O carregador de dados tenta de novo duas vezes quando um arquivo falha, para resistir a Wi-Fi instável.
 
+Rodando contra o GitHub Pages, a rede de verdade mostrou uma corrida que não aparece no servidor local: com cliques rápidos, uma página pedida antes podia terminar depois e cobrir a atual (o endereço dizia São Paulo e a tela mostrava o Piauí). O roteador agora numera os pedidos; o mapa e o painel da cidade ignoram o que chega atrasado. O teste `corrida.js` (latência de 400 ms simulada, 5 sequências em 3 velocidades de clique) passa em 15 de 15, sem erro de JavaScript. A página "não encontrada" também avisa que está pronta, e as esperas dos testes têm limite de 15 s: uma página que não abre faz o teste falhar, sem travar a lista inteira.
+
 Os testes verificam essas larguras de tela; não substituem uso num celular físico nem confirmam a publicação no GitHub Pages.
 
 A abertura direta por `file://` não foi verificada nesta rodada: a política do navegador de testes permite somente HTTP e HTTPS. As duas rodadas usaram o servidor local em `127.0.0.1:8765`.

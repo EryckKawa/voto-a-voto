@@ -186,19 +186,19 @@
     const sub = `${V.pct((100 * v1) / tot)} dos votos${s2 ? `, contra ${V.pct((100 * v2) / tot)} do ${V.nomePartido(s2)}` : ""}, somando candidatos e legenda.${top ? ` Quem teve mais votos aqui foi ${V.titulo(top[0])} (${V.nomePartido(top[1])}), com ${V.int(top[2])}.` : ""}`;
     return { tit, sub, v1, v2, tot, k1: [s1, s1], k2: s2 ? [s2, s2] : null, rot1: V.nomePartido(s1), rot2: s2 ? V.nomePartido(s2) : "" };
   }
-  async function painelProp(el, ib, ano, cargo) {
+  async function painelProp(el, ib, ano, cargo, alvo) {
     const c = BR.porIbge.get(ib);
     el.innerHTML = `<p class="lado__volta"><a href="${lk(c.uf)}">← ${UFN[c.uf]}</a></p><h2 class="lado__cidade">${V.esc(c.nome)}</h2>
       <p class="lado__fatos">${UFN[c.uf]}${c.capital ? " · capital" : ""} · ${V.int(c.pop)} moradores (Censo 2022)</p><div id="cid-corpo"><p class="vazio">Carregando…</p></div>`;
     let P = null; try { P = await V.dados("br/prop/" + cargo + ano); } catch (e) {}
-    const lst = P && P[c.uf] && P[c.uf][c.tse], corpo = document.getElementById("cid-corpo");
-    if (!lst) { corpo.innerHTML = '<p class="vazio">' + V.esc(textoPorQue(porQue(ib, null, ano, cargo), c, ano, cargo)[1]) + '</p><div id="hist"></div>'; document.getElementById("hist").innerHTML = await historicoHtml(ib); return; }
+    const lst = P && P[c.uf] && P[c.uf][c.tse], corpo = alvo("cid-corpo");
+    if (!lst) { corpo.innerHTML = '<p class="vazio">' + V.esc(textoPorQue(porQue(ib, null, ano, cargo), c, ano, cargo)[1]) + '</p><div id="hist"></div>'; alvo("hist").innerHTML = await historicoHtml(ib); return; }
     const notas = BR.ideo.anos[ano] || {}, nt = (sg) => (notas[sg] ? notas[sg][0] : null), tot = lst.reduce((a, x) => a + x[1], 0);
     const top = P[c.uf]._c && P[c.uf]._c[c.tse];
     corpo.innerHTML = `<h3 class="lado__turno">Votos por partido para ${NOME_CG[cargo]} em ${ano}</h3><p class="lado__sub">Votos nos candidatos do partido mais os votos só no número do partido (legenda)${ano < 2000 ? "; antes de 2000 o TSE não separa a legenda, e só entram os votos nos candidatos" : ""}.</p>
       <ol class="ranking">${lst.map(([sg, v]) => `<li><span class="ranking__sg">${V.esc(sg === "outros" ? "Outros partidos" : V.nomePartido(sg))}</span><span class="ranking__barra"><i style="width:${(100 * v) / lst[0][1]}%;background:${sg === "outros" ? "#c9ccd1" : V.corNota(nt(sg))}"></i></span><b>${V.pct((100 * v) / tot, 0)}</b><small>${V.int(v)}</small></li>`).join("")}</ol>
       ${top ? `<p class="lado__sub">Candidato com mais votos na cidade: <b>${V.esc(V.titulo(top[0]))}</b> (${V.esc(V.nomePartido(top[1]))}), ${V.int(top[2])} votos.</p>` : ""}<div id="hist"></div>`;
-    document.getElementById("hist").innerHTML = await historicoHtml(ib);
+    alvo("hist").innerHTML = await historicoHtml(ib);
   }
   /* manchete de uma cidade: quem venceu e por quanto */
   function mancheteCidade(c, w, U, ano, cargo) {
@@ -382,14 +382,18 @@
   }
 
   /* ---------- painel da cidade ---------- */
+  // o painel carrega sem travar o mapa; se outra cidade, o estado ou outra página o substituiu nesse meio tempo,
+  // o que chega atrasado vai para um elemento solto (alvo), em vez de cobrir a tela nova
+  const novaVez = (el) => (el.dataset.vez = String(+(el.dataset.vez || 0) + 1));
   async function painelCidade(el, ib, ano, cargo) {
+    const vez = novaVez(el), alvo = (id) => (el.isConnected && el.dataset.vez === vez && document.getElementById(id)) || document.createElement("div");
     const c = BR.porIbge.get(ib); if (!c) return;
-    if (PROP[cargo]) return painelProp(el, ib, ano, cargo);
+    if (PROP[cargo]) return painelProp(el, ib, ano, cargo, alvo);
     const w = BR.venc[ib];
     el.innerHTML = `<p class="lado__volta"><a href="${lk(c.uf)}">← ${UFN[c.uf]}</a></p><h2 class="lado__cidade">${V.esc(c.nome)}</h2>
       <p class="lado__fatos">${UFN[c.uf]}${c.capital ? " · capital" : ""} · ${V.int(c.pop)} moradores (Censo 2022)</p><div id="cid-corpo"><p class="vazio">Carregando…</p></div>`;
-    let U; try { U = (await V.dados("br/ufx/" + cargo + ano))[c.uf]; if (!U) throw new Error("sem dados"); } catch (e) { document.getElementById("cid-corpo").innerHTML = '<p class="vazio">Sem dados desta eleição.</p>'; return; }
-    const r = U.r[c.tse]; if (!r) { document.getElementById("cid-corpo").innerHTML = '<p class="vazio">' + V.esc(textoPorQue(porQue(ib, null, ano, cargo), c, ano, cargo)[1]) + '</p><div id="hist"></div>'; document.getElementById("hist").innerHTML = await historicoHtml(ib); return; }
+    let U; try { U = (await V.dados("br/ufx/" + cargo + ano))[c.uf]; if (!U) throw new Error("sem dados"); } catch (e) { alvo("cid-corpo").innerHTML = '<p class="vazio">Sem dados desta eleição.</p>'; return; }
+    const r = U.r[c.tse]; if (!r) { alvo("cid-corpo").innerHTML = '<p class="vazio">' + V.esc(textoPorQue(porQue(ib, null, ano, cargo), c, ano, cargo)[1]) + '</p><div id="hist"></div>'; alvo("hist").innerHTML = await historicoHtml(ib); return; }
     const notas = BR.ideo.anos[ano] || {};
     const nt = (sg) => (notas[sg] ? notas[sg][0] : null);
     const turnos = r.t2 ? ["t1"] : ["t1"];
@@ -409,8 +413,8 @@
           <span class="cand-num">${V.pct(p)}<small>${V.int(v)} votos</small></span></li>`;
       }).join("")}</ul>`;
     }).join("");
-    document.getElementById("cid-corpo").innerHTML = urna + lista + '<div id="hist"></div>';
-    document.getElementById("hist").innerHTML = await historicoHtml(ib);
+    alvo("cid-corpo").innerHTML = urna + lista + '<div id="hist"></div>';
+    alvo("hist").innerHTML = await historicoHtml(ib);
   }
 
   /* ---------- o ato de votar: quem foi, quem faltou, quem anulou ou votou em branco ---------- */
@@ -430,6 +434,7 @@
   const mi = (n) => (n >= 1e6 ? V.int(Math.round(n / 1e5) / 10).replace(/(\d)$/, "$1") + "" : V.int(n));
   const milhoes = (n) => (n >= 1e6 ? (n / 1e6).toFixed(1).replace(".", ",") + " milhões" : V.int(n));
   async function atualizarMetrica(uf, ib, cargo, ano, cam, trocou) {
+    novaVez(document.getElementById("lado") || document.createElement("div"));   // painel de cidade atrasado não cobre este
     const M = H.M, X = MET[cam], comp = await V.dados("br/comp/" + ano);
     const val = (id) => (comp[id] && comp[id].t1 ? X.valor(comp[id].t1) : null);
     const todos = Object.keys(comp).map(val).filter((v) => v != null).sort(d3.ascending);
@@ -510,6 +515,7 @@
 
   /* ---------- para que lado a cidade foi: PT no 2º turno de 2018 (Haddad) e de 2022 (Lula) ---------- */
   async function atualizarVirada(uf, ib, trocou) {
+    novaVez(document.getElementById("lado") || document.createElement("div"));   // painel de cidade atrasado não cobre este
     const M = H.M, VR = await V.dados("br/virada");
     const dif = (id) => (VR[id] ? VR[id][1] - VR[id][0] : null);
     const cor = d3.scaleLinear().domain([-15, -5, 0, 5, 15]).range(["#132c78", "#7d97d6", "#e4e2dd", "#e08a83", "#8e1520"]).clamp(true).interpolate(d3.interpolateLab);
@@ -733,7 +739,7 @@
     lado.classList.remove("lado--chega");
     M.realcar(null); M.foco(uf || null);
     if (ib) { M.destacar(ib); M.cidade(ib); painelCidade(lado, ib, ano, cargo); }
-    else { M.destacar(null); if (uf) M.estado(uf); else M.brasil(); lado.innerHTML = ranking(r, ano, cargo, uf, RES) + porEstado(BR.venc, uf, cargo); }
+    else { M.destacar(null); if (uf) M.estado(uf); else M.brasil(); novaVez(lado); lado.innerHTML = ranking(r, ano, cargo, uf, RES) + porEstado(BR.venc, uf, cargo); }
     // no celular, depois de tocar no mapa, o título com a resposta volta para a vista
     if (cab.getBoundingClientRect().top < 0) cab.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     const rever = document.getElementById("apu-rever");
@@ -745,17 +751,20 @@
   }
   V.rota(/^\/mapa(?:\/e\/([A-Z]+)(\d{4}))?(?:\/v\/(abst|bn|vira))?(?:\/br\/([A-Z]{2})(?:\/c\/(\d{7}))?)?\/?$/, async function (main, cg, an, cam, uf, ib, mesma) {
     V.marcarNav("mapa");
-    await base(); await V.geoBR();
+    // BR.venc é de todos: um pedido velho que termina depois não pode trocar a eleição do pedido atual
+    const meu = V.pedido, velho = () => meu !== V.pedido;
+    await base(); await V.geoBR(); if (velho()) return;
     let cargo = cg || "PREF", ano = an ? +an : 2024;
     if (!ELEICOES[cargo] || !ELEICOES[cargo].prontos.includes(ano)) { cargo = "PREF"; ano = 2024; }
-    BR.venc = await V.dados("br/venc/" + cargo + ano); BR.eleicao = { cargo, ano };
+    const venc = await V.dados("br/venc/" + cargo + ano); if (velho()) return;
+    BR.venc = venc; BR.eleicao = { cargo, ano };
     // endereço digitado à mão: estado ou cidade inexistente cai no Brasil, e a cidade decide o estado
     if (uf && !V.UFN[uf]) uf = undefined;
     if (ib && !BR.porIbge.get(ib)) ib = undefined;
     if (ib) uf = BR.porIbge.get(ib).uf;
     const nova = !mesma || !H || !document.getElementById("mapa-br");
     if (nova) montar(main);
-    const rever = await atualizar(uf, ib, cargo, ano, cam || "venc");
+    const rever = await atualizar(uf, ib, cargo, ano, cam || "venc"); if (velho()) return;
     if (nova && rever && !uf && !ib) {
       let jaViu = false; try { jaViu = sessionStorage.getItem("vav-apurou") === "1"; sessionStorage.setItem("vav-apurou", "1"); } catch (e) {}
       if (!jaViu && !matchMedia("(prefers-reduced-motion: reduce)").matches) rever.click();

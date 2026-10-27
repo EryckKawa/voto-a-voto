@@ -125,7 +125,12 @@
   V.rotas = [];
   V.rota = (re, fn, op) => V.rotas.push([re, fn, op || {}]);
   V.ir = (h) => { if (location.hash === h) dispara(); else location.hash = h; };
+  // cliques rápidos numa rede lenta: uma página pedida antes pode terminar depois da atual;
+  // "vez" numera os pedidos e "feita" guarda o último que terminou
+  let vez = 0, feita = 0;
   async function dispara() {
+    const minha = ++vez;
+    V.pedido = minha;   // a rota guarda o número no começo; se mudar durante um await, ela ficou velha
     const h = location.hash.replace(/^#/, "") || "/";
     if (h === "/apertadas") { location.replace("#/mapa"); return; }
     const main = document.getElementById("conteudo");
@@ -138,13 +143,18 @@
         document.querySelectorAll(".nav a").forEach((a) => a.removeAttribute("aria-current"));
         if (!mesma) main.innerHTML = '<div class="carregando">Carregando…</div>';
         delete main.dataset.erro;
-        try { await fn(main, ...m.slice(1), mesma); } catch (err) { console.error(err); main.dataset.erro = "1"; main.innerHTML = '<div class="pagina"><p class="aviso">' + V.esc(err.message) + '. <a href="#/">Voltar ao início</a>.</p></div>'; main.dataset.rota = ""; }
+        try { await fn(main, ...m.slice(1), mesma); } catch (err) { if (minha === vez) { console.error(err); main.dataset.erro = "1"; main.innerHTML = '<div class="pagina"><p class="aviso">' + V.esc(err.message) + '. <a href="#/">Voltar ao início</a>.</p></div>'; main.dataset.rota = ""; } }
+        // pedido velho: se a página atual já tinha terminado, ele pode tê-la coberto; desenha a atual de novo
+        if (minha !== vez) { if (feita === vez) dispara(); return; }
+        feita = minha;
         if (!V.semRolar && !mesma) scrollTo(0, 0); V.semRolar = false;
         dispatchEvent(new CustomEvent("vav:pronto", { detail: h }));   // a página terminou de montar (usado pelos testes)
         return;
       }
     }
+    feita = minha;
     main.innerHTML = '<div class="pagina"><p class="vazio">Página não encontrada. <a href="#/">Voltar ao início</a>.</p></div>';
+    dispatchEvent(new CustomEvent("vav:pronto", { detail: h }));
   }
   V.iniciarRotas = () => { addEventListener("hashchange", dispara); dispara(); };
   V.marcarNav = (k) => { const a = document.querySelector('.nav a[data-nav="' + k + '"]'); if (a) a.setAttribute("aria-current", "page"); };
