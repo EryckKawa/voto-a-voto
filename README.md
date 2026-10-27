@@ -15,7 +15,12 @@ O site é estático (HTML, CSS e JavaScript, sem servidor e sem banco no navegad
 | O que o voto revela | `#/revela` | Oito achados de trinta anos de eleições, cada um com o título que já diz o dado. |
 | 12 perguntas | `#/perguntas` | As 12 perguntas de pesquisa do trabalho, respondidas com o Brasil inteiro. Cada resposta traz o gráfico, a tabela e a consulta SQL que a produziu. |
 | Partidos | `#/partidos` | Onde fica cada partido entre esquerda e direita em cada eleição, segundo três estudos acadêmicos e o voto na Câmara. |
-| Políticos | `#/politicos` | A ficha de cada um dos 2,4 milhões de candidatos de 1994 a 2026: cada eleição, o partido e o lado dele, votos, dinheiro, bens, onde gastou, nuvens de palavras dos planos e dos projetos/discursos oficiais disponíveis, e, para deputado federal, como votou na Câmara. |
+| Políticos | `#/politicos` | A ficha de cada um dos 2,4 milhões de candidatos de 1994 a 2026: cada eleição, o partido e o lado dele, votos, dinheiro, bens, onde gastou, nuvens de palavras dos planos e dos projetos/discursos oficiais disponíveis, e, para deputado federal, como votou na Câmara. Cada ficha vira uma carta colecionável, que dá para virar e baixar. |
+| Explorar | `#/explorar` | As visualizações para ver e mexer, e o botão do modo apresentação (setas ← → ou passador de slides; Esc sai). |
+| Brasil em 3D | `#/3d` | Cada cidade é uma coluna (three.js): a altura é o número de eleitores ou a parte que faltou; a cor, o lado de quem venceu. |
+| Máquina do tempo | `#/tempo` | O mapa passando eleição por eleição, de 1994 a 2026, para presidente, governador e prefeito. |
+| A multidão do Ninguém | `#/multidao` | Os 42,6 milhões que não escolheram ninguém em 2024, um ponto para cada mil, saindo das cidades e lotando o Maracanã 539 vezes. |
+| Corrida do patrimônio | `#/patrimonio` | Os eleitos com mais bens declarados, de 2006 a 2026 (só eleitos: entre todos os candidatos, o topo é de erros de digitação do TSE). |
 | Testes | `#/testes` | Testes de velocidade, funcionamento, acessibilidade e conferência dos dados com os números oficiais do TSE. |
 
 ## Como abrir
@@ -34,7 +39,7 @@ data/               dados já prontos, em .json (origem) e .js (para abrir sem s
 img/fotos/          fotos oficiais dos candidatos (TSE), em miniatura
 scripts/            como os dados foram feitos, a partir dos arquivos do TSE, IBGE e Câmara
 testes/             robô que roda os testes do site no computador e no celular (Playwright)
-vendor/             D3 7.9.0, topojson-client 3.1.0, axe-core 4.10.2
+vendor/             D3 7.9.0, topojson-client 3.1.0, axe-core 4.10.2, three.js r147 (só na página 3D)
 fonts/              fontes com licença OFL
 rede/               servidor para a rede de casa (PowerShell)
 trabalho-6-estados/ a primeira versão do trabalho: modelo relacional, consultas MySQL e respostas dos 6 estados

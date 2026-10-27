@@ -197,7 +197,8 @@
             <li><b>${vit}</b><span>${vit === 1 ? "vitória" : "vitórias"}</span></li>
             <li><b>${anos[0]}${anos.length > 1 ? "–" + anos[anos.length - 1] : ""}</b><span>${anos.length} ${anos.length === 1 ? "eleição" : "eleições"}</span></li>
             <li><b>${maior[7] ? V.int(maior[7]) : "—"}</b><span>maior votação (${CARGO[maior[1]]} ${maior[0]})</span></li>
-          </ul></div>
+          </ul>
+          <p class="pol-carta-btn"><button type="button" class="btn" id="pol-carta">Ver como carta</button></p></div>
       </header>
       ${semTitulo ? '<p class="aviso">O arquivo do TSE não trouxe o título de eleitor desta candidatura (acontece em 1996 e em registros incompletos). Sem ele, não dá para ligar com certeza as candidaturas desta pessoa em outros anos, que podem estar em outra ficha.</p>' : ""}
       <section class="cartao pol-cartao" aria-labelledby="pol-lado-tit"><h2 class="cartao__titulo" id="pol-lado-tit">Lado político</h2>
@@ -216,6 +217,16 @@
       <details class="pq-origem"><summary>De onde vêm esses números</summary>
         <p>Candidaturas, votos, situação final, receitas, despesas e bens: TSE, Portal de Dados Abertos, no banco nacional do trabalho (tabelas <code>pessoa</code>, <code>candidatura</code>, <code>votacao_candidato</code>, <code>receita</code>, <code>despesa</code>, <code>bem_candidato</code>, <code>proposta_palavra</code> e as views <code>vw_partido_ano</code> e <code>vw_despesa_tipo</code>). A mesma pessoa é seguida entre eleições pelo título de eleitor, que não aparece no site. A consulta q12d, em <a href="#/perguntas/q12">Histórico eleitoral</a>, é a desta ficha.${cam ? " Votos na Câmara: tabelas <code>votacao_camara</code>, <code>voto_deputado</code>, <code>orientacao_bancada</code> e <code>deputado_camara</code>." : ""}</p></details>
     </div>`;
+    // a carta colecionável (js/carta.js), com o que a ficha já calculou
+    document.getElementById("pol-carta").addEventListener("click", (e) => {
+      const img = main.querySelector(".pol-foto img"), bens = cands.filter((c) => c[13] != null).pop();
+      V.abrirCarta({ nome: V.titulo(nome), urna: urnasVal.length ? V.titulo(urnasVal[urnasVal.length - 1]) : "", foto: img && img.naturalWidth ? img.src : null, iniciais: V.iniciais(nome),
+        partido: ultima[3], nota: ultima[4], cargo: CARGO[ultima[1]] || "Candidato", ano: ultima[0], situacao: (SIT[ultima[9]] || SIT["-"])[0],
+        votos: maior[7] || 0, cargoMaior: `${CARGO[maior[1]] || "Candidato"} ${maior[0]}`, vitorias: vit, eleicoes: anos.length,
+        periodo: anos[0] + (anos.length > 1 ? "–" + anos[anos.length - 1] : ""), bens: bens ? [bens[13], bens[0]] : null,
+        eleicoes_lista: cands.map((c) => [c[0], CARGO[c[1]] || "Candidato", (SIT[c[9]] || SIT["-"])[0]]),
+        trajeto: trajeto.map((t) => [t.sg, t.de, t.ate, (cands.find((c) => c[3] === t.sg && c[0] === t.ate) || [])[4]]) }, e.currentTarget);
+    });
     // trocas de recorte sem redesenhar a página toda
     main.querySelector(".pol").addEventListener("click", async (e) => {
       const g = e.target.closest("[data-gasto]"), pl = e.target.closest("[data-plano]"), mais = e.target.closest("[data-mais]");

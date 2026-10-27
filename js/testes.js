@@ -96,9 +96,9 @@
   });
 
   // FUNCIONAMENTO
-  teste("Funcionamento", "Menu com as seis seções (sem Disputas apertadas)", async () => {
+  teste("Funcionamento", "Menu com as sete seções (sem Disputas apertadas)", async () => {
     const ls = qq(".nav a").map((a) => a.textContent.trim());
-    return R(ls.length === 6 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos");
+    return R(ls.length === 7 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos · Explorar");
   });
   teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
     location.hash = "#/apertadas";
