@@ -160,6 +160,32 @@ if 'cand' in ETAPAS or 'cand2' in ETAPAS:
     """)
     log('candidaturas', con.execute("select count(*) from candidatura").fetchone()[0], 'pessoas', con.execute("select count(*) from pessoa").fetchone()[0])
 
+# ------------------------------------------------------------------ registro: o resultado do pedido de registro de cada candidatura (TSE)
+# Situação da candidatura (apto, inapto, deferido, indeferido...) e o detalhe dela (indeferido, cassado, renúncia, falecimento...).
+# São os processos de registro que a Justiça Eleitoral julga para cada candidato: é o que o TSE publica por candidatura.
+# A chave é a mesma da candidatura (eleição, alcance, cargo, sequencial), no último turno disputado.
+if 'registro' in ETAPAS:
+    tmp = tempfile.mkdtemp(dir=TMP)
+    con.execute("""CREATE OR REPLACE TABLE situacao_registro (id_candidatura INTEGER PRIMARY KEY, ds_situacao_candidatura VARCHAR,
+                   ds_detalhe_situacao VARCHAR)""")
+    for ano in ANOS:
+        z = f'{P}/consulta_cand_{ano}.zip.001'
+        if not os.path.exists(z): continue
+        arqs = extrai(z, r'consulta_cand_\d{4}_(?!BRASIL)', tmp)
+        cols = set(open(arqs[0], encoding='utf-8').readline().replace('"', '').strip().split(';'))
+        det = 'DS_DETALHE_SITUACAO_CAND' if 'DS_DETALHE_SITUACAO_CAND' in cols else 'NULL'
+        con.execute(f"""INSERT INTO situacao_registro
+            SELECT c.id_candidatura, ANY_VALUE(NULLIF(s.DS_SITUACAO_CANDIDATURA, '#NULO#')), ANY_VALUE(NULLIF({det}, '#NULO#'))
+            FROM (SELECT * FROM {le(arqs)} WHERE CD_TIPO_ELEICAO = '2' OR NM_TIPO_ELEICAO ILIKE 'ORDIN%') s
+            JOIN eleicao e ON e.nr_ano_eleicao = {ano}
+            JOIN candidatura c ON c.id_eleicao = e.id_eleicao AND c.cd_cargo = TRY_CAST(s.CD_CARGO AS SMALLINT) AND c.sq_candidato = TRY_CAST(s.SQ_CANDIDATO AS BIGINT)
+                 AND c.sg_ue = CASE WHEN s.CD_CARGO IN ('11','12','13') THEN s.SG_UE WHEN s.CD_CARGO = '1' THEN 'BR' ELSE s.SG_UF END
+            GROUP BY c.id_candidatura""")
+        for a in arqs: os.remove(a)
+        log('registro', ano, con.execute(f"""SELECT COUNT(*) FROM situacao_registro r JOIN candidatura c USING (id_candidatura) JOIN eleicao e USING (id_eleicao)
+                                             WHERE e.nr_ano_eleicao = {ano}""").fetchone()[0])
+    shutil.rmtree(tmp, ignore_errors=True)
+
 # ------------------------------------------------------------------ espectro dos partidos (as duas réguas do site)
 if 'espectro' in ETAPAS:
     H = json.load(open(f'{D}/ideologia.json'))['anos']; Vt = json.load(open(f'{D}/ideologia_voto.json'))['anos']
@@ -484,6 +510,38 @@ if 'idhm' in ETAPAS:
     con.execute("INSERT INTO indicador_municipio SELECT cd_municipio_tse, nr_ano_referencia, NULL, NULL, vr_idhm FROM indicador_atlas WHERE vr_idhm IS NOT NULL")
     log('idhm:', con.execute("SELECT nr_ano_referencia, COUNT(*), ROUND(AVG(vr_idhm), 3), ROUND(AVG(pc_superior_25m), 2) FROM indicador_atlas GROUP BY 1 ORDER BY 1").fetchall(),
         'sem IDHM:', con.execute("SELECT string_agg(nm_municipio || '/' || sg_uf, ', ') FROM municipio m WHERE NOT EXISTS (SELECT 1 FROM indicador_atlas a WHERE a.cd_municipio_tse = m.cd_municipio_tse AND a.nr_ano_referencia = 2010)").fetchone()[0])
+
+# ------------------------------------------------------------------ limpeza: valores impossíveis na prestação de contas
+# O TSE publica alguns lançamentos com erro de digitação: em 2020, doze vereadores do Amazonas aparecem com uma receita
+# de R$ 207 milhões cada (R$ 2,5 bilhões, mais que todos os vereadores do país juntos). Uma receita é descartada quando passa
+# de 10 vezes o teto de gasto do candidato (quando o TSE informa o teto) ou, para vereador, de R$ 5 milhões. O valor fica
+# NULL em receita (e some das somas) e o lançamento original fica guardado em receita_descartada.
+if 'limpeza' in ETAPAS:
+    regra = """r.vr_receita > 100000 AND ((c.vr_despesa_max > 0 AND r.vr_receita > 10 * c.vr_despesa_max)
+               OR (c.cd_cargo = 13 AND r.vr_receita > 5000000))"""
+    con.execute(f"""CREATE TABLE IF NOT EXISTS receita_descartada AS SELECT r.*, 'acima do teto ou de R$ 5 milhões para vereador' AS ds_motivo
+                    FROM receita r JOIN candidatura c ON c.id_candidatura = r.id_candidatura WHERE {regra}""")
+    con.execute(f"UPDATE receita r SET vr_receita = NULL FROM candidatura c WHERE c.id_candidatura = r.id_candidatura AND {regra}")
+    log('limpeza:', con.execute("SELECT nr_ano_eleicao, COUNT(*), SUM(vr_receita) FROM receita_descartada GROUP BY 1 ORDER BY 1").fetchall())
+
+# ------------------------------------------------------------------ bolsa: Programa Bolsa Família por município (MDS, via IpeaData)
+# Séries FAM_PBF (número de benefícios em dezembro) e VAL_PBF (valor pago em dezembro, em R$ mil), 2004 a 2025,
+# baixadas por baixar_extras.ps1. Entre 2021 e 2023 o programa se chamou Auxílio Brasil; a série continua a mesma.
+if 'bolsa' in ETAPAS:
+    val = {}
+    for serie, col in {'FAM_PBF': 'qt_beneficios', 'VAL_PBF': 'vr_mil_reais'}.items():
+        arq = (glob.glob(f'{P}/ipea_{serie}.json.001') or [None])[0]
+        if not arq: log('sem', serie); continue
+        for r in json.load(open(arq, encoding='utf-8-sig'))['value']:
+            if r['NIVNOME'] != 'Municípios' or r['VALVALOR'] is None: continue
+            val.setdefault((int(r['TERCODIGO']), int(r['VALDATA'][:4])), {})[col] = float(r['VALVALOR'])
+    con.execute("""CREATE OR REPLACE TABLE bolsa_familia_municipio (cd_municipio_tse INTEGER, nr_ano SMALLINT, qt_beneficios INTEGER,
+                   vr_dezembro_mil_reais DOUBLE, PRIMARY KEY (cd_municipio_tse, nr_ano))""")
+    ibge_tse = dict(con.execute("SELECT cd_municipio_ibge, cd_municipio_tse FROM municipio").fetchall())
+    con.executemany("INSERT INTO bolsa_familia_municipio VALUES (?, ?, ?, ?)",
+                    [(ibge_tse[i], a, round(v['qt_beneficios']) if v.get('qt_beneficios') is not None else None, v.get('vr_mil_reais'))
+                     for (i, a), v in val.items() if i in ibge_tse])
+    log('bolsa:', con.execute("SELECT nr_ano, COUNT(*), SUM(qt_beneficios), ROUND(SUM(vr_dezembro_mil_reais) / 1000) FROM bolsa_familia_municipio GROUP BY 1 ORDER BY 1").fetchall())
 
 # ------------------------------------------------------------------ bens: bens declarados pelo candidato no registro da candidatura
 # Liga pelo sequencial do candidato no ano e pelo alcance (município, UF ou BR), como as contas.

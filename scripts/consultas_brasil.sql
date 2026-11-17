@@ -601,3 +601,546 @@ FROM v LEFT JOIN op ON op.id_votacao = v.id_votacao AND op.sg = upper(strip_acce
 LEFT JOIN gov ON gov.id_votacao = v.id_votacao
 GROUP BY 1, 2 HAVING COUNT(DISTINCT v.id_deputado) >= 5
 ORDER BY 1, pc_segue_governo DESC;
+
+-- =====================================================================
+-- Os 16 temas do enunciado (questoes_analise_dados_eleitorais): consultas acrescentadas em 16/11/2026
+-- para os temas e as partes de tema que ainda não tinham resposta. Os ids começam com o número do tema (t1a = tema 1).
+-- =====================================================================
+
+-- @t1a | Tema 1: gasto de campanha por voto recebido, partido a partido, com a nota do partido (−1 esquerda, +1 direita)
+WITH v AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt_votos FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+b AS (
+    SELECT r.nr_ano_eleicao, r.ds_cargo, r.sg_partido, pa.vr_nota, pa.ds_espectro, r.vr_despesa_total, COALESCE(v.qt_votos, 0) AS qt_votos, r.fl_eleito
+    FROM vw_candidatura_resumo r JOIN candidatura c ON c.id_candidatura = r.id_candidatura
+    LEFT JOIN v ON v.id_candidatura = r.id_candidatura
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = r.nr_ano_eleicao
+    WHERE r.nr_ano_eleicao IN (2022, 2024) AND r.cd_cargo IN (6, 11, 13)
+)
+SELECT nr_ano_eleicao, ds_cargo, sg_partido, ROUND(ANY_VALUE(vr_nota), 2) AS vr_nota, ANY_VALUE(ds_espectro) AS ds_espectro,
+       SUM(qt_votos) AS qt_votos, COUNT_IF(fl_eleito) AS qt_eleitos, ROUND(SUM(vr_despesa_total), 0) AS vr_gasto,
+       ROUND(SUM(vr_despesa_total) / NULLIF(SUM(qt_votos), 0), 2) AS vr_gasto_por_voto
+FROM b
+WHERE (nr_ano_eleicao = 2022 AND ds_cargo = 'DEPUTADO FEDERAL') OR (nr_ano_eleicao = 2024 AND ds_cargo IN ('PREFEITO', 'VEREADOR'))
+GROUP BY 1, 2, 3 HAVING COUNT_IF(fl_eleito) >= 5
+ORDER BY 1, 2, vr_gasto_por_voto DESC;
+
+-- @t1b | Tema 1: quanto o gasto acompanha os votos (correlação, candidato a candidato, em logaritmo) e o gasto por voto de eleitos e não eleitos, por campo político
+WITH v AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt_votos FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+b AS (
+    SELECT r.nr_ano_eleicao, r.ds_cargo, r.cd_cargo,
+           CASE WHEN r.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN r.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                WHEN r.ds_espectro = 'CENTRO' THEN 'centro' ELSE 'sem nota' END AS ds_bloco,
+           r.vr_despesa_total, COALESCE(v.qt_votos, 0) AS qt_votos, r.fl_eleito
+    FROM vw_candidatura_resumo r LEFT JOIN v ON v.id_candidatura = r.id_candidatura
+    WHERE r.nr_ano_eleicao IN (2018, 2020, 2022, 2024) AND r.cd_cargo IN (3, 5, 6, 7, 11, 13)
+)
+SELECT nr_ano_eleicao, ds_cargo, cd_cargo, CASE WHEN GROUPING(ds_bloco) = 1 THEN 'todos' ELSE ds_bloco END AS ds_bloco, COUNT(*) AS qt_candidatos,
+       ROUND(CORR(LN(1 + vr_despesa_total), LN(1 + qt_votos)), 2) AS r_gasto_votos,
+       ROUND(SUM(vr_despesa_total) / NULLIF(SUM(qt_votos), 0), 2) AS vr_gasto_por_voto,
+       ROUND(MEDIAN(CASE WHEN fl_eleito AND qt_votos > 0 THEN vr_despesa_total / qt_votos END), 2) AS vr_por_voto_eleito_mediano,
+       ROUND(MEDIAN(CASE WHEN NOT fl_eleito AND qt_votos > 0 THEN vr_despesa_total / qt_votos END), 2) AS vr_por_voto_nao_eleito_mediano
+FROM b GROUP BY GROUPING SETS ((nr_ano_eleicao, ds_cargo, cd_cargo, ds_bloco), (nr_ano_eleicao, ds_cargo, cd_cargo))
+ORDER BY 1, 3, 4;
+
+-- @t1c | Temas 1 e 4: escolaridade do candidato x chance de se eleger, gasto médio, gasto por voto e patrimônio (deputados 2022, prefeito e vereador 2024)
+WITH v AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt_votos FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1)
+SELECT r.nr_ano_eleicao, r.ds_cargo, gi.nr_ordem, gi.ds_grau_instrucao, COUNT(*) AS qt_candidatos, COUNT_IF(r.fl_eleito) AS qt_eleitos,
+       ROUND(100 * AVG(CAST(r.fl_eleito AS INT)), 2) AS pc_taxa_sucesso, ROUND(AVG(r.vr_despesa_total), 0) AS vr_gasto_medio,
+       ROUND(SUM(r.vr_despesa_total) / NULLIF(SUM(v.qt_votos), 0), 2) AS vr_gasto_por_voto, ROUND(MEDIAN(pt.vr_patrimonio), 0) AS vr_patrimonio_mediano
+FROM vw_candidatura_resumo r
+JOIN candidatura c ON c.id_candidatura = r.id_candidatura
+JOIN grau_instrucao gi ON gi.cd_grau_instrucao = c.cd_grau_instrucao
+LEFT JOIN v ON v.id_candidatura = r.id_candidatura
+LEFT JOIN vw_patrimonio_candidato pt ON pt.id_candidatura = r.id_candidatura
+WHERE gi.nr_ordem > 0 AND r.nr_ano_eleicao IN (2022, 2024) AND r.cd_cargo IN (6, 7, 11, 13)
+  AND (r.nr_ano_eleicao = 2022) = (r.cd_cargo IN (6, 7))
+GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3;
+
+-- @t4a | Tema 4: escolaridade do eleitorado x dos candidatos x dos eleitos, no Brasil (2022 e 2024)
+WITH el AS (
+    SELECT nr_ano_eleicao, SUM(qt_eleitores) FILTER (WHERE cd_grau_escolaridade BETWEEN 1 AND 8) AS tot,
+           SUM(qt_eleitores) FILTER (WHERE cd_grau_escolaridade = 8) AS sup,
+           SUM(qt_eleitores) FILTER (WHERE cd_grau_escolaridade BETWEEN 5 AND 7) AS med,
+           SUM(qt_eleitores) FILTER (WHERE cd_grau_escolaridade BETWEEN 1 AND 4) AS fund
+    FROM eleitorado_perfil WHERE nr_ano_eleicao IN (2022, 2024) GROUP BY 1
+),
+ca AS (
+    SELECT e.nr_ano_eleicao, cg.ds_cargo, c.cd_cargo, COALESCE(st.fl_eleito, false) AS fl_eleito, c.cd_grau_instrucao AS g
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+    LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE e.nr_ano_eleicao IN (2022, 2024) AND c.cd_cargo IN (3, 5, 6, 7, 11, 13) AND c.cd_grau_instrucao BETWEEN 1 AND 8
+),
+grupos AS (SELECT nr_ano_eleicao, ds_cargo, cd_cargo, 'candidatos' AS ds_grupo, g FROM ca
+           UNION ALL SELECT nr_ano_eleicao, ds_cargo, cd_cargo, 'eleitos', g FROM ca WHERE fl_eleito)
+SELECT nr_ano_eleicao, 'ELEITORADO' AS ds_cargo, 0 AS cd_cargo, 'eleitores' AS ds_grupo,
+       ROUND(100.0 * sup / tot, 1) AS pc_superior, ROUND(100.0 * med / tot, 1) AS pc_medio, ROUND(100.0 * fund / tot, 1) AS pc_ate_fundamental
+FROM el
+UNION ALL
+SELECT nr_ano_eleicao, ds_cargo, cd_cargo, ds_grupo, ROUND(100 * AVG(CAST(g = 8 AS INT)), 1), ROUND(100 * AVG(CAST(g BETWEEN 5 AND 7 AS INT)), 1),
+       ROUND(100 * AVG(CAST(g <= 4 AS INT)), 1)
+FROM grupos GROUP BY 1, 2, 3, 4
+ORDER BY 1, 3, 4;
+
+-- @t5a | Tema 5: cidades em que duas ou mais pessoas com o mesmo sobrenome já foram eleitas prefeito (2000 a 2024), por região
+-- Sobrenome: a última palavra do nome civil, sem JUNIOR, FILHO, NETO, SOBRINHO... Ficam de fora os 50 sobrenomes mais comuns
+-- entre os candidatos (SILVA, SANTOS, OLIVEIRA...), que se repetem por acaso. 1996 fica de fora: sem o título de eleitor.
+WITH nomes AS (
+    SELECT id_pessoa, nr_titulo_eleitoral,
+           regexp_extract(regexp_replace(upper(strip_accents(trim(nm_pessoa))), '\s+(JUNIOR|JR|FILHO|NETO|SOBRINHO|SEGUNDO|II|III)\.?$', ''), '(\S+)$', 1) AS sn
+    FROM pessoa
+),
+comuns AS (SELECT sn FROM nomes GROUP BY sn ORDER BY COUNT(*) DESC LIMIT 50),
+pref AS (
+    SELECT c.cd_municipio_tse, e.nr_ano_eleicao, c.id_pessoa, n.sn
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    JOIN nomes n ON n.id_pessoa = c.id_pessoa
+    WHERE c.cd_cargo = 11 AND st.fl_eleito AND e.nr_ano_eleicao >= 2000 AND n.nr_titulo_eleitoral NOT LIKE 'SQ%' AND n.sn NOT IN (SELECT sn FROM comuns)
+),
+fam AS (SELECT cd_municipio_tse, sn, COUNT(DISTINCT nr_ano_eleicao) AS qt_mandatos FROM pref GROUP BY 1, 2 HAVING COUNT(DISTINCT id_pessoa) >= 2),
+mun AS (SELECT m.cd_municipio_tse, u.nm_regiao, COALESCE(MAX(f.qt_mandatos), 0) AS qt_mandatos_familia
+        FROM municipio m JOIN uf u ON u.sg_uf = m.sg_uf LEFT JOIN fam f ON f.cd_municipio_tse = m.cd_municipio_tse GROUP BY 1, 2)
+SELECT COALESCE(nm_regiao, 'Brasil') AS nm_regiao, COUNT(*) AS qt_municipios,
+       COUNT_IF(qt_mandatos_familia >= 2) AS qt_com_familia, ROUND(100 * AVG(CAST(qt_mandatos_familia >= 2 AS INT)), 1) AS pc_com_familia,
+       COUNT_IF(qt_mandatos_familia >= 3) AS qt_familia_3_mandatos, ROUND(100 * AVG(CAST(qt_mandatos_familia >= 3 AS INT)), 1) AS pc_familia_3_mandatos
+FROM mun GROUP BY ROLLUP (nm_regiao) ORDER BY nm_regiao NULLS FIRST;
+
+-- @t5b | Tema 5: as cidades em que o mesmo sobrenome mais vezes ganhou a prefeitura, com pessoas diferentes (2000 a 2024)
+WITH nomes AS (
+    SELECT id_pessoa, nr_titulo_eleitoral, nm_pessoa,
+           regexp_extract(regexp_replace(upper(strip_accents(trim(nm_pessoa))), '\s+(JUNIOR|JR|FILHO|NETO|SOBRINHO|SEGUNDO|II|III)\.?$', ''), '(\S+)$', 1) AS sn
+    FROM pessoa
+),
+comuns AS (SELECT sn FROM nomes GROUP BY sn ORDER BY COUNT(*) DESC LIMIT 50),
+pref AS (
+    SELECT c.cd_municipio_tse, e.nr_ano_eleicao, c.id_pessoa, n.nm_pessoa, n.sn
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    JOIN nomes n ON n.id_pessoa = c.id_pessoa
+    WHERE c.cd_cargo = 11 AND st.fl_eleito AND e.nr_ano_eleicao >= 2000 AND n.nr_titulo_eleitoral NOT LIKE 'SQ%' AND n.sn NOT IN (SELECT sn FROM comuns)
+)
+SELECT m.nm_municipio, m.sg_uf, p.sn AS ds_sobrenome, COUNT(DISTINCT p.nr_ano_eleicao) AS qt_mandatos, COUNT(DISTINCT p.id_pessoa) AS qt_pessoas,
+       string_agg(p.nr_ano_eleicao || ' ' || p.nm_pessoa, '; ' ORDER BY p.nr_ano_eleicao) AS ds_prefeitos
+FROM pref p JOIN municipio m ON m.cd_municipio_tse = p.cd_municipio_tse
+GROUP BY 1, 2, 3 HAVING COUNT(DISTINCT p.id_pessoa) >= 2
+ORDER BY qt_mandatos DESC, qt_pessoas DESC, m.nm_municipio LIMIT 15;
+
+-- @t5c | Tema 5: concentração dos votos dos deputados (parte que veio da cidade onde tiveram mais votos) e sobrenome de ex-prefeito dessa cidade (2018 e 2022)
+WITH nomes AS (
+    SELECT id_pessoa, regexp_extract(regexp_replace(upper(strip_accents(trim(nm_pessoa))), '\s+(JUNIOR|JR|FILHO|NETO|SOBRINHO|SEGUNDO|II|III)\.?$', ''), '(\S+)$', 1) AS sn
+    FROM pessoa
+),
+comuns AS (SELECT sn FROM nomes GROUP BY sn ORDER BY COUNT(*) DESC LIMIT 50),
+v AS (
+    SELECT vc.id_candidatura, vc.cd_municipio_tse, SUM(vc.qt_votos_nominais) AS qt
+    FROM votacao_candidato vc JOIN candidatura c ON c.id_candidatura = vc.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    WHERE vc.nr_turno = 1 AND e.nr_ano_eleicao IN (2018, 2022) AND c.cd_cargo IN (6, 7) GROUP BY 1, 2
+),
+t AS (SELECT id_candidatura, SUM(qt) AS qt_total, ARG_MAX(cd_municipio_tse, qt) AS cd_reduto, MAX(qt) AS qt_reduto FROM v GROUP BY 1),
+pref AS (   -- sobrenomes de quem já foi eleito prefeito em cada cidade, de 2000 a 2020
+    SELECT DISTINCT c.cd_municipio_tse, n.sn, e.nr_ano_eleicao
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    JOIN nomes n ON n.id_pessoa = c.id_pessoa
+    WHERE c.cd_cargo = 11 AND st.fl_eleito AND e.nr_ano_eleicao BETWEEN 2000 AND 2020 AND n.sn NOT IN (SELECT sn FROM comuns)
+),
+b AS (
+    SELECT e.nr_ano_eleicao, cg.ds_cargo, COALESCE(st.fl_eleito, false) AS fl_eleito, 100.0 * t.qt_reduto / t.qt_total AS pc_reduto,
+           EXISTS (SELECT 1 FROM pref WHERE pref.cd_municipio_tse = t.cd_reduto AND pref.sn = n.sn AND pref.nr_ano_eleicao < e.nr_ano_eleicao) AS fl_sobrenome_prefeito
+    FROM t JOIN candidatura c ON c.id_candidatura = t.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+    JOIN nomes n ON n.id_pessoa = c.id_pessoa LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE t.qt_total >= 1000   -- só quem teve pelo menos mil votos
+)
+SELECT nr_ano_eleicao, ds_cargo, fl_sobrenome_prefeito, COUNT(*) AS qt_candidatos, COUNT_IF(fl_eleito) AS qt_eleitos,
+       ROUND(100 * AVG(CAST(fl_eleito AS INT)), 1) AS pc_sucesso,
+       ROUND(MEDIAN(pc_reduto) FILTER (WHERE fl_eleito), 1) AS pc_reduto_mediano_eleitos,
+       ROUND(100 * AVG(CAST(pc_reduto >= 50 AS INT)) FILTER (WHERE fl_eleito), 1) AS pc_eleitos_metade_numa_cidade
+FROM b GROUP BY 1, 2, 3 ORDER BY 1, 2, 3;
+
+-- @t6a | Tema 6: as cidades com mais e com menos "Ninguém" (abstenção + brancos + nulos) — prefeito 2024 e presidente 2022, 1º turno
+WITH cand AS (
+    SELECT c.id_candidatura, c.cd_cargo, e.nr_ano_eleicao FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    WHERE (e.nr_ano_eleicao = 2024 AND c.cd_cargo = 11) OR (e.nr_ano_eleicao = 2022 AND c.cd_cargo = 1)
+),
+vc AS (   -- votos do 1º colocado em cada cidade
+    SELECT cand.nr_ano_eleicao, cand.cd_cargo, v.cd_municipio_tse, MAX(v.qt) AS qt_1o
+    FROM cand JOIN (SELECT id_candidatura, cd_municipio_tse, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1, 2) v
+         ON v.id_candidatura = cand.id_candidatura
+    GROUP BY 1, 2, 3
+),
+cp AS (
+    SELECT e.nr_ano_eleicao, cp.cd_cargo, cp.cd_municipio_tse, SUM(qt_aptos) AS aptos, SUM(qt_abstencoes) AS abst, SUM(qt_votos_brancos) AS br, SUM(qt_votos_nulos) AS nu
+    FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao
+    WHERE cp.nr_turno = 1 AND ((e.nr_ano_eleicao = 2024 AND cp.cd_cargo = 11) OR (e.nr_ano_eleicao = 2022 AND cp.cd_cargo = 1)) GROUP BY 1, 2, 3
+),
+x AS (
+    SELECT cp.nr_ano_eleicao, cp.cd_cargo, m.nm_municipio, m.sg_uf, cp.aptos AS qt_aptos,
+           ROUND(100.0 * (abst + br + nu) / aptos, 1) AS pc_ninguem, ROUND(100.0 * abst / aptos, 1) AS pc_abstencao,
+           ROUND(100.0 * (br + nu) / aptos, 1) AS pc_branco_nulo, ROUND(100.0 * qt_1o / aptos, 1) AS pc_1o_colocado,
+           (abst + br + nu) > qt_1o AS fl_ninguem_passou_o_1o
+    FROM cp JOIN vc ON vc.nr_ano_eleicao = cp.nr_ano_eleicao AND vc.cd_cargo = cp.cd_cargo AND vc.cd_municipio_tse = cp.cd_municipio_tse
+    JOIN municipio m ON m.cd_municipio_tse = cp.cd_municipio_tse
+)
+SELECT *, CASE WHEN ROW_NUMBER() OVER (PARTITION BY nr_ano_eleicao ORDER BY pc_ninguem DESC) <= 10 THEN 'mais' ELSE 'menos' END AS ds_lista
+FROM x
+QUALIFY ROW_NUMBER() OVER (PARTITION BY nr_ano_eleicao ORDER BY pc_ninguem DESC) <= 10 OR ROW_NUMBER() OVER (PARTITION BY nr_ano_eleicao ORDER BY pc_ninguem) <= 5
+ORDER BY nr_ano_eleicao, pc_ninguem DESC;
+
+-- @t6b | Tema 6: o "Ninguém" e o resultado — cidades em cinco grupos pela parte do eleitorado que não escolheu ninguém para prefeito (1º turno)
+WITH cand AS (SELECT c.id_candidatura, e.nr_ano_eleicao FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao WHERE c.cd_cargo = 11 AND e.nr_ano_eleicao >= 2008),
+vc AS (
+    SELECT cand.nr_ano_eleicao, v.cd_municipio_tse, MAX(v.qt) AS qt_1o, COUNT(*) AS qt_cand
+    FROM cand JOIN (SELECT id_candidatura, cd_municipio_tse, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1, 2) v
+         ON v.id_candidatura = cand.id_candidatura
+    GROUP BY 1, 2
+),
+cp AS (
+    SELECT e.nr_ano_eleicao, cp.cd_municipio_tse, SUM(qt_aptos) AS aptos, SUM(qt_abstencoes) AS abst, SUM(qt_votos_brancos) AS br, SUM(qt_votos_nulos) AS nu
+    FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao WHERE cp.nr_turno = 1 AND cp.cd_cargo = 11 AND e.nr_ano_eleicao >= 2008 GROUP BY 1, 2
+),
+b AS (
+    SELECT cp.*, vc.qt_1o, vc.qt_cand, 100.0 * (abst + br + nu) / aptos AS pc_ning,
+           NTILE(5) OVER (PARTITION BY cp.nr_ano_eleicao ORDER BY (abst + br + nu) / aptos) AS nr_quintil
+    FROM cp JOIN vc ON vc.nr_ano_eleicao = cp.nr_ano_eleicao AND vc.cd_municipio_tse = cp.cd_municipio_tse WHERE aptos > 0
+)
+SELECT nr_ano_eleicao, nr_quintil, COUNT(*) AS qt_municipios, ROUND(MIN(pc_ning), 1) AS pc_ninguem_min, ROUND(MAX(pc_ning), 1) AS pc_ninguem_max,
+       ROUND(AVG(100.0 * qt_1o / aptos), 1) AS pc_eleitores_do_1o, ROUND(100 * AVG(CAST(qt_cand = 1 AS INT)), 1) AS pc_candidato_unico,
+       ROUND(100 * AVG(CAST((abst + br + nu) > qt_1o AS INT)), 1) AS pc_ninguem_passou_o_1o, ROUND(MEDIAN(aptos), 0) AS qt_eleitores_mediano
+FROM b GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @t6c | Tema 6: abstenção, brancos e nulos no Brasil, eleição a eleição (presidente nas gerais, prefeito nas municipais; 1º turno)
+SELECT e.nr_ano_eleicao, cp.cd_cargo, SUM(qt_aptos) AS qt_aptos,
+       ROUND(100.0 * SUM(qt_abstencoes) / SUM(qt_aptos), 1) AS pc_abstencao, ROUND(100.0 * SUM(qt_votos_brancos) / SUM(qt_aptos), 1) AS pc_branco,
+       ROUND(100.0 * SUM(qt_votos_nulos) / SUM(qt_aptos), 1) AS pc_nulo,
+       ROUND(100.0 * SUM(qt_abstencoes + qt_votos_brancos + qt_votos_nulos) / SUM(qt_aptos), 1) AS pc_ninguem,
+       SUM(qt_abstencoes + qt_votos_brancos + qt_votos_nulos) AS qt_ninguem
+FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao
+WHERE cp.nr_turno = 1 AND cp.cd_cargo IN (1, 11) GROUP BY 1, 2 ORDER BY 1;
+
+-- @t7a | Tema 7: quantas cadeiras vieram do voto de legenda e quantos eleitos tiveram, sozinhos, os votos de uma cadeira (quociente eleitoral)
+-- Cadeiras da legenda: em cada partido e circunscrição, eleitos × (votos de legenda ÷ votos do partido). Quociente eleitoral:
+-- votos válidos da circunscrição (nominais + legenda) ÷ cadeiras. Circunscrição: o estado para deputado, a cidade para vereador.
+WITH circ AS (
+    SELECT e.nr_ano_eleicao, CASE WHEN vp.cd_cargo = 8 THEN 7 ELSE vp.cd_cargo END AS cd_cargo,
+           CASE WHEN vp.cd_cargo = 13 THEN vp.cd_municipio_tse::VARCHAR ELSE m.sg_uf END AS ds_circ, vp.id_partido,
+           SUM(vp.qt_votos_nominais) AS qt_nom, SUM(COALESCE(vp.qt_votos_legenda, 0)) AS qt_leg
+    FROM votacao_partido vp JOIN eleicao e ON e.id_eleicao = vp.id_eleicao JOIN municipio m ON m.cd_municipio_tse = vp.cd_municipio_tse
+    WHERE vp.nr_turno = 1 AND vp.cd_cargo IN (6, 7, 8, 13) AND e.nr_ano_eleicao >= 2000 GROUP BY 1, 2, 3, 4
+),
+vt AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+el AS (
+    SELECT e.nr_ano_eleicao, CASE WHEN c.cd_cargo = 8 THEN 7 ELSE c.cd_cargo END AS cd_cargo,
+           CASE WHEN c.cd_cargo = 13 THEN c.cd_municipio_tse::VARCHAR ELSE c.sg_uf END AS ds_circ, c.id_partido, COALESCE(vt.qt, 0) AS qt_votos
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    LEFT JOIN vt ON vt.id_candidatura = c.id_candidatura
+    WHERE st.fl_eleito AND c.cd_cargo IN (6, 7, 8, 13) AND e.nr_ano_eleicao >= 2000
+),
+cad AS (SELECT nr_ano_eleicao, cd_cargo, ds_circ, COUNT(*) AS qt_cadeiras FROM el GROUP BY 1, 2, 3),
+qe AS (
+    SELECT c.nr_ano_eleicao, c.cd_cargo, c.ds_circ, SUM(c.qt_nom + c.qt_leg) / ANY_VALUE(cad.qt_cadeiras) AS vr_qe
+    FROM circ c JOIN cad ON cad.nr_ano_eleicao = c.nr_ano_eleicao AND cad.cd_cargo = c.cd_cargo AND cad.ds_circ = c.ds_circ GROUP BY 1, 2, 3
+),
+pe AS (SELECT nr_ano_eleicao, cd_cargo, ds_circ, id_partido, COUNT(*) AS qt_eleitos FROM el GROUP BY 1, 2, 3, 4),
+leg AS (
+    SELECT c.nr_ano_eleicao, c.cd_cargo, SUM(c.qt_leg) AS qt_legenda, SUM(c.qt_nom + c.qt_leg) AS qt_validos,
+           SUM(COALESCE(pe.qt_eleitos, 0) * c.qt_leg / NULLIF(c.qt_nom + c.qt_leg, 0)) AS qt_cadeiras_legenda
+    FROM circ c LEFT JOIN pe ON pe.nr_ano_eleicao = c.nr_ano_eleicao AND pe.cd_cargo = c.cd_cargo AND pe.ds_circ = c.ds_circ AND pe.id_partido = c.id_partido
+    GROUP BY 1, 2
+),
+proprios AS (
+    SELECT el.nr_ano_eleicao, el.cd_cargo, COUNT(*) AS qt_eleitos, COUNT_IF(el.qt_votos >= qe.vr_qe) AS qt_com_votos_proprios
+    FROM el JOIN qe ON qe.nr_ano_eleicao = el.nr_ano_eleicao AND qe.cd_cargo = el.cd_cargo AND qe.ds_circ = el.ds_circ GROUP BY 1, 2
+)
+SELECT l.nr_ano_eleicao, cg.ds_cargo, l.cd_cargo, a.qt_eleitos, l.qt_legenda, ROUND(100.0 * l.qt_legenda / l.qt_validos, 2) AS pc_legenda,
+       ROUND(l.qt_cadeiras_legenda, 0) AS qt_cadeiras_da_legenda, ROUND(100.0 * l.qt_cadeiras_legenda / a.qt_eleitos, 1) AS pc_cadeiras_da_legenda,
+       a.qt_com_votos_proprios, ROUND(100.0 * a.qt_com_votos_proprios / a.qt_eleitos, 1) AS pc_com_votos_proprios
+FROM leg l JOIN proprios a ON a.nr_ano_eleicao = l.nr_ano_eleicao AND a.cd_cargo = l.cd_cargo JOIN cargo cg ON cg.cd_cargo = l.cd_cargo
+WHERE l.qt_legenda > 0 ORDER BY l.cd_cargo, l.nr_ano_eleicao;
+
+-- @t8a | Tema 8: número de vereadores e de votos, pelo tamanho da cidade (2024)
+WITH cand AS (
+    SELECT c.id_candidatura, c.cd_municipio_tse, COALESCE(st.fl_eleito, false) AS fl_eleito
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE c.cd_cargo = 13 AND e.nr_ano_eleicao = 2024
+),
+vt AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+mun AS (
+    SELECT cand.cd_municipio_tse, COUNT_IF(fl_eleito) AS qt_cadeiras, COUNT(*) AS qt_candidatos,
+           MEDIAN(CASE WHEN fl_eleito THEN COALESCE(vt.qt, 0) END) AS qt_votos_eleito_mediano
+    FROM cand LEFT JOIN vt ON vt.id_candidatura = cand.id_candidatura GROUP BY 1
+),
+val AS (SELECT vp.cd_municipio_tse, SUM(qt_votos_nominais + COALESCE(qt_votos_legenda, 0)) AS qt_validos FROM votacao_partido vp JOIN eleicao e ON e.id_eleicao = vp.id_eleicao
+        WHERE e.nr_ano_eleicao = 2024 AND vp.cd_cargo = 13 AND vp.nr_turno = 1 GROUP BY 1),
+apt AS (SELECT cp.cd_municipio_tse, SUM(qt_aptos) AS qt_aptos FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao
+        WHERE e.nr_ano_eleicao = 2024 AND cp.cd_cargo = 13 AND cp.nr_turno = 1 GROUP BY 1),
+b AS (
+    SELECT mun.*, val.qt_validos, apt.qt_aptos,
+           CASE WHEN i.qt_populacao < 5000 THEN 1 WHEN i.qt_populacao < 10000 THEN 2 WHEN i.qt_populacao < 20000 THEN 3 WHEN i.qt_populacao < 50000 THEN 4
+                WHEN i.qt_populacao < 100000 THEN 5 WHEN i.qt_populacao < 500000 THEN 6 WHEN i.qt_populacao < 1000000 THEN 7 ELSE 8 END AS nr_faixa
+    FROM mun JOIN val ON val.cd_municipio_tse = mun.cd_municipio_tse JOIN apt ON apt.cd_municipio_tse = mun.cd_municipio_tse
+    JOIN vw_indicador_atual i ON i.cd_municipio_tse = mun.cd_municipio_tse WHERE mun.qt_cadeiras > 0
+)
+SELECT nr_faixa, ['até 5 mil habitantes', '5 a 10 mil', '10 a 20 mil', '20 a 50 mil', '50 a 100 mil', '100 a 500 mil', '500 mil a 1 milhão', 'mais de 1 milhão'][nr_faixa] AS ds_faixa,
+       COUNT(*) AS qt_municipios, SUM(qt_cadeiras) AS qt_cadeiras, ROUND(AVG(qt_cadeiras), 1) AS qt_cadeiras_media,
+       ROUND(SUM(qt_aptos) / SUM(qt_cadeiras), 0) AS qt_eleitores_por_cadeira, ROUND(SUM(qt_validos) / SUM(qt_cadeiras), 0) AS qt_votos_por_cadeira,
+       ROUND(MEDIAN(qt_votos_eleito_mediano), 0) AS qt_votos_eleito_mediano, ROUND(SUM(qt_candidatos) / SUM(qt_cadeiras), 1) AS qt_candidatos_por_cadeira
+FROM b GROUP BY 1, 2 ORDER BY 1;
+
+-- @t8b | Tema 8: onde uma cadeira de vereador representa mais e menos eleitores (2024), e a correlação entre o tamanho do eleitorado e o número de cadeiras
+WITH mun AS (
+    SELECT c.cd_municipio_tse, COUNT(*) AS qt_cadeiras
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE c.cd_cargo = 13 AND e.nr_ano_eleicao = 2024 AND st.fl_eleito GROUP BY 1
+),
+apt AS (SELECT cp.cd_municipio_tse, SUM(qt_aptos) AS qt_aptos FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao
+        WHERE e.nr_ano_eleicao = 2024 AND cp.cd_cargo = 13 AND cp.nr_turno = 1 GROUP BY 1),
+b AS (SELECT m.nm_municipio, m.sg_uf, mun.qt_cadeiras, apt.qt_aptos, apt.qt_aptos / mun.qt_cadeiras AS qt_por_cadeira
+      FROM mun JOIN apt ON apt.cd_municipio_tse = mun.cd_municipio_tse JOIN municipio m ON m.cd_municipio_tse = mun.cd_municipio_tse)
+SELECT * FROM (
+    SELECT 'correlação' AS ds_tipo, NULL AS nm_municipio, NULL AS sg_uf, NULL AS qt_cadeiras, NULL AS qt_aptos, NULL AS qt_eleitores_por_cadeira,
+           ROUND(CORR(LN(qt_aptos), qt_cadeiras), 2) AS r_eleitores_cadeiras, 0 AS nr_ordem
+    FROM b
+    UNION ALL
+    SELECT 'mais eleitores por cadeira', nm_municipio, sg_uf, qt_cadeiras, qt_aptos, ROUND(qt_por_cadeira, 0), NULL, ROW_NUMBER() OVER (ORDER BY qt_por_cadeira DESC) FROM b
+    UNION ALL
+    SELECT 'menos eleitores por cadeira', nm_municipio, sg_uf, qt_cadeiras, qt_aptos, ROUND(qt_por_cadeira, 0), NULL, ROW_NUMBER() OVER (ORDER BY qt_por_cadeira) FROM b
+) WHERE nr_ordem <= 5 ORDER BY ds_tipo, nr_ordem;
+
+-- @t9a | Tema 9: os assuntos dos planos de governo ao longo do tempo — parte dos planos que cita cada assunto, eleição a eleição
+WITH pl AS (
+    SELECT e.nr_ano_eleicao, CASE WHEN c.cd_cargo = 11 THEN 'PREFEITO' ELSE 'GOVERNADOR E PRESIDENTE' END AS ds_grupo, lower(strip_accents(pg.tx_proposta)) AS tx
+    FROM proposta_governo pg JOIN candidatura c ON c.id_candidatura = pg.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    WHERE c.cd_cargo IN (1, 3, 11) AND length(pg.tx_proposta) > 500   -- plano escaneado como imagem não tem texto
+)
+SELECT nr_ano_eleicao, ds_grupo, COUNT(*) AS qt_planos,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'pandemia|covid|coronavirus') AS INT)), 1) AS pc_pandemia,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'inteligencia artificial') AS INT)), 1) AS pc_inteligencia_artificial,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'saude mental|autis') AS INT)), 1) AS pc_saude_mental_autismo,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'clima|climatic|sustentab') AS INT)), 1) AS pc_clima,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'animal|animais|castracao') AS INT)), 1) AS pc_causa_animal,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'mulher|feminicidio|violencia domestica') AS INT)), 1) AS pc_mulheres,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'transparencia|corrupcao|controle social') AS INT)), 1) AS pc_transparencia,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'digital|internet|wi-?fi|conectividade') AS INT)), 1) AS pc_digital,
+       ROUND(100 * AVG(CAST(regexp_matches(tx, 'seguranca publica|guarda municipal|videomonitoramento|policia') AS INT)), 1) AS pc_seguranca
+FROM pl GROUP BY 1, 2 ORDER BY 2, 1;
+
+-- @t9b | Tema 9: o mesmo político de uma eleição para a outra — quanto o plano novo repete as palavras do anterior
+-- Semelhança: palavras em comum ÷ palavras dos dois planos (índice de Jaccard), usando as 80 palavras mais usadas de cada plano
+-- (tabela proposta_palavra). A mesma pessoa é seguida pelo título de eleitor.
+WITH pl AS (
+    SELECT c.id_pessoa, c.id_candidatura, e.nr_ano_eleicao, c.cd_cargo
+    FROM proposta_governo pg JOIN candidatura c ON c.id_candidatura = pg.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    WHERE ps.nr_titulo_eleitoral NOT LIKE 'SQ%' AND EXISTS (SELECT 1 FROM proposta_palavra x WHERE x.id_candidatura = c.id_candidatura)
+),
+par AS (   -- cada plano com o plano seguinte da mesma pessoa
+    SELECT a.id_pessoa, a.id_candidatura AS ida, b.id_candidatura AS idb, a.cd_cargo = b.cd_cargo AS fl_mesmo_cargo
+    FROM pl a JOIN pl b ON b.id_pessoa = a.id_pessoa AND b.nr_ano_eleicao > a.nr_ano_eleicao
+    WHERE NOT EXISTS (SELECT 1 FROM pl m WHERE m.id_pessoa = a.id_pessoa AND m.nr_ano_eleicao > a.nr_ano_eleicao AND m.nr_ano_eleicao < b.nr_ano_eleicao)
+),
+com AS (SELECT par.ida, par.idb, COUNT(*) AS qt_comum FROM par JOIN proposta_palavra x ON x.id_candidatura = par.ida
+        JOIN proposta_palavra y ON y.id_candidatura = par.idb AND y.palavra = x.palavra GROUP BY 1, 2),
+uni AS (SELECT par.ida, par.idb, COUNT(DISTINCT p.palavra) AS qt_uniao FROM par JOIN proposta_palavra p ON p.id_candidatura IN (par.ida, par.idb) GROUP BY 1, 2),
+sim AS (SELECT par.*, COALESCE(com.qt_comum, 0) / uni.qt_uniao AS vr_sim FROM par JOIN uni ON uni.ida = par.ida AND uni.idb = par.idb
+        LEFT JOIN com ON com.ida = par.ida AND com.idb = par.idb)
+SELECT COALESCE(CASE WHEN fl_mesmo_cargo THEN 'mesmo cargo' ELSE 'outro cargo' END, 'todos') AS ds_tipo, COUNT(*) AS qt_pares_de_planos,
+       ROUND(100 * AVG(vr_sim), 1) AS pc_semelhanca_media, ROUND(100 * AVG(CAST(vr_sim >= 0.8 AS INT)), 1) AS pc_quase_igual,
+       ROUND(100 * AVG(CAST(vr_sim < 0.3 AS INT)), 1) AS pc_muito_diferente
+FROM sim GROUP BY ROLLUP (fl_mesmo_cargo) ORDER BY qt_pares_de_planos DESC;
+
+-- @t10a | Tema 10: prefeitos que tentaram a reeleição — quantos conseguiram, pela idade (2004 a 2024)
+WITH pf AS (
+    SELECT c.id_pessoa, c.cd_municipio_tse, e.nr_ano_eleicao, c.nr_idade_posse, COALESCE(st.fl_eleito, false) AS fl_eleito
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE c.cd_cargo = 11 AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%' AND e.nr_ano_eleicao >= 2000
+),
+inc AS (SELECT b.*, CASE WHEN b.nr_idade_posse < 40 THEN 1 WHEN b.nr_idade_posse < 50 THEN 2 WHEN b.nr_idade_posse < 60 THEN 3 WHEN b.nr_idade_posse < 70 THEN 4 ELSE 5 END AS nr_faixa
+        FROM pf b JOIN pf a ON a.id_pessoa = b.id_pessoa AND a.cd_municipio_tse = b.cd_municipio_tse AND a.nr_ano_eleicao = b.nr_ano_eleicao - 4 AND a.fl_eleito
+        WHERE b.nr_idade_posse BETWEEN 18 AND 100)
+SELECT nr_faixa, ['até 39 anos', '40 a 49', '50 a 59', '60 a 69', '70 ou mais'][nr_faixa] AS ds_idade,
+       COUNT(*) AS qt_tentaram, COUNT_IF(fl_eleito) AS qt_reeleitos, ROUND(100 * AVG(CAST(fl_eleito AS INT)), 1) AS pc_reeleitos
+FROM inc GROUP BY 1, 2 ORDER BY 1;
+
+-- @t10b | Tema 10: alternância de poder nas prefeituras, eleição a eleição — mesmo prefeito, mesmo partido ou troca — e a idade de cada grupo
+-- Partido pela "linhagem" (PFL, DEM e União contam como o mesmo; PR e PL também), para mudança de nome não parecer troca.
+WITH pf AS (
+    SELECT c.id_pessoa, c.cd_municipio_tse, e.nr_ano_eleicao, c.nr_idade_posse, COALESCE(pa.cd_linhagem, c.id_partido::VARCHAR) AS cd_partido
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE c.cd_cargo = 11 AND st.fl_eleito AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%' AND e.nr_ano_eleicao >= 2000
+),
+b AS (SELECT n.*, a.id_pessoa AS id_anterior, a.cd_partido AS partido_anterior, a.nr_idade_posse AS idade_anterior
+      FROM pf n JOIN pf a ON a.cd_municipio_tse = n.cd_municipio_tse AND a.nr_ano_eleicao = n.nr_ano_eleicao - 4)
+SELECT nr_ano_eleicao, COUNT(*) AS qt_municipios,
+       ROUND(100 * AVG(CAST(id_pessoa = id_anterior AS INT)), 1) AS pc_mesmo_prefeito,
+       ROUND(100 * AVG(CAST(id_pessoa <> id_anterior AND cd_partido = partido_anterior AS INT)), 1) AS pc_outro_do_mesmo_partido,
+       ROUND(100 * AVG(CAST(id_pessoa <> id_anterior AND cd_partido <> partido_anterior AS INT)), 1) AS pc_troca_de_partido,
+       ROUND(AVG(nr_idade_posse) FILTER (WHERE id_pessoa = id_anterior), 1) AS vr_idade_reeleito,
+       ROUND(AVG(nr_idade_posse) FILTER (WHERE id_pessoa <> id_anterior AND cd_partido <> partido_anterior), 1) AS vr_idade_quem_entrou,
+       ROUND(AVG(idade_anterior) FILTER (WHERE id_pessoa <> id_anterior AND cd_partido <> partido_anterior), 1) AS vr_idade_quem_saiu
+FROM b GROUP BY 1 ORDER BY 1;
+
+-- @t10c | Tema 10: renovação na Câmara dos Deputados — parte dos eleitos que não estava lá antes, e a idade de novatos e reeleitos
+WITH d AS (
+    SELECT c.id_pessoa, e.nr_ano_eleicao, c.nr_idade_posse
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE c.cd_cargo = 6 AND st.fl_eleito AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%'
+)
+SELECT n.nr_ano_eleicao, COUNT(*) AS qt_eleitos, ROUND(100 * AVG(CAST(a.id_pessoa IS NULL AS INT)), 1) AS pc_novatos,
+       ROUND(AVG(n.nr_idade_posse) FILTER (WHERE a.id_pessoa IS NULL), 1) AS vr_idade_novatos,
+       ROUND(AVG(n.nr_idade_posse) FILTER (WHERE a.id_pessoa IS NOT NULL), 1) AS vr_idade_reeleitos
+FROM d n LEFT JOIN d a ON a.id_pessoa = n.id_pessoa AND a.nr_ano_eleicao = n.nr_ano_eleicao - 4
+WHERE n.nr_ano_eleicao >= 2002   -- 1998 compara com 1994, ano em que muitos títulos de eleitor faltam
+GROUP BY 1 ORDER BY 1;
+
+-- @t11a | Tema 11: Bolsa Família e dinheiro de empresas nas campanhas, ano a ano (benefícios e valor pago em dezembro; doações com CNPJ)
+WITH bf AS (SELECT nr_ano, SUM(qt_beneficios) AS qt_beneficios, SUM(vr_dezembro_mil_reais) * 1000 AS vr_dezembro FROM bolsa_familia_municipio GROUP BY 1),
+pj AS (SELECT nr_ano_eleicao AS nr_ano, SUM(vr_receita) FILTER (WHERE tp_doador = 'PJ') AS vr_pj, SUM(vr_receita) AS vr_total FROM receita GROUP BY 1)
+SELECT bf.nr_ano, bf.qt_beneficios, ROUND(bf.vr_dezembro, 0) AS vr_bolsa_dezembro, ROUND(pj.vr_pj, 0) AS vr_doacao_empresas,
+       ROUND(100 * pj.vr_pj / pj.vr_total, 1) AS pc_doacao_empresas
+FROM bf LEFT JOIN pj ON pj.nr_ano = bf.nr_ano ORDER BY 1;
+
+-- @t11b | Tema 11: cidades em cinco grupos pelo alcance do Bolsa Família (benefícios ÷ eleitores) x dinheiro de empresas e lado do prefeito eleito
+WITH apt AS (
+    SELECT e.nr_ano_eleicao AS nr_ano, cp.cd_municipio_tse, SUM(qt_aptos) AS qt_aptos FROM comparecimento cp JOIN eleicao e ON e.id_eleicao = cp.id_eleicao
+    WHERE cp.cd_cargo = 11 AND cp.nr_turno = 1 AND e.nr_ano_eleicao IN (2012, 2016, 2020, 2024) GROUP BY 1, 2
+),
+cob AS (SELECT b.nr_ano, b.cd_municipio_tse, b.qt_beneficios / NULLIF(a.qt_aptos, 0) AS vr_alcance
+        FROM bolsa_familia_municipio b JOIN apt a ON a.cd_municipio_tse = b.cd_municipio_tse AND a.nr_ano = b.nr_ano),
+q AS (SELECT *, NTILE(5) OVER (PARTITION BY nr_ano ORDER BY vr_alcance) AS nr_quintil FROM cob WHERE vr_alcance IS NOT NULL),
+rc AS (
+    SELECT r.nr_ano_eleicao, c.cd_municipio_tse, SUM(r.vr_receita) FILTER (WHERE r.tp_doador = 'PJ') AS vr_pj, SUM(r.vr_receita) AS vr_total,
+           SUM(r.vr_receita) FILTER (WHERE r.fl_recurso_publico) AS vr_publico
+    FROM receita r JOIN candidatura c ON c.id_candidatura = r.id_candidatura
+    WHERE c.cd_cargo IN (11, 13) AND r.nr_ano_eleicao IN (2012, 2016, 2020, 2024) GROUP BY 1, 2
+),
+pf AS (
+    SELECT e.nr_ano_eleicao, c.cd_municipio_tse, ANY_VALUE(pa.ds_espectro) AS ds_espectro
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE c.cd_cargo = 11 AND st.fl_eleito GROUP BY 1, 2
+)
+SELECT q.nr_ano, q.nr_quintil, COUNT(*) AS qt_municipios, ROUND(100 * MIN(q.vr_alcance), 1) AS pc_alcance_min, ROUND(100 * MAX(q.vr_alcance), 1) AS pc_alcance_max,
+       ROUND(SUM(rc.vr_pj), 0) AS vr_doacao_empresas, ROUND(100 * SUM(rc.vr_pj) / NULLIF(SUM(rc.vr_total), 0), 1) AS pc_doacao_empresas,
+       ROUND(100 * SUM(rc.vr_publico) / NULLIF(SUM(rc.vr_total), 0), 1) AS pc_dinheiro_publico,
+       ROUND(100 * AVG(CAST(pf.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') AS INT)), 1) AS pc_prefeito_esquerda,
+       ROUND(100 * AVG(CAST(pf.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') AS INT)), 1) AS pc_prefeito_direita
+FROM q LEFT JOIN rc ON rc.nr_ano_eleicao = q.nr_ano AND rc.cd_municipio_tse = q.cd_municipio_tse
+LEFT JOIN pf ON pf.nr_ano_eleicao = q.nr_ano AND pf.cd_municipio_tse = q.cd_municipio_tse
+GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @t13a | Tema 13: mapa de calor — parte dos votos para presidente que foi para a esquerda, o centro e a direita, por estado e região (1º turno, 1994 a 2026)
+WITH v AS (
+    SELECT e.nr_ano_eleicao, m.sg_uf,
+           CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'e' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'd' ELSE 'c' END AS lado,
+           SUM(vc.qt_votos_nominais) AS qt
+    FROM votacao_candidato vc JOIN candidatura c ON c.id_candidatura = vc.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    JOIN municipio m ON m.cd_municipio_tse = vc.cd_municipio_tse
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE c.cd_cargo = 1 AND vc.nr_turno = 1 GROUP BY 1, 2, 3
+)
+SELECT v.nr_ano_eleicao, COALESCE(u.nm_regiao, 'Brasil') AS nm_regiao, COALESCE(v.sg_uf, '') AS sg_uf,
+       ROUND(100.0 * SUM(qt) FILTER (WHERE lado = 'e') / SUM(qt), 1) AS pc_esquerda, ROUND(100.0 * SUM(qt) FILTER (WHERE lado = 'c') / SUM(qt), 1) AS pc_centro,
+       ROUND(100.0 * SUM(qt) FILTER (WHERE lado = 'd') / SUM(qt), 1) AS pc_direita
+FROM v JOIN uf u ON u.sg_uf = v.sg_uf
+GROUP BY GROUPING SETS ((v.nr_ano_eleicao, u.nm_regiao, v.sg_uf), (v.nr_ano_eleicao, u.nm_regiao), (v.nr_ano_eleicao))
+ORDER BY 1, 2, 3;
+
+-- @t14a | Tema 14: quantas vezes cada cidade trocou de lado — o campo político do 1º colocado para presidente (1º turno) e do prefeito eleito
+WITH pres AS (
+    SELECT e.nr_ano_eleicao, vc.cd_municipio_tse, c.id_partido, SUM(vc.qt_votos_nominais) AS qt
+    FROM votacao_candidato vc JOIN candidatura c ON c.id_candidatura = vc.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    WHERE c.cd_cargo = 1 AND vc.nr_turno = 1 GROUP BY 1, 2, 3
+),
+p1 AS (SELECT 'PRESIDENTE' AS ds_cargo, nr_ano_eleicao, cd_municipio_tse, ARG_MAX(id_partido, qt) AS id_partido FROM pres GROUP BY 1, 2, 3),
+pf AS (SELECT 'PREFEITO' AS ds_cargo, e.nr_ano_eleicao, c.cd_municipio_tse, ANY_VALUE(c.id_partido) AS id_partido
+       FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+       WHERE c.cd_cargo = 11 AND st.fl_eleito GROUP BY 1, 2, 3),
+lado AS (
+    SELECT x.*, CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                     WHEN pa.ds_espectro = 'CENTRO' THEN 'centro' END AS ds_lado
+    FROM (SELECT * FROM p1 UNION ALL SELECT * FROM pf) x JOIN municipio m ON m.cd_municipio_tse = x.cd_municipio_tse
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = x.id_partido AND pa.nr_ano_eleicao = x.nr_ano_eleicao
+),
+seq AS (SELECT *, LAG(ds_lado) OVER (PARTITION BY ds_cargo, cd_municipio_tse ORDER BY nr_ano_eleicao) AS ds_lado_anterior FROM lado WHERE ds_lado IS NOT NULL),
+mun AS (SELECT ds_cargo, cd_municipio_tse, COUNT(*) AS qt_eleicoes, COUNT_IF(ds_lado_anterior IS NOT NULL AND ds_lado_anterior <> ds_lado) AS qt_trocas FROM seq GROUP BY 1, 2)
+SELECT ds_cargo, LEAST(qt_trocas, 6) AS qt_trocas, COUNT(*) AS qt_municipios,
+       ROUND(100.0 * COUNT(*) / SUM(COUNT(*)) OVER (PARTITION BY ds_cargo), 1) AS pc_municipios
+FROM mun WHERE qt_eleicoes >= 6 GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @t14b | Tema 14: em cada eleição, a parte das cidades que repetiu o lado da eleição anterior, e quantas viraram de um lado para o outro
+WITH pres AS (
+    SELECT e.nr_ano_eleicao, vc.cd_municipio_tse, c.id_partido, SUM(vc.qt_votos_nominais) AS qt
+    FROM votacao_candidato vc JOIN candidatura c ON c.id_candidatura = vc.id_candidatura JOIN eleicao e ON e.id_eleicao = c.id_eleicao
+    WHERE c.cd_cargo = 1 AND vc.nr_turno = 1 GROUP BY 1, 2, 3
+),
+p1 AS (SELECT 'PRESIDENTE' AS ds_cargo, nr_ano_eleicao, cd_municipio_tse, ARG_MAX(id_partido, qt) AS id_partido FROM pres GROUP BY 1, 2, 3),
+pf AS (SELECT 'PREFEITO' AS ds_cargo, e.nr_ano_eleicao, c.cd_municipio_tse, ANY_VALUE(c.id_partido) AS id_partido
+       FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+       WHERE c.cd_cargo = 11 AND st.fl_eleito GROUP BY 1, 2, 3),
+lado AS (
+    SELECT x.*, CASE WHEN pa.ds_espectro IN ('ESQUERDA', 'CENTRO-ESQUERDA') THEN 'esquerda' WHEN pa.ds_espectro IN ('DIREITA', 'CENTRO-DIREITA') THEN 'direita'
+                     WHEN pa.ds_espectro = 'CENTRO' THEN 'centro' END AS ds_lado
+    FROM (SELECT * FROM p1 UNION ALL SELECT * FROM pf) x JOIN municipio m ON m.cd_municipio_tse = x.cd_municipio_tse
+    LEFT JOIN vw_partido_ano pa ON pa.id_partido = x.id_partido AND pa.nr_ano_eleicao = x.nr_ano_eleicao
+),
+seq AS (SELECT *, LAG(ds_lado) OVER (PARTITION BY ds_cargo, cd_municipio_tse ORDER BY nr_ano_eleicao) AS ds_lado_anterior FROM lado WHERE ds_lado IS NOT NULL)
+SELECT ds_cargo, nr_ano_eleicao, COUNT(*) AS qt_municipios, ROUND(100 * AVG(CAST(ds_lado = ds_lado_anterior AS INT)), 1) AS pc_mesmo_lado,
+       COUNT_IF(ds_lado_anterior = 'esquerda' AND ds_lado = 'direita') AS qt_esquerda_para_direita,
+       COUNT_IF(ds_lado_anterior = 'direita' AND ds_lado = 'esquerda') AS qt_direita_para_esquerda
+FROM seq WHERE ds_lado_anterior IS NOT NULL GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @t15a | Tema 15: candidatos pela parte da receita que veio de dinheiro público (fundos) — chance de se eleger, votos e gasto por voto
+WITH v AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+b AS (
+    SELECT r.nr_ano_eleicao, r.ds_cargo, r.cd_cargo, r.fl_eleito, r.vr_receita_total, COALESCE(v.qt, 0) AS qt_votos, r.vr_despesa_total,
+           CASE WHEN r.vr_receita_total <= 0 THEN 0 WHEN r.vr_receita_publica = 0 THEN 1 WHEN r.vr_receita_publica < 0.5 * r.vr_receita_total THEN 2
+                WHEN r.vr_receita_publica < 0.9 * r.vr_receita_total THEN 3 ELSE 4 END AS nr_faixa
+    FROM vw_candidatura_resumo r LEFT JOIN v ON v.id_candidatura = r.id_candidatura
+    WHERE r.nr_ano_eleicao IN (2022, 2024) AND r.cd_cargo IN (6, 7, 11, 13) AND (r.nr_ano_eleicao = 2022) = (r.cd_cargo IN (6, 7))
+)
+SELECT nr_ano_eleicao, ds_cargo, nr_faixa,
+       ['sem receita declarada', 'só dinheiro privado', 'menos da metade pública', 'de metade a 90% pública', '90% ou mais pública'][nr_faixa + 1] AS ds_faixa,
+       COUNT(*) AS qt_candidatos, COUNT_IF(fl_eleito) AS qt_eleitos, ROUND(100 * AVG(CAST(fl_eleito AS INT)), 2) AS pc_taxa_sucesso,
+       ROUND(MEDIAN(vr_receita_total), 0) AS vr_receita_mediana, ROUND(MEDIAN(qt_votos), 0) AS qt_votos_mediano,
+       ROUND(SUM(vr_despesa_total) / NULLIF(SUM(qt_votos), 0), 2) AS vr_gasto_por_voto
+FROM b GROUP BY 1, 2, 3, 4 ORDER BY 1, 2, 3;
+
+-- @t16a | Tema 16: os processos de registro das candidaturas, eleição a eleição — candidaturas inaptas (registro negado, cassado, cancelado ou renúncia), 1998 a 2022
+-- É o que a Justiça Eleitoral julga para cada candidatura e o TSE publica por candidato (tabela situacao_registro). Até 2016 o TSE
+-- traz o detalhe (indeferido, cassado, inelegível, renúncia...); de 2014 a 2022, só se a candidatura ficou apta ou inapta.
+-- Processos criminais, de improbidade ou de contas não estão nos dados abertos do TSE. Em 2024 e 2026 o campo veio vazio.
+WITH b AS (
+    SELECT e.nr_ano_eleicao, e.tp_abrangencia, sr.ds_situacao_candidatura AS sit, sr.ds_detalhe_situacao AS det
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_registro sr ON sr.id_candidatura = c.id_candidatura
+    WHERE c.cd_cargo IN (1, 3, 5, 6, 7, 8, 11, 13) AND e.nr_ano_eleicao BETWEEN 1998 AND 2022
+)
+SELECT nr_ano_eleicao, tp_abrangencia, COUNT(*) AS qt_candidaturas,
+       SUM(CASE WHEN sit = 'INAPTO' OR det LIKE 'INDEFERIDO%' OR det LIKE 'CASSADO%' OR det IN ('INELEGÍVEL', 'CANCELADO', 'CANCELADO COM RECURSO', 'NÃO CONHECIMENTO DO PEDIDO')
+                     OR det LIKE 'REN%NCIA' OR det LIKE 'FALECI%' OR sit LIKE 'INDEFERIDO%' OR sit LIKE 'CASSA%' OR sit LIKE '%REN%NCIA%' THEN 1 ELSE 0 END) AS qt_inaptas,
+       SUM(CASE WHEN det LIKE 'INDEFERIDO%' OR det = 'INELEGÍVEL' OR sit LIKE 'INDEFERIDO%' THEN 1 ELSE 0 END) AS qt_indeferidas,
+       SUM(CASE WHEN det LIKE 'CASSADO%' OR sit LIKE 'CASSA%' THEN 1 ELSE 0 END) AS qt_cassadas,
+       SUM(CASE WHEN det LIKE 'REN%NCIA' OR sit LIKE '%REN%NCIA%' THEN 1 ELSE 0 END) AS qt_renuncias,
+       COUNT(det) > 0 AS fl_tem_detalhe
+FROM b GROUP BY 1, 2 ORDER BY 1;
+
+-- @t16b | Tema 16: partido a partido — parte das candidaturas inaptas (registro negado, cassado, cancelado ou renúncia), 2020 e 2022 somadas, partidos com 2 mil candidaturas ou mais
+WITH b AS (
+    SELECT p.sg_partido, pa.ds_espectro, sr.ds_situacao_candidatura = 'INAPTO' AS fl_inapta
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_registro sr ON sr.id_candidatura = c.id_candidatura
+    JOIN partido p ON p.id_partido = c.id_partido LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
+    WHERE e.nr_ano_eleicao IN (2020, 2022) AND c.cd_cargo IN (1, 3, 5, 6, 7, 8, 11, 13)
+)
+SELECT sg_partido, MODE(ds_espectro) AS ds_espectro, COUNT(*) AS qt_candidaturas, SUM(CAST(fl_inapta AS INT)) AS qt_inaptas,
+       ROUND(100 * AVG(CAST(fl_inapta AS INT)), 2) AS pc_inaptas
+FROM b GROUP BY 1 HAVING COUNT(*) >= 2000 ORDER BY pc_inaptas DESC;
+
+-- @t16c | Tema 16: o tipo de processo (indeferimento, cassação, inelegibilidade, renúncia) e o voto em quem foi barrado, 2008, 2012 e 2016 (anos com o detalhe)
+SELECT CASE WHEN c.cd_cargo IN (11, 13) THEN 'prefeito e vereador' ELSE 'cargos estaduais e federais' END AS ds_grupo,
+       sr.ds_detalhe_situacao, COUNT(*) AS qt_candidaturas, SUM(CASE WHEN vt.qt > 0 THEN 1 ELSE 0 END) AS qt_com_votos_na_urna,
+       SUM(COALESCE(vt.qt, 0)) AS qt_votos_recebidos
+FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN situacao_registro sr ON sr.id_candidatura = c.id_candidatura
+LEFT JOIN (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1) vt ON vt.id_candidatura = c.id_candidatura
+WHERE e.nr_ano_eleicao IN (2008, 2012, 2016) AND c.cd_cargo IN (1, 3, 5, 6, 7, 8, 11, 13)
+  AND (sr.ds_detalhe_situacao LIKE 'INDEFERIDO%' OR sr.ds_detalhe_situacao LIKE 'CASSADO%' OR sr.ds_detalhe_situacao = 'INELEGÍVEL' OR sr.ds_detalhe_situacao LIKE 'REN%NCIA')
+GROUP BY 1, 2 ORDER BY 1, 3 DESC;

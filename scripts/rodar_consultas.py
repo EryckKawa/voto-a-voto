@@ -1,5 +1,6 @@
-"""Roda as 12 questões (scripts/consultas_brasil.sql) no banco nacional e salva
-data/br/perguntas.json com o SQL de cada consulta, as colunas, as linhas e o tempo.
+"""Roda as consultas dos 16 temas (scripts/consultas_brasil.sql) no banco nacional e salva
+data/br/perguntas.json com a descrição de cada consulta, as colunas, as linhas e o tempo.
+O texto do SQL fica só em scripts/consultas_brasil.sql: o site mostra as respostas, não o código.
 
 Uso: python scripts/rodar_consultas.py [caminho/eleicoes_brasil.duckdb] [só_estes_ids]
 """
@@ -51,7 +52,7 @@ def main():
         linhas = [[valor(v) for v in r] for r in cur.fetchall()]
         seg = round(time.time() - t, 2)
         print(f'{cid:5} {len(linhas):5} linhas  {seg:6.2f}s  {desc[:70]}', flush=True)
-        saida.append({'id': cid, 'descricao': desc, 'sql': sql, 'colunas': cols, 'linhas': linhas, 'segundos': seg})
+        saida.append({'id': cid, 'descricao': desc, 'colunas': cols, 'linhas': linhas, 'segundos': seg})
     # rodando só algumas consultas, o tamanho do banco continua o da última rodada completa
     tam = velho.get('tamanho') if SO and velho else {r[0]: r[1] for r in con.execute(
         "SELECT 'candidaturas', COUNT(*) FROM candidatura UNION ALL SELECT 'votos', COUNT(*) FROM votacao_candidato "

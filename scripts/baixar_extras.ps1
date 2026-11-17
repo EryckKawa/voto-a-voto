@@ -17,6 +17,8 @@ foreach ($a in 2006,2008,2010,2012,2014,2016,2018,2020,2022,2024,2026) { Add-Job
 foreach ($s in 'ADH_IDHM','ADH_IDHM_E','ADH_IDHM_R','ADH_IDHM_L','ADH_T_SUPER25M','ADH_T_MED25M','ADH_T_FUND25M','ADH_E_ANOSESTUDO','ADH_T_ANALF25M','ADH_RDPC') {
   Add-Job "ipea_$s" 'json' @("$ipea/ValoresSerie(SERCODIGO='$s')")
 }
+# Bolsa Familia (MDS, via IpeaData): beneficios e valor pago em dezembro, por municipio, 2004 a 2025 (tema 11)
+foreach ($s in 'FAM_PBF','VAL_PBF') { Add-Job "ipea_$s" 'json' @("$ipea/ValoresSerie(SERCODIGO='$s')") }
 Add-Job 'ipea_metadados_adh' 'json' @("$ipea/Metadados?`$filter=startswith(SERCODIGO,'ADH_')&`$select=SERCODIGO,SERNOME,SERNUMERICA")
 
 function Cortar($arq, $nome, $ext) {
