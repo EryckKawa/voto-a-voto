@@ -21,7 +21,8 @@ Se a rota falha, o roteador marca `main.dataset.erro` e mostra a mensagem de err
 | `js/ninguem.js` | `#/` | O candidato Ninguém |
 | `js/brasil.js` | `#/mapa`, `#/mapa/e/PREF2024`, `#/mapa/v/abst`, `#/mapa/br/SP`, `#/mapa/br/SP/c/3550308` | Mapa do Brasil, estado e cidade |
 | `js/revela.js` | `#/revela` | O que o voto revela |
-| `js/perguntas.js` | `#/perguntas`, `#/perguntas/q1` … `q12` | As 12 perguntas |
+| `js/perguntas.js` | `#/perguntas`, `#/perguntas/t1` … `t16`, `e1`, `e2` (e os antigos `q1` … `q12`, que redirecionam) | Os 16 temas do enunciado e as 2 perguntas a mais |
+| `js/formularios.js` | `#/formularios`, `#/formularios/candidatura` … `relatorios`, `registro` | Formulários (INSERT, UPDATE, DELETE com as restrições do modelo) e relatórios para imprimir, sobre a amostra de Teresina |
 | `js/partidos.js` | `#/partidos` | Posição dos partidos |
 | `js/politico.js` | `#/politicos`, `#/politico/123` | Busca de políticos e a ficha de cada um (todos os candidatos de 1994 a 2026) |
 | `js/testes.js` | `#/testes`, `#/testes/auto` | Testes no navegador |
@@ -52,7 +53,8 @@ Principais pastas de `data/br/`:
 | `geo_proj` | Desenho das cidades e dos estados, já projetado (carregado só quando há mapa na tela) |
 | `ideologia`, `ideologia_voto`, `ideologia_consenso` | As três réguas de esquerda e direita, por ano |
 | `partidos_notas` | Notas de cada partido em cada eleição, medida por medida, para a página Partidos |
-| `perguntas` | O SQL, as colunas e as linhas de cada consulta das 12 perguntas |
+| `perguntas` | A descrição, as colunas e as linhas de cada consulta dos 16 temas (o texto do SQL fica só em `scripts/consultas_brasil.sql`) |
+| `form/base` | A amostra de Teresina (2020 e 2024) usada pelos formulários e relatórios |
 | `achados` | Números já calculados da página "O que o voto revela" |
 | `cidades` | As 5.570 cidades: códigos do TSE e do IBGE, nome, estado, população, PIB e o ano da primeira eleição |
 | `busca` | Índice da busca: candidatos a presidente, governador e senador, e prefeitos eleitos, de 1994 a 2026 |

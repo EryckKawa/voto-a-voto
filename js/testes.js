@@ -66,7 +66,7 @@
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
-  teste("Velocidade", "12 perguntas abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 12, 1500, 400));
+  teste("Velocidade", "16 perguntas abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 18, 1500, 400));
   teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
   teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
   teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
@@ -98,7 +98,7 @@
   // FUNCIONAMENTO
   teste("Funcionamento", "Menu com as sete seções (sem Disputas apertadas)", async () => {
     const ls = qq(".nav a").map((a) => a.textContent.trim());
-    return R(ls.length === 7 && ls[3] === "12 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 12 perguntas · Partidos · Políticos · Explorar");
+    return R(ls.length === 7 && ls[3] === "16 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 16 perguntas · Partidos · Políticos · Explorar");
   });
   teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
     location.hash = "#/apertadas";
@@ -151,16 +151,32 @@
     const certa = ordem.join(",") === "Presidente,Governador,Senador,Deputado federal,Deputado estadual,Prefeito,Vereador";
     return R(n === 7 && anos >= 55 && certa, n + " cargos, " + anos + " eleições · " + ordem.join(", "), "7 cargos na ordem Presidente … Vereador, 55 ou mais eleições");
   });
-  teste("Funcionamento", "12 perguntas: recorte, Gráfico | Tabela e SQL", async () => {
-    await irPara("#/perguntas/q2"); await quadros(2);
+  teste("Funcionamento", "16 perguntas: recorte, Gráfico | Tabela, sem SQL na página", async () => {
+    await irPara("#/perguntas/t2"); await quadros(2);
     if (q("[data-modo='graf']")) q("[data-modo='graf']").click();
-    const antes = txt("#pq-graf"); q("[data-vista='3']").click(); await quadros(1);
+    const antes = txt("#pq-graf"); q("[data-vista='2']").click(); await quadros(1);
     const trocou = antes !== txt("#pq-graf");
     q("[data-modo='tab']").click(); await quadros(1);
-    await ate(() => qq("#pq-graf tbody tr").length === 5, 3000).catch(() => {});   // computador ocupado: a tabela pode levar alguns quadros
+    await ate(() => qq("#pq-graf tbody tr").length === 6, 3000).catch(() => {});   // computador ocupado: a tabela pode levar alguns quadros
     const linhasTab = qq("#pq-graf tbody tr").length; q("[data-modo='graf']").click();
-    const sql = /SELECT/.test(txt("#sql-q2"));
-    return R(trocou && linhasTab === 5 && sql, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · SQL ${sql ? "presente" : "ausente"}`, "troca o gráfico; tabela com 5 grupos; SQL na página");
+    const semSQL = !/SELECT\s[\s\S]*\sFROM\s/.test(txt("main")) && !q("main pre code");
+    return R(trocou && linhasTab === 6 && semSQL, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · ${semSQL ? "sem SQL" : "com SQL"}`, "troca o gráfico; tabela com 6 faixas de patrimônio; nenhum código SQL na página");
+  });
+  teste("Funcionamento", "16 temas e 2 a mais: todos com resposta, pontos e cuidado", async () => {
+    const ruins = [];
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
+      await irPara("#/perguntas/" + id); await quadros(1);
+      const r = txt(".pq-resposta"), p = qq(".pq-pontos li").length, c = qq(".pq-cuidado li").length;
+      if (r.length < 60 || p < 1 || c < 1 || /—\s*(das|de|dos)\s/.test(r)) ruins.push(`${id}: resposta ${r.length} letras, ${p} pontos, ${c} cuidados`);
+    }
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "18 páginas completas", "resposta, pontos e cuidado em todas");
+  });
+  teste("Funcionamento", "Endereços antigos das 12 perguntas levam ao tema certo", async () => {
+    await irPara("#/perguntas/q9"); await ate(() => /t14$/.test(location.hash), 3000).catch(() => {});
+    const ok9 = /t14$/.test(location.hash);
+    await irPara("#/perguntas/q5"); await ate(() => /t7$/.test(location.hash), 3000).catch(() => {});
+    const ok5 = /t7$/.test(location.hash);
+    return R(ok9 && ok5, `q9 → ${ok9 ? "tema 14" : "?"} · q5 → ${ok5 ? "tema 7" : "?"}`, "q9 leva ao tema 14 e q5 ao tema 7");
   });
   teste("Funcionamento", "Régua: o PT não aparece como extremo", async () => {
     const BR = await V.baseBR(), pt = BR.ideoV.partidos.PT.nota, psol = BR.ideoV.partidos.PSOL.nota;
@@ -168,7 +184,7 @@
   });
 
   // ACESSIBILIDADE
-  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "12 perguntas"], ["#/perguntas/q3", "Uma pergunta (Q3)"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "16 perguntas"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
   for (const [h, nome] of PAGS_A11Y) {
     teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
       await carregarAxe(); await irPara(h); await quadros(3);
@@ -310,12 +326,12 @@
     }
     return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${pags.length} páginas, nenhum vazio`, "sem “undefined”, “NaN” ou título vazio");
   });
-  teste("Preenchimento", "Tabelas das 12 perguntas sem célula vazia", async () => {
+  teste("Preenchimento", "Tabelas dos 16 temas sem célula vazia", async () => {
     const ruins = [];
-    for (let i = 1; i <= 12; i++) {
-      await irPara("#/perguntas/q" + i); await quadros(1);
+    for (let i = 1; i <= 16; i++) {
+      await irPara("#/perguntas/t" + i); await quadros(1);
       const vaz = qq("main td").filter((td) => !td.textContent.trim());
-      if (vaz.length) ruins.push(`Q${i}: ${vaz.length}`);
+      if (vaz.length) ruins.push(`Tema ${i}: ${vaz.length}`);
     }
     return R(ruins.length === 0, ruins.length ? "células vazias em " + ruins.join(", ") : "nenhuma célula vazia", "toda célula com valor ou “—”");
   });
@@ -421,8 +437,8 @@
     const ok = [2002, 2006, 2022].every((a) => anos.includes(a));
     return R(ok, "eleito presidente em " + anos.sort().join(", "), "inclui 2002, 2006 e 2022");
   });
-  teste("Funcionamento", "Q6: nuvem de palavras por cargo e por partido", async () => {
-    await irPara("#/perguntas/q6");
+  teste("Funcionamento", "Tema 9: nuvem de palavras por cargo e por partido", async () => {
+    await irPara("#/perguntas/t9");
     const bs = qq("#pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · Prefeito/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
     if (!bc || !bp) return R(false, "sem os botões das nuvens", "nuvem por cargo e por partido");
     bc.click(); await quadros(2); const nc = qq("#pq-graf .nuvem span").length;

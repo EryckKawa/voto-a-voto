@@ -71,7 +71,7 @@ Os scripts foram rodados num ambiente com as pastas fixas que aparecem no topo d
 
 ## O banco nacional (DuckDB)
 
-As 12 perguntas são respondidas por consultas SQL num banco DuckDB com **o mesmo modelo relacional do trabalho** (`trabalho-6-estados/modelo_votacao_grupo6.sql`), agora para os 27 estados. O banco é montado por `scripts/banco_brasil.py` e tem cerca de 4,4 GB. Ele não está no repositório, porque passa do limite de tamanho do GitHub e guarda CPF e CNPJ de doadores e o título de eleitor dos candidatos.
+Os 16 temas são respondidos por consultas SQL num banco DuckDB com **o mesmo modelo relacional do trabalho** (`trabalho-6-estados/modelo_votacao_grupo6.sql`), agora para os 27 estados. O banco é montado por `scripts/banco_brasil.py` e tem cerca de 4,4 GB. Ele não está no repositório, porque passa do limite de tamanho do GitHub e guarda CPF e CNPJ de doadores e o título de eleitor dos candidatos.
 
 ### Tabelas
 
@@ -101,6 +101,9 @@ As 12 perguntas são respondidas por consultas SQL num banco DuckDB com **o mesm
 | `voto_deputado` | 1.273.413 | o voto de cada deputado em cada votação (Sim, Não, Obstrução, Abstenção, Art. 17) |
 | `orientacao_bancada` | 68.509 | a orientação de cada bancada, do governo, da maioria e da oposição em cada votação |
 | `deputado_camara` | 916 | deputados da Câmara, ligados à `pessoa` do TSE pelo nome civil e pela data de nascimento |
+| `bolsa_familia_municipio` | 122.440 | (16/11) benefícios do Bolsa Família e valor pago em dezembro, por município, 2004 a 2025 (MDS, via IpeaData). Tema 11 |
+| `situacao_registro` | 3.697.353 | (16/11) situação do registro de cada candidatura (apto, inapto, deferido, indeferido, cassado, renúncia...) e o detalhe, quando o TSE publica (até 2016). Tema 16 |
+| `receita_descartada` | 26 | (16/11) as receitas impossíveis tiradas da tabela `receita` pela etapa `limpeza`, guardadas como vieram do TSE |
 
 O banco tem 2.397.854 registros em `pessoa`; 19 ficaram sem candidatura associada na carga. O site exporta as 2.397.835 pessoas com candidatura, cobrindo as 3.697.353 candidaturas. A conferência compara a quantidade de candidaturas de cada ficha com o banco.
 
@@ -112,6 +115,10 @@ O banco tem 2.397.854 registros em `pessoa`; 19 ficaram sem candidatura associad
 - `vw_eleitorado_municipio`: eleitorado de cada cidade em cada eleição: total, idade média (pelo meio de cada faixa), parte com até 29 e com 60 anos ou mais, parte com superior completo. É a base de Q4 e Q7.
 - `vw_partido_ano`: a nota e a faixa (esquerda, centro-esquerda, centro, centro-direita, direita) de cada partido em cada eleição, com o aviso de classificação incerta.
 - `vw_despesa_tipo`: cada despesa com o tipo, juntando as categorias do TSE em onze grupos (material impresso, internet e redes, rádio, TV e vídeo, militância, adesivos e carro de som, comícios e eventos, jornais e revistas, que são propaganda, e pessoal, veículos, repasses e outras). É a base de Q11 e do gasto na ficha do político.
+
+### Limpeza das receitas (16/11/2026)
+
+O TSE publica alguns lançamentos com erro de digitação. O pior: em 2020, doze vereadores do Amazonas aparecem com uma receita de R$ 207.166.666,66 cada (R$ 2,5 bilhões, mais que todos os vereadores do país juntos), o que distorcia toda conta de dinheiro de 2020. A etapa `limpeza` descarta a receita que passa de 10 vezes o teto de gasto do candidato (quando o TSE informa o teto) ou, para vereador, de R$ 5 milhões: 26 lançamentos (3 de 2012, 11 de 2016 e os 12 de 2020), R$ 2,58 bilhões. O valor fica `NULL` em `receita` e o lançamento original vai para `receita_descartada`. As fichas dos políticos (`data/br/pol`) foram exportadas antes dessa limpeza; para atualizá-las, rode `ficha_politico.py` de novo.
 
 ### Decisões do modelo
 
@@ -139,7 +146,12 @@ python scripts/empacotar.py
 python scripts/banco_brasil.py PASTA_DOS_ZIPS base cand votos partido_votos comp
 python scripts/banco_brasil.py PASTA_DOS_ZIPS contas 2010 2012 2014 2016 2018 2020 2022 2024 2026
 python scripts/banco_brasil.py PASTA_DOS_ZIPS propostas camara idhm bens eleitorado notas views
+python scripts/banco_brasil.py PASTA_DOS_ZIPS registro bolsa limpeza
 ```
+
+As três últimas etapas (16/11/2026): `registro` relê os arquivos de candidatos e grava a situação do registro de cada candidatura; `bolsa` lê `ipea_FAM_PBF.json.001` e `ipea_VAL_PBF.json.001` (baixados por `baixar_extras.ps1`); `limpeza` descarta as receitas impossíveis.
+
+A amostra da página de formulários (Teresina, 2020 e 2024) sai de `python scripts/formularios_amostra.py caminho/eleicoes_brasil.duckdb`, que grava `data/br/form/base.json` e `.js`.
 
 As fotos por pessoa são geradas por `fotos_politicos.py`: 81.214 miniaturas em `img/pol`, de 81.296 pessoas nas eleições gerais de 2014 a 2026. Foram processados os 112 pacotes; 82 pessoas não tinham foto aproveitável no pacote. A ficha usa esse índice quando não há uma foto dos pacotes já usados pelo mapa. Rode novamente depois da exportação das fichas com `--indice` para atualizar apenas `data/br/pol/fotos.js`, sem repetir downloads.
 

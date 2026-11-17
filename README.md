@@ -13,7 +13,8 @@ O site é estático (HTML, CSS e JavaScript, sem servidor e sem banco no navegad
 | Ninguém | `#/` | O "candidato Ninguém": quem faltou, votou em branco ou anulou. Em 2024, foram 42,6 milhões de eleitores no 1º turno. |
 | Mapa | `#/mapa` | As 5.570 cidades, eleição por eleição, em sete cargos (presidente, governador, senador, deputado federal, deputado estadual, prefeito e vereador, de 1994 a 2026), pintadas pelo lado político de quem venceu. Para deputado e vereador, vale o partido mais votado na cidade. Também mostra quem faltou, branco e nulo, e a virada de 2018 para 2022. |
 | O que o voto revela | `#/revela` | Oito achados de trinta anos de eleições, cada um com o título que já diz o dado. |
-| 12 perguntas | `#/perguntas` | As 12 perguntas de pesquisa do trabalho, respondidas com o Brasil inteiro. Cada resposta traz o gráfico, a tabela e a consulta SQL que a produziu. |
+| 16 perguntas | `#/perguntas` | Os 16 temas do enunciado da disciplina (e duas perguntas a mais do grupo), respondidos com o Brasil inteiro. Cada tema traz a resposta em uma frase, os números que a sustentam, os gráficos, os cuidados para ler e de onde vêm os dados. |
+| Formulários e relatórios | `#/formularios` | O protótipo do sistema: formulários de candidaturas, pessoas, partidos e votação que incluem, alteram e excluem registros com as regras do banco (chave primária, UNIQUE, chave estrangeira e CHECK), e relatórios prontos para imprimir. Usa uma amostra real do banco (Teresina, 2020 e 2024). |
 | Partidos | `#/partidos` | Onde fica cada partido entre esquerda e direita em cada eleição, segundo três estudos acadêmicos e o voto na Câmara. |
 | Políticos | `#/politicos` | A ficha de cada um dos 2,4 milhões de candidatos de 1994 a 2026: cada eleição, o partido e o lado dele, votos, dinheiro, bens, onde gastou, nuvens de palavras dos planos e dos projetos/discursos oficiais disponíveis, e, para deputado federal, como votou na Câmara. Cada ficha vira uma carta colecionável, que dá para virar e baixar. |
 | Explorar | `#/explorar` | As visualizações para ver e mexer, e o botão do modo apresentação (setas ← → ou passador de slides; Esc sai). |
@@ -50,15 +51,23 @@ docs/               documentação
 
 1. [Arquitetura do site](docs/arquitetura.md): rotas, carregamento dos dados, páginas e desempenho.
 2. [Dados e banco](docs/dados-e-banco.md): de onde vêm os dados, como viram arquivos do site, e o banco nacional em DuckDB no modelo relacional do trabalho.
-3. [As 12 perguntas](docs/12-perguntas.md): onde está cada pergunta do enunciado, o que cada consulta faz, o que ela responde e os limites de cada resposta.
+3. [Os 16 temas](docs/16-temas.md): onde está cada tema do enunciado, as consultas de cada um, as respostas e os limites de cada resposta.
 4. [A régua dos partidos](docs/regua-dos-partidos.md): como cada partido é posto entre esquerda e direita, com as referências.
 5. [Testes](docs/testes.md): o que é testado e como rodar.
+
+## O que mudou na versão final (16 e 17/11/2026)
+
+- A página de perguntas passou a seguir os **16 temas do enunciado**, com respostas mais diretas e sem os blocos de SQL na tela. Entraram os temas que faltavam: sobrenome e "curral eleitoral" (5), brancos, nulos e abstenção com ranking (6), cadeiras ganhas pela legenda (7), vereadores e votos (8), propostas ao longo do tempo (9), idade e alternância de poder (10), doações de empresas e Bolsa Família (11), mapa de calor regional (13), manutenção do lado político (14), dependência do fundo público (15) e processos de registro das candidaturas (16).
+- Banco: três etapas novas em `scripts/banco_brasil.py` (`bolsa`, `registro` e `limpeza`), com as tabelas `bolsa_familia_municipio`, `situacao_registro` e `receita_descartada`; 27 consultas novas em `scripts/consultas_brasil.sql`.
+- Página de **formulários e relatórios** (`#/formularios`, `js/formularios.js`, amostra feita por `scripts/formularios_amostra.py`).
+- Testes: `testes/rodar_testes_edge.js` roda a suíte no Edge sem instalar o Playwright.
 
 ## Fontes dos dados
 
 - **Tribunal Superior Eleitoral (TSE), Portal de Dados Abertos:** candidatos, bens declarados, perfil do eleitorado, votação por município e zona, comparecimento, prestação de contas (receitas e despesas) e propostas de governo, de 1994 a 2026.
 - **IBGE:** municípios, Censo 2022 (população) e PIB dos municípios (2021).
 - **Atlas do Desenvolvimento Humano no Brasil (PNUD, Ipea e Fundação João Pinheiro),** pela API do IpeaData: IDHM, escolaridade dos adultos e renda por habitante de cada município (Censos 1991, 2000 e 2010).
+- **Ministério do Desenvolvimento e Assistência Social, pela API do IpeaData:** Bolsa Família por município (benefícios e valor pago em dezembro), 2004 a 2025.
 - **Câmara dos Deputados, dados abertos:** orientação das bancadas e voto de cada deputado nas votações do Plenário, de 2019 a 2026.
 - **Estudos acadêmicos sobre a posição dos partidos:**
   - Zucco e Power (2024), *Latin American Politics and Society*; dados no Harvard Dataverse, doi:10.7910/DVN/6KVTUV.

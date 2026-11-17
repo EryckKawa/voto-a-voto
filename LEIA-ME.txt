@@ -27,7 +27,9 @@ Páginas
   #/mapa      Mapa das 5.570 cidades, 1994 a 2026, pintado pelo lado político
               de quem venceu, com três réguas (todas as medidas, Harvard, voto)
   #/revela    O que o voto revela: achados de 30 anos de eleições
-  #/perguntas As 12 perguntas do trabalho, cada uma com gráfico, tabela e SQL
+  #/perguntas Os 16 temas do enunciado, cada um com a resposta, os números,
+              os gráficos e os cuidados para ler
+  #/formularios Formulários (incluir, alterar, excluir) e relatórios para imprimir
   #/partidos  Onde fica cada partido em cada eleição, segundo três estudos
               acadêmicos e o voto na Câmara
   #/politicos A ficha de cada candidato de 1994 a 2026 (histórico, lado do
@@ -40,7 +42,7 @@ Documentação completa: README.md e a pasta docs/
 Pastas
   css/      estilo.css
   js/       base.js (utilidades e rotas), brasil.js (mapa), ninguem.js (início),
-            revela.js (achados), perguntas.js (12 perguntas), partidos.js
+            revela.js (achados), perguntas.js (16 temas), formularios.js (formulários), partidos.js
             (partidos), politico.js (ficha do político), cidade.js (busca),
             testes.js (testes)
   data/br/  dados já prontos em .js (funcionam sem servidor)
