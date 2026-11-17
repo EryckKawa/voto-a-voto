@@ -163,17 +163,17 @@
     const semSQL = !/SELECT\s[\s\S]*\sFROM\s/.test(txt("main")) && !q("main pre code");
     return R(trocou && linhasTab === 7 && semSQL, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · ${semSQL ? "sem SQL" : "com SQL"}`, "troca o gráfico; tabela com os 7 cargos; nenhum código SQL na página");
   });
-  teste("Funcionamento", "Perguntas: do vereador ao presidente em cada parte e no seletor de cargo", async () => {
+  teste("Funcionamento", "Perguntas: filtro de cargo (do vereador ao presidente) e de eleição", async () => {
     await irPara("#/perguntas/t2"); await quadros(2);
     const cs = qq("#pq-painel [data-cargo]"), nomes = cs.map((b) => b.textContent.replace(/\s*\d{4}$/, "").trim());
     const ordem = nomes.join(",") === "Vereador,Prefeito,Dep. estadual,Dep. federal,Senador,Governador,Presidente";
     const antes = txt("#pq-graf"); cs[0].click(); await quadros(1); const trocou = antes !== txt("#pq-graf");
     const vereadorAtivo = q("#pq-painel [data-cargo='0']").getAttribute("aria-pressed") === "true";
-    const anos = qq("#pq-painel [data-ano]"), a0 = txt("#pq-graf"); if (anos[0]) { anos[0].click(); await quadros(1); }
-    const trocouAno = anos.length >= 8 && a0 !== txt("#pq-graf");
-    const sem = [];
-    for (let i = 1; i <= 16; i++) { await irPara("#/perguntas/t" + i); await quadros(1); if (!qq(".pq-escada").length) sem.push(i); }
-    return R(ordem && trocou && vereadorAtivo && trocouAno && !sem.length, `${cs.length} cargos (${nomes.join(", ")}) · ${trocou ? "troca o gráfico" : "não troca"} · ${anos.length} eleições, ${trocouAno ? "o ano troca o gráfico" : "o ano não troca"} · temas sem a lista: ${sem.join(", ") || "nenhum"}`, "7 cargos do vereador ao presidente e 8 ou mais eleições; os botões trocam o gráfico; todo tema tem a lista cargo a cargo");
+    const sel = q("#pq-painel [data-ano-sel]"), nAnos = sel ? sel.options.length : 0, a0 = txt("#pq-graf");
+    if (sel) { sel.value = sel.options[sel.options.length - 1].value; sel.dispatchEvent(new Event("change", { bubbles: true })); await quadros(1); }
+    const trocouAno = nAnos >= 8 && a0 !== txt("#pq-graf");
+    const semResumo = !qq(".pq-escada, .pq-mais-num, .em-resumo").length;
+    return R(ordem && trocou && vereadorAtivo && trocouAno && semResumo, `${cs.length} cargos (${nomes.join(", ")}) · ${trocou ? "troca o gráfico" : "não troca"} · ${nAnos} eleições, ${trocouAno ? "o ano troca o gráfico" : "o ano não troca"} · ${semResumo ? "sem blocos de resumo" : "com blocos de resumo"}`, "7 cargos do vereador ao presidente e 8 ou mais eleições; os filtros trocam o gráfico; nenhum bloco de resumo");
   });
   teste("Funcionamento", "Todos os temas e as 2 perguntas a mais: com resposta, pontos e cuidado", async () => {
     const ruins = [];

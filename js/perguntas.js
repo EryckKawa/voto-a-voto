@@ -138,7 +138,7 @@
       const t = (a, cg) => tot.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const m = (a, cg) => med.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
       const CG_MED = ESCADA.map(([cg, a]) => [a, cg]);   // do vereador ao presidente
-      const vistaMedia = (campo, rot, nt) => porEleicao(rot, (E7, Y) => ({ rot: `${rot} (${Y})`, graf: () => barras(E7.map(([cg, a]) => m(a, cg)).filter((r) => r[campo] != null).map((r) => ({ rot: `${CARGO[r.ds_cargo] || r.ds_cargo} ${r.nr_ano_eleicao}`, sub: `${V.int(r.qt_candidatos)} candidatos · ${V.int(r.qt_eleitos)} ${r.qt_eleitos === 1 ? "eleito" : "eleitos"}`, v: r[campo], vTxt: V.brl(r[campo]) })),
+      const vistaMedia = (campo, rot, nt) => porEleicao(rot, (E7, Y) => ({ rot, graf: () => barras(E7.map(([cg, a]) => m(a, cg)).filter((r) => r[campo] != null).map((r) => ({ rot: `${CARGO[r.ds_cargo] || r.ds_cargo} ${r.nr_ano_eleicao}`, sub: `${V.int(r.qt_candidatos)} candidatos · ${V.int(r.qt_eleitos)} ${r.qt_eleitos === 1 ? "eleito" : "eleitos"}`, v: r[campo], vTxt: V.brl(r[campo]) })),
         { cor: COR.terra, cols: ["Cargo", "Candidatos e eleitos", rot] }), nota: nt }), ANOS(2010, 2026));
       const vista = (a, cg) => ({ rot: `Por partido · ${CARGO[cg]} ${a}`, graf: () => {
         // os 12 partidos com mais cadeiras, do mais caro para o mais barato
@@ -1261,12 +1261,11 @@
     const vs = parte.v;
     if (!vs.length) return "";
     return `<div class="pq-painel" data-p="${i}"${idDe(i, "pq-painel")}>
-        <div class="pq-painel__cab">
-          ${vs.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Recorte">${vs.map((k) => `<button class="chip" type="button" data-vista="${k}">${b.vistas[k].rot}</button>`).join("")}</div>` : "<span></span>"}
+        ${vs.length > 1 ? `<div class="pq-vistas" role="group" aria-label="O que ver">${vs.map((k) => `<button class="pq-aba" type="button" data-vista="${k}">${b.vistas[k].rot}</button>`).join("")}</div>` : ""}
+        <div class="pq-painel__cab pq-barra">
+          <div class="pq-filtros"></div>
           <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
         </div>
-        <div class="pq-cargos" role="group" aria-label="Cargo, do vereador ao presidente" hidden></div>
-        <div class="pq-cargos pq-anos" role="group" aria-label="Eleição" hidden></div>
         <div class="pq-graf__cab"><h4 class="pq-graf__tit"${idDe(i, "pq-graf-tit")}></h4>
           <details class="mais pq-comoler"><summary>Como ler este gráfico</summary><p class="pq-graf__desc"${idDe(i, "pq-nota")}></p></details></div>
         <div class="pq-leg"${idDe(i, "pq-leg")}></div>
@@ -1289,17 +1288,18 @@
     const el = document.querySelector(`.pq-painel[data-p="${i}"]`), st = ATUAL.paineis[i];
     if (!el || !st) return;
     const { b, modo } = ATUAL, base = b.vistas[st.vi], ci = cargoDe(b, st), v = vistaAberta(b, st), $ = (c) => el.querySelector(c);
-    const cg = $(".pq-cargos:not(.pq-anos)"), an = $(".pq-anos");
+    const fl = $(".pq-filtros");
     const anos = base.eleicoes || (ci != null ? base.cargos[ci].anos : []), ano = anos.length > 1 ? anoDe(b, st) : null;
-    an.hidden = ano == null;
-    an.innerHTML = ano == null ? "" : `<span class="pq-cargos__rot">Eleição</span>${anos.map((y) => `<button class="chip chip--cargo" type="button" data-ano="${y}" aria-pressed="${y === ano}"${base.eleicoes ? ` title="Vereador e prefeito: ${anoMun(y)}; deputados, senador, governador e presidente: ${anoGer(y)}"` : ""}>${y}</button>`).join("")}${base.eleicoes ? `<p class="pq-cargos__falta">Vereador e prefeito na eleição municipal até o ano escolhido; os demais cargos, na eleição geral.</p>` : ""}`;
-    const anoAtivo = an.querySelector('[aria-pressed="true"]');
-    if (anoAtivo && an.scrollWidth > an.clientWidth) an.scrollLeft = Math.max(0, anoAtivo.offsetLeft - an.offsetLeft - 70);
-    cg.hidden = ci == null;
-    cg.innerHTML = ci == null ? "" : `<span class="pq-cargos__rot">Cargo</span>${base.cargos.map((c, k) => `<button class="chip chip--cargo" type="button" data-cargo="${k}" aria-pressed="${k === ci}" title="${CARGO[c.cg]}">${CURTO[c.cg]}${c.anos.length > 1 ? "" : ` <small>${c.a}</small>`}</button>`).join("")}${base.falta ? `<p class="pq-cargos__falta">${base.falta}</p>` : ""}`;
-    // no celular a fila rola para o lado: o cargo aberto fica à vista
-    const ativo = cg.querySelector('[aria-pressed="true"]');
-    if (ativo && cg.scrollWidth > cg.clientWidth) cg.scrollLeft = Math.max(0, ativo.offsetLeft - cg.offsetLeft - 70);
+    const rotAno = (y) => (base.eleicoes ? `${anoMun(y)} e ${anoGer(y)}` : String(y));
+    const notas = [base.falta, base.eleicoes ? "Vereador e prefeito na eleição municipal; os demais cargos na geral." : ""].filter(Boolean);
+    fl.innerHTML = (ci != null ? `<div class="pq-filtro"><span class="pq-filtro__rot">Cargo</span><div class="pq-seg" role="group" aria-label="Cargo, do vereador ao presidente">${base.cargos.map((c, k) => `<button type="button" data-cargo="${k}" aria-pressed="${k === ci}" title="${CARGO[c.cg]}${c.anos.length > 1 ? "" : `, ${c.a}`}">${CURTO[c.cg]}</button>`).join("")}</div><select class="pq-ano pq-cargo-sel" data-cargo-sel aria-label="Cargo">${base.cargos.map((c, k) => `<option value="${k}"${k === ci ? " selected" : ""}>${CARGO[c.cg]}</option>`).join("")}</select></div>` : "")
+      + (ano != null ? `<label class="pq-filtro"><span class="pq-filtro__rot">Eleição</span><select class="pq-ano" data-ano-sel>${[...anos].reverse().map((y) => `<option value="${y}"${y === ano ? " selected" : ""}>${rotAno(y)}</option>`).join("")}</select></label>`
+        : "")
+      + (notas.length ? `<p class="pq-filtros__nota">${notas.join(" ")}</p>` : "");
+    fl.classList.toggle("pq-filtros--vazio", ci == null && ano == null);
+    // no celular a fila de cargos rola para o lado: o cargo aberto fica à vista
+    const seg = fl.querySelector(".pq-seg"), ativo = seg && seg.querySelector('[aria-pressed="true"]');
+    if (ativo && seg.scrollWidth > seg.clientWidth) seg.scrollLeft = Math.max(0, ativo.offsetLeft - seg.offsetLeft - 60);
     let g; try { g = v.graf(); } catch (e) { console.error(e); g = { html: '<p class="vazio">Não foi possível desenhar este gráfico.</p>', tab: { cols: [""], linhas: [] } }; }
     $(".pq-leg").innerHTML = v.legenda || "";
     $(".pq-leg").hidden = modo === "tab";
@@ -1315,22 +1315,7 @@
   }
   const pintarTodos = () => ATUAL.paineis.forEach((_, i) => pintarPainel(i));
 
-  /* "Mais números": grupos de frases montados por js/detalhes.js a partir das linhas das consultas antigas */
-  function maisHTML(b, C) {
-    const grupos = [];
-    for (const id of b.antigas || []) {
-      const f = V.detalhes && V.detalhes[id];
-      if (!f) continue;
-      try { grupos.push(...f(C).filter((g) => g && g.itens && g.itens.filter(Boolean).length)); } catch (e) { console.error(e); }
-    }
-    if (!grupos.length) return "";
-    return `<details class="pq-origem pq-mais-num"><summary>Mais números, ano a ano e cargo a cargo</summary>
-      ${grupos.map((g) => `<div class="pq-detalhe__grupo"><h3>${g.tit}</h3>${g.texto ? `<p>${g.texto}</p>` : ""}<ul>${g.itens.filter(Boolean).map((i) => `<li>${i}</li>`).join("")}</ul></div>`).join("")}</details>`;
-  }
 
-  /* "Do vereador ao presidente": o mesmo número, cargo a cargo, logo abaixo da afirmação de cada parte */
-  const escadaHTML = (es) => (es && es.length ? `<details class="pq-escada" open><summary>Do vereador ao presidente</summary>
-      <ul>${es.map(([cg, a, t]) => `<li${t.na ? ' class="pq-escada__na"' : ""}><b>${CARGO[cg]}${a && !t.na ? ` <small>${a}</small>` : ""}</b><span>${t.na || t}</span></li>`).join("")}</ul></details>` : "");
   const selo = (b) => `<span class="pq-selo">${typeof b.n === "number" ? b.n : b.n}</span>`;
   function paginaTema(b, temas, C) {
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
@@ -1348,10 +1333,10 @@
       </header>
       <section class="pq-partes" aria-labelledby="pq-partes-tit">
         <h2 class="pq-partes__tit" id="pq-partes-tit">${partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
+        ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span class="pq-parte__n">${k + 1}</span><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
         ${partes.map((pt, k) => `<article class="pq-parte" aria-labelledby="pq-parte-${k}">
-          <h3 class="pq-parte__q" id="pq-parte-${k}">${partes.length > 1 ? `<span class="pq-parte__n">${k + 1}</span>` : ""}${pt.q}</h3>
+          <h3 class="pq-parte__q" id="pq-parte-${k}" tabindex="-1">${partes.length > 1 ? `<span class="pq-parte__n">${k + 1}</span>` : ""}${pt.q}</h3>
           ${pt.a ? `<p class="pq-parte__a">${pt.a}</p>` : ""}
-          ${escadaHTML(pt.escada)}
           ${painelHTML(b, pt, k)}
           ${pt.p.length ? `<details class="mais pq-parte__r"><summary>Os números em detalhe</summary>${pt.p.map((j) => `<p>${b.pontos[j]}</p>`).join("")}</details>` : ""}
         </article>`).join("")}
@@ -1367,7 +1352,6 @@
         <p><b>Tabelas do banco usadas:</b> ${b.tabelas.map((t) => `<code>${t}</code>`).join(", ")}.</p>
         <p><b>Consultas:</b> ${b.consultas.map((id) => `<code title="${V.esc((C[id] || {}).descricao || "")}">${id}</code>`).join(", ")}, no arquivo <a href="${GH}" rel="noopener"><code>scripts/consultas_brasil.sql</code></a>, rodadas no banco nacional em DuckDB.</p>
       </details>
-      ${maisHTML(b, C)}
       ${b.link ? `<p class="pq-link"><a href="${b.link}">${b.linkTxt}</a></p>` : ""}
       <nav class="pq-passos" aria-label="Outros temas">
         ${ant ? `<a href="#/perguntas/${ant.id}" class="pq-passos__ant"><small>Anterior</small><span><b>${ant.n}</b> ${ant.titulo}</span></a>` : "<span></span>"}
@@ -1408,10 +1392,17 @@
     if (st && st.tab) V.baixarCSV(st.tab, ATUAL.b.id + " " + (vistaAberta(ATUAL.b, st).rot || ATUAL.b.vistas[st.vi].rot || "dados"));
   }
 
-  document.getElementById("conteudo").addEventListener("change", (e) => { if (e.target.id === "pq-ir" && e.target.value) location.hash = "#/perguntas/" + e.target.value; });
+  document.getElementById("conteudo").addEventListener("change", (e) => {
+    if (e.target.id === "pq-ir" && e.target.value) { location.hash = "#/perguntas/" + e.target.value; return; }
+    const pn = e.target.closest(".pq-painel[data-p]");
+    if (ATUAL && pn && e.target.matches("[data-ano-sel]")) { const st = ATUAL.paineis[+pn.dataset.p]; st.ano[st.vi] = +e.target.value; pintarPainel(+pn.dataset.p); }
+    if (ATUAL && pn && e.target.matches("[data-cargo-sel]")) { const st = ATUAL.paineis[+pn.dataset.p]; st.ci[st.vi] = +e.target.value; pintarPainel(+pn.dataset.p); }
+  });
 
   /* um só ouvinte de cliques para as páginas dos temas */
   document.getElementById("conteudo").addEventListener("click", (e) => {
+    const ir = e.target.closest("[data-ir]");
+    if (ir) { const alvo = document.getElementById("pq-parte-" + ir.dataset.ir); if (alvo) { alvo.closest(".pq-parte").scrollIntoView({ behavior: "smooth", block: "start" }); alvo.focus({ preventScroll: true }); } return; }
     const pn = e.target.closest(".pq-painel[data-p]");
     if (!ATUAL || !pn) return;
     const i = +pn.dataset.p, vt = e.target.closest("[data-vista]"), md = e.target.closest("[data-modo]"), cg = e.target.closest("[data-cargo]");

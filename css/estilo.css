@@ -1268,33 +1268,85 @@ details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
 .pt-conc-mais[open] > .pt-concorda { margin-top: var(--e-3); }
 .mapa-leg__ler { flex-basis: 100%; color: var(--tinta-2); font-size: var(--t-meta); }
 .vis-barra__leg { font-size: var(--t-min); color: var(--tinta-2); margin-top: var(--e-1); }
-/* "Em resumo": três frases para quem só passa os olhos */
-.em-resumo { background: var(--papel); border: 1px solid var(--linha); border-radius: var(--r-l); padding: var(--e-4) var(--e-5); max-width: 980px; }
-.em-resumo__tit { font: var(--t-h3); margin-bottom: var(--e-2); }
-.em-resumo ul { margin: 0; padding-left: 20px; display: grid; gap: var(--e-1); }
-.em-resumo li { font-size: var(--t-corpo); }
 .form-leigo { font-size: 19px; font-weight: 700; max-width: 62ch; }
 /* filas de botões que rolam para o lado no celular: a borda direita esmaece, para mostrar que há mais */
 @media (max-width: 720px) { .pq-vistas, .vis-anos { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); } }
-/* do vereador ao presidente (17/11/2026): o seletor de cargo dos gráficos e a escada de cada parte */
-.pq-cargos { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: var(--e-2) 0; border-top: 1px dashed var(--linha); }
-.pq-cargos[hidden] { display: none; }
-.pq-cargos__rot { font-weight: 700; color: var(--tinta-2); font-size: var(--t-meta); margin-right: 4px; }
-.chip--cargo { padding: 8px 12px; font-size: 14.5px; }
-.chip--cargo small { font-weight: 400; }
-.pq-cargos__falta { flex-basis: 100%; margin: 2px 0 0; font-size: var(--t-meta); color: var(--tinta-2); }
-.pq-escada { max-width: 980px; border-left: 3px solid var(--linha-forte); padding: 2px 0 2px var(--e-3); }
-.pq-escada > summary { font-weight: 700; color: var(--tinta-2); font-size: var(--t-meta); cursor: pointer; }
-.pq-escada ul { list-style: none; margin: var(--e-2) 0 0; padding: 0; display: grid; gap: 6px; }
-.pq-escada li { display: grid; grid-template-columns: minmax(150px, 190px) minmax(0, 1fr); gap: 4px 14px; font-size: var(--t-corpo); line-height: 1.45; }
-.pq-escada li b { color: var(--tinta); }
-.pq-escada li b small { font: 400 15px/1 var(--fonte); color: var(--tinta-3); }
-.chip--cargo small { font: 400 13px/1 var(--fonte); }
-.pq-escada__na span, .pq-escada__na b { color: var(--tinta-3); }
-.pq-escada__na b { font-weight: 600; }
+/* ===== Perguntas: leitura e navegação (17/11/2026, noite) =====
+   Cada parte: pergunta → resposta → um cartão de gráfico (abas do que ver, uma barra de filtros, o gráfico, a fonte). */
+.pq-parte { gap: var(--e-3); scroll-margin-top: 76px; }
+.pq-parte__q:focus { outline: none; }
+.pq-parte__a { margin-bottom: var(--e-1); }
+.pq-parte .pq-painel { background: #f7f8fa; border: 1px solid var(--linha); border-radius: 12px; padding: var(--e-4) var(--e-5) var(--e-3); gap: var(--e-3); margin-top: var(--e-1); }
+.pq-parte .pq-painel__cab { align-items: end; gap: var(--e-2) var(--e-4); }
+/* abas: o que ver neste gráfico */
+.pq-vistas { display: flex; flex-wrap: wrap; gap: 0 2px; border-bottom: 1px solid var(--linha); flex: 1 1 360px; }
+.pq-aba { appearance: none; border: 0; background: none; font: 700 15px/1.25 var(--fonte); color: var(--tinta-2); padding: 10px 12px 9px; border-bottom: 3px solid transparent; margin-bottom: -1px; cursor: pointer; text-align: left; border-radius: 6px 6px 0 0; }
+.pq-aba:hover { color: var(--tinta); background: #eceef1; }
+.pq-aba[aria-pressed="true"] { color: var(--tinta); border-bottom-color: var(--tinta); }
+.pq-aba:focus-visible { outline: 3px solid var(--link); outline-offset: -3px; }
+.pq-parte .pq-modo button { min-height: 36px; padding: 0 14px; font-size: 14.5px; }
+/* filtros: cargo e eleição numa linha só */
+.pq-filtros { display: flex; flex-wrap: wrap; align-items: end; gap: var(--e-3) var(--e-5); }
+.pq-filtros[hidden] { display: none; }
+.pq-filtro { display: grid; gap: 5px; min-width: 0; }
+.pq-filtro__rot { font: 700 14px/1.2 var(--fonte); color: var(--tinta-2); }
+.pq-filtro__fixo { display: inline-flex; align-items: center; min-height: 38px; font-weight: 700; color: var(--tinta); }
+.pq-seg { display: flex; max-width: 100%; overflow-x: auto; border: 1.5px solid var(--linha-forte); border-radius: 9px; background: var(--papel); scrollbar-width: none; }
+.pq-seg::-webkit-scrollbar { display: none; }
+.pq-seg button { appearance: none; border: 0; background: none; flex: none; font: 600 14.5px/1 var(--fonte); color: var(--tinta-2); padding: 0 13px; min-height: 38px; cursor: pointer; white-space: nowrap; }
+.pq-seg button + button { border-left: 1px solid var(--linha); }
+.pq-seg button:hover { background: #eceef1; color: var(--tinta); }
+.pq-seg button[aria-pressed="true"] { background: var(--tinta); color: #fff; }
+.pq-seg button:focus-visible { outline: 3px solid var(--link); outline-offset: -3px; }
+.pq-ano { font: 600 15px/1.2 var(--fonte); min-height: 40px; padding: 6px 34px 6px 12px; border: 1.5px solid var(--linha-forte); border-radius: 9px; background: var(--papel); color: var(--tinta); cursor: pointer; }
+.pq-filtros__nota { flex-basis: 100%; margin: 0; font-size: 14px; line-height: 1.4; color: var(--tinta-3); }
+/* o gráfico em branco dentro do cartão */
+.pq-parte .pq-graf__cab { border-top: 0; padding-top: var(--e-1); margin-top: 0; }
+.pq-parte .pq-graf__tit { font: 700 21px/1.2 var(--num); }
+.pq-parte .pq-graf { background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: var(--e-3) var(--e-4); }
+.pq-parte .pq-painel__pe { border-top: 0; padding-top: 0; }
+.pq-parte .pq-painel__pe .pq-fonte { font-size: 14px; }
+.pq-parte .pq-csv { min-height: 36px; font-size: 14px; }
+/* índice das partes, logo abaixo de "A resposta em N partes" */
+.pq-indice { list-style: none; margin: 0; padding: 0; display: grid; grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); gap: var(--e-2); }
+.pq-indice button { appearance: none; width: 100%; height: 100%; display: flex; align-items: center; gap: var(--e-2); text-align: left; background: var(--papel); border: 1px solid var(--linha); border-radius: 10px; padding: 10px 12px; font: 600 15.5px/1.3 var(--fonte); color: var(--tinta); cursor: pointer; }
+.pq-indice button:hover { border-color: var(--tinta-2); }
+.pq-indice button:focus-visible { outline: 3px solid var(--link); outline-offset: 2px; }
 @media (max-width: 720px) {
-  .pq-escada li { grid-template-columns: minmax(0, 1fr); gap: 0; }
-  .pq-cargos { flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px; padding: 8px 14px; scrollbar-width: thin; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
-  .pq-cargos .chip { flex: none; white-space: nowrap; }
-  .pq-cargos__falta { display: none; }
+  .pq-parte .pq-painel { padding: var(--e-3); margin: var(--e-1) -4px 0; }
+  .pq-vistas { flex-wrap: nowrap; overflow-x: auto; margin: 0; padding: 0; flex-basis: 100%; scrollbar-width: none; }
+  .pq-aba { flex: none; white-space: nowrap; }
+  .pq-filtro { width: 100%; }
+  .pq-ano { width: 100%; min-height: 44px; }
+  .pq-seg button { min-height: 42px; }
+  .pq-parte .pq-graf { padding: var(--e-2); }
+  .pq-indice { grid-template-columns: minmax(0, 1fr); }
 }
+/* a barra do gráfico: filtros à esquerda, Gráfico | Tabela à direita */
+.pq-parte .pq-barra { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: end; gap: var(--e-3) var(--e-4); }
+.pq-parte .pq-barra .pq-filtros { flex: 1 1 420px; }
+.pq-parte .pq-barra .pq-filtros--vazio { flex: 0 0 0; }
+.pq-parte .pq-vistas { margin-bottom: calc(-1 * var(--e-1)); }
+@media (max-width: 720px) { .pq-parte .pq-barra { display: grid; } .pq-parte .pq-barra .pq-filtros { flex: none; } .pq-parte .pq-barra .pq-filtros--vazio { display: none; } }
+@media (min-width: 721px) {
+  .pq-parte .pq-filtro { flex: none; }
+  .pq-parte .pq-seg { overflow: visible; max-width: none; }
+}
+/* barra em grade: cargos numa linha inteira; embaixo, a eleição à esquerda e Gráfico | Tabela à direita */
+.pq-parte .pq-barra { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: end; gap: var(--e-3) var(--e-4); }
+.pq-parte .pq-barra .pq-filtros { display: contents; }
+.pq-parte .pq-barra .pq-filtro:has(.pq-seg) { grid-column: 1 / -1; }
+.pq-parte .pq-barra .pq-filtros__nota { grid-column: 1 / -1; order: 9; margin-top: calc(-1 * var(--e-2)); }
+.pq-parte .pq-barra .pq-modo { grid-column: 2; justify-self: end; }
+.pq-parte .pq-barra .pq-filtro:not(:has(.pq-seg)) { grid-column: 1; justify-self: start; }
+.pq-parte .pq-graf td { white-space: nowrap; }
+@media (max-width: 720px) {
+  .pq-parte .pq-barra { grid-template-columns: minmax(0, 1fr); }
+  .pq-parte .pq-barra .pq-modo, .pq-parte .pq-barra .pq-filtro:not(:has(.pq-seg)) { grid-column: 1; justify-self: stretch; }
+  .pq-parte .pq-barra .pq-filtros__nota { margin-top: 0; }
+}
+@media (min-width: 721px) { .pq-parte .pq-barra .pq-seg { width: fit-content; } }
+.pq-parte .pq-graf:has(> .pq__tabela) { padding: 0; border: 0; background: none; }
+/* cargo: botões no computador, lista de seleção no celular */
+.pq-cargo-sel { display: none; }
+@media (max-width: 720px) { .pq-parte .pq-seg { display: none; } .pq-parte .pq-cargo-sel { display: block; width: 100%; min-height: 44px; } }
