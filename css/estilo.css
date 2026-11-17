@@ -1274,3 +1274,5 @@ details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
 .em-resumo ul { margin: 0; padding-left: 20px; display: grid; gap: var(--e-1); }
 .em-resumo li { font-size: var(--t-corpo); }
 .form-leigo { font-size: 19px; font-weight: 700; max-width: 62ch; }
+/* filas de botões que rolam para o lado no celular: a borda direita esmaece, para mostrar que há mais */
+@media (max-width: 720px) { .pq-vistas, .vis-anos { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); } }

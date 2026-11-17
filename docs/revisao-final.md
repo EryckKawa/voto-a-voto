@@ -53,4 +53,5 @@ Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Ou
 - **Relatório final:** regerado com os textos atuais do site (`relatorio_final/coletar_temas.js`) e com o **sumário montado** (`relatorio_final/montar_pdf.py`); o PDF de 17/11 tinha saído com o sumário vazio. Corrigido "Grupo 5" para "Grupo 6" nos arquivos da 1ª etapa, que iam para o Apêndice B.
 - **Entrega:** `Trabalho_Votacao/ENTREGA_FINAL/` e `ENTREGA_FINAL_Grupo6_BDR.zip` (relatório .pdf e .docx, consultas, modelo, DER e LEIA-ME).
 - **Testes:** 186 de 186; varredura de quebras (16 páginas × 7 larguras) sem achados.
+- **Exploração final (18/11):** a cópia offline abre direto do disco em todas as páginas; no site publicado, nenhum arquivo falha e não há erro de JavaScript (testado em 11 páginas, inclusive cidade e fichas); os números de 2026 batem entre Mapa, 3D, ficha e apresentação. Entraram o ícone da aba, a imagem e o resumo de compartilhamento do link (`img/og.jpg`), a página "não encontrada" com as seções do site e o esmaecido nas filas de botões que rolam no celular.
 
