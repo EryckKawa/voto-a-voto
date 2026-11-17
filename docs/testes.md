@@ -22,7 +22,7 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 
 ## Rodada de 17/11/2026
 
-Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Novos: as 18 páginas de temas com resposta, pontos e cuidado; o recorte e o Gráfico | Tabela sem código SQL na página; os endereços antigos (`#/perguntas/q1` … `q12`) levando ao tema certo; a nuvem de palavras no tema 9; e as regras de acessibilidade no mapa de calor (tema 13) e nos formulários. O aviso que pode aparecer é o do zoom do mapa abaixo de 40 quadros por segundo no Edge sem janela (sem placa de vídeo), que não é falha.
+Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o sistema de design (18/11): 90 por tela, 180 nas duas; os três novos conferem as sugestões com foto na busca vazia de Políticos, o índice das 16 perguntas pelos cinco assuntos com o número-chave em cada tema, e os filtros do Mapa acima do mapa. Novos: as 18 páginas de temas com resposta, pontos e cuidado; o recorte e o Gráfico | Tabela sem código SQL na página; os endereços antigos (`#/perguntas/q1` … `q12`) levando ao tema certo; a nuvem de palavras no tema 9; e as regras de acessibilidade no mapa de calor (tema 13) e nos formulários. O aviso que pode aparecer é o do zoom do mapa abaixo de 40 quadros por segundo no Edge sem janela (sem placa de vídeo), que não é falha.
 
 ## O que é testado (81 testes por tela no navegador, antes de 16/11)
 

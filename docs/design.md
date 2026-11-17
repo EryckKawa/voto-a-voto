@@ -71,3 +71,30 @@ Cada item diz o problema visto nas capturas (1280 px e 390 px) e a regra que res
 ### Em todas
 - Cabeçalho de página igual: título que diz o achado, uma frase, e a linha de números-chave quando houver.
 - Conferir depois de cada página: captura em 1280 e 390 px, a suíte de testes e a comparação com as referências.
+
+## Sistema de design (18/11/2026)
+
+O plano completo (fundamentos, componentes, página por página e fases) foi feito como o de um designer de produto. Esta seção é a referência do que já está no código.
+
+### Tokens (`:root` em `css/estilo.css`)
+- **Texto:** `--t-display`, `--t-h1`, `--t-h2` (Barlow Condensed), `--t-h3` (Atkinson, 20 px), `--t-corpo` 18 px, `--t-meta` 15 px, `--t-min` 14 px (só legendas, eixos e rótulos de controles); números `--t-num-xl` 48 px e `--t-num` 30 px.
+- **Espaço:** `--e-1` a `--e-8` (4, 8, 12, 16, 24, 32, 48 e 64 px). Mais espaço acima de um título do que abaixo.
+- **Raio:** `--r-s` 4, `--r-m` 8, `--r-l` 14, `--r-pill` 999. **Leitura:** `--leitura` 68ch.
+
+### Componentes
+| Componente | Classe | Regra |
+|---|---|---|
+| Números-chave | `.kpis` | cada número com o seu rótulo inteiro; nunca "23% × 0,4%" com um rótulo só |
+| Barra de filtros | `.filtros` | tudo o que muda o que se vê, junto e acima do que filtra |
+| Recolhível | `details.mais` | o rótulo diz o que há dentro |
+| Estado vazio que ensina | `.vazio-guia` | o que fazer e um primeiro passo clicável |
+| Painel de dados | `.pq-painel` | título-achado e descrição em cima; fonte e "Baixar dados (CSV)" embaixo |
+
+### O que mudou nesta rodada (fases 1 e 2 do plano)
+- **16 perguntas:** índice pelos cinco assuntos (Dinheiro, Perfil, Território, Voto, Partidos), com a numeração do enunciado; cada tema com a resposta ao lado dos números-chave e um seletor "Ir para o tema". As regras repetidas de `.pq-lista` (6 blocos) viraram uma só.
+- **Mapa:** camadas, cargo e ano numa barra de filtros acima do mapa (no celular, antes do mapa; o ano escolhido aparece no meio da fila); ranking com cabeçalho (Partido · Cidades · Nota); a régua dos partidos recolhida, com link para a página Partidos.
+- **Políticos:** a busca abre com 18 sugestões com foto em três trilhas (os mais votados de 2022, prefeitos eleitos nas capitais em 2024, quem mais venceu desde 1994), feitas por `scripts/sugestoes_politicos.py`; os resultados da busca mostram a foto quando o site tem.
+
+### O que fica para depois de 19/11 (fases 4 a 6)
+Ninguém (busca da cidade no topo, sumário de capítulos), O que o voto revela no mesmo painel dos temas, Partidos (ano em controle deslizante, rótulos só para os incertos), fichas com a situação do registro ("Registro negado", "Cassado"), Explorar com miniaturas reais, e a limpeza final dos blocos de conserto do CSS.
+

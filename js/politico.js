@@ -146,25 +146,41 @@
   }
 
   /* ---------- página da busca: #/politicos ---------- */
-  const itemBusca = (e, BR) => `<li><a href="#/politico/${e.id}"><span class="busca__ico" style="background:#5f6672">${V.esc(V.iniciais(e.civil))}</span>
+  // a foto da busca: a do TSE (se a pessoa tem uma no site) ou a de img/pol; senão, as iniciais
+  const fotoBusca = (e, fotos) => {
+    const ini = `<span class="busca__ico" style="background:#5f6672">${V.esc(V.iniciais(e.civil))}</span>`;
+    if (e.fano && V.temFoto(e.fano, e.fsq)) return V.fotoOu(e.fano, e.fsq, ini, "pol-lista__foto");
+    return fotos && fotos.has(+e.id) ? `<img class="pol-lista__foto" loading="lazy" alt="" src="img/pol/${e.id % 100}/${e.id}.webp" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="${V.esc(ini)}">` : ini;
+  };
+  const itemBusca = (e, BR, fotos) => `<li><a href="#/politico/${e.id}">${fotoBusca(e, fotos)}
     <span><b>${V.esc(V.titulo(e.urna || e.civil))}</b>${e.urna ? ` <small>${V.esc(V.titulo(e.civil))}</small>` : ""}<small>${V.esc(V.descrPol(e, BR))}</small></span></a></li>`;
+  const deSugestao = ([id, civil, urna, ano, cargo, lugar, vit, votos, fano, fsq]) => ({ id, civil, urna, ano, cargo, lugar, vit, votos, fano, fsq });
   V.rota(/^\/politicos\/?$/, async function (main) {
     V.marcarNav("politicos");
     document.title = "Políticos · Voto a voto";
-    const [BR, info] = await Promise.all([V.baseBR(), V.dados("br/pol/info").catch(() => null)]);
+    const [BR, info, SUG, fotos] = await Promise.all([V.baseBR(), V.dados("br/pol/info").catch(() => null), V.dados("br/pol/sugestoes").catch(() => null),
+      FOTOS || (FOTOS = V.dados("br/pol/fotos").then((ids) => new Set(ids)).catch(() => new Set()))]);
+    const trilhas = SUG ? SUG.trilhas.map((t) => ({ tit: t.tit, nomes: t.nomes.map(deSugestao) })) : [];
+    await Promise.all([...new Set(trilhas.flatMap((t) => t.nomes.map((e) => e.fano)).filter(Boolean))].map(V.carregarFotos));
+    const sugestoes = trilhas.length ? `<section class="vazio-guia" id="pol-sugestoes" aria-labelledby="pol-sug-tit">
+        <h2 class="vazio-guia__tit" id="pol-sug-tit">Comece por aqui</h2>
+        <div class="vazio-guia__trilhas">${trilhas.map((t) => `<div class="vazio-guia__trilha"><h3>${V.esc(t.tit)}</h3><ol class="pol-lista pol-lista--sug">${t.nomes.map((e) => itemBusca(e, BR, fotos)).join("")}</ol></div>`).join("")}</div>
+      </section>` : "";
     main.innerHTML = `<div class="pagina pol">
       <header class="pq-cab"><h1 class="titulo-grande">Políticos</h1>
-        <p class="pq-mais">A ficha de ${info ? V.int(info.pessoas) : "todos os"} candidatos de 1994 a 2026: cada eleição que disputou, por qual partido e de que lado ele estava, quantos votos teve, quanto arrecadou e gastou, os bens que declarou, as palavras de planos, projetos e discursos oficiais disponíveis e, para deputado federal, como votou na Câmara.</p></header>
+        <p class="pq-mais">A carreira de ${info ? V.int(info.pessoas) : "todos os"} candidatos de 1994 a 2026: cada eleição, o partido, os votos, o dinheiro e, para deputado federal, como votou na Câmara.</p></header>
       <div class="pol-busca" role="search" aria-label="Busca de políticos"><label for="pol-busca">Nome do político</label>
-        <input id="pol-busca" type="search" autocomplete="off" spellcheck="false" placeholder="Nome civil ou nome na urna, pelo começo (ex.: Luiz Inácio, Tarcísio, Marina)"></div>
-      <p class="pq-nota" id="pol-busca-res" aria-live="polite">Digite pelo menos 3 letras. A busca vai pelo começo do nome civil ou do nome na urna; para quem já venceu uma eleição, também pelo último sobrenome.</p>
-      <ol class="pol-lista" id="pol-lista"></ol></div>`;
-    const inp = document.getElementById("pol-busca"); let tmr;
+        <input id="pol-busca" type="search" autocomplete="off" spellcheck="false" placeholder="Nome civil ou nome na urna (ex.: Luiz Inácio, Tarcísio, Marina)"></div>
+      <p class="pol-busca__res" id="pol-busca-res" aria-live="polite">Digite pelo menos 3 letras do começo do nome.</p>
+      <ol class="pol-lista" id="pol-lista"></ol>
+      ${sugestoes}</div>`;
+    const inp = document.getElementById("pol-busca"), sug = document.getElementById("pol-sugestoes"); let tmr;
     inp.addEventListener("input", () => { clearTimeout(tmr); tmr = setTimeout(async () => {
-      const t = inp.value, r = await V.buscaPoliticos(t, 40);
+      const t = inp.value, curto = chaveBusca(t).length < 3, r = await V.buscaPoliticos(t, 40);
       if (inp.value !== t) return;
-      document.getElementById("pol-busca-res").textContent = chaveBusca(t).length < 3 ? "Digite pelo menos 3 letras." : r.length ? `${r.length === 40 ? "As 40 primeiras" : r.length} pessoas, da maior votação para a menor.` : "Ninguém com esse começo de nome.";
-      document.getElementById("pol-lista").innerHTML = r.map((e) => itemBusca(e, BR)).join("");
+      if (sug) sug.hidden = !curto;
+      document.getElementById("pol-busca-res").textContent = curto ? "Digite pelo menos 3 letras do começo do nome." : r.length ? `${r.length === 40 ? "As 40 primeiras" : r.length} pessoas, da maior votação para a menor.` : "Ninguém com esse começo de nome. Tente o nome na urna ou o último sobrenome.";
+      document.getElementById("pol-lista").innerHTML = r.map((e) => itemBusca(e, BR, fotos)).join("");
     }, 150); });
     inp.focus();
   });

@@ -320,7 +320,7 @@
       await irPara(h); await quadros(2);
       const m = q("main"), t = m.innerText;
       if (RUIM.test(t)) ruins.push(h + ": “" + t.match(RUIM)[0] + "”");
-      const vaz = qq("main h1, main h2, main h3, main th, main .pq-resp, main .manchete__titulo").filter((e) => !e.textContent.trim() && !e.closest("[hidden]"));
+      const vaz = qq("main h1, main h2, main h3, main th, main .pq-resposta, main .kpis b, main .manchete__titulo").filter((e) => !e.textContent.trim() && !e.closest("[hidden]"));
       if (vaz.length) ruins.push(h + ": " + vaz.length + " título(s) vazio(s)");
       if (m.dataset.erro) ruins.push(h + ": erro ao abrir");
     }
@@ -406,6 +406,25 @@
   // FICHA DO POLÍTICO, NUVENS E CÂMARA
   const fichaDe = async (nome, re) => { const r = await V.buscaPoliticos(nome, 10); const e = r.find((x) => re.test(x.civil + " " + (x.urna || ""))); return e ? "#/politico/" + e.id : null; };
   teste("Velocidade", "Busca de políticos abre", () => medirPagina("#/politicos", () => !!q("#pol-busca"), 1200, 300));
+  teste("Funcionamento", "Busca de políticos vazia sugere nomes com foto, e some ao digitar", async () => {
+    await irPara("#/politicos"); await ate(() => qq("#pol-sugestoes li a").length >= 18, 8000).catch(() => {});
+    const n = qq("#pol-sugestoes li a").length, fotos = qq("#pol-sugestoes img").length;
+    const inp = q("#pol-busca"); inp.value = "lula"; inp.dispatchEvent(new Event("input"));
+    await ate(() => qq("#pol-lista li").length > 0, 8000).catch(() => {});
+    const some = q("#pol-sugestoes").hidden;
+    return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
+  });
+  teste("Funcionamento", "16 perguntas: índice pelos 5 assuntos e número-chave em cada tema", async () => {
+    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 18, 8000).catch(() => {});
+    const grupos = qq(".pq-assunto").length; let sem = [];
+    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
+    return R(grupos === 6 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as 2 a mais; número com rótulo inteiro; seletor de tema");
+  });
+  teste("Funcionamento", "Mapa: os filtros vêm antes do mapa", async () => {
+    await irPara("#/mapa"); await ate(() => q("#controles .chip") && q("#mapa-br path.mun"), 8000).catch(() => {});
+    const f = q(".home__filtros").getBoundingClientRect(), m = q("#mapa-br").getBoundingClientRect(), cab = qq(".ranking__cab").length;
+    return R(f.bottom <= m.top + 1 && cab >= 1, `filtros terminam em ${Math.round(f.bottom)} px, mapa começa em ${Math.round(m.top)} px; ${cab ? "ranking com cabeçalho" : "ranking sem cabeçalho"}`, "filtros acima do mapa; ranking com cabeçalho");
+  });
   teste("Funcionamento", "Ficha do político: histórico, lado político e votos na Câmara (Arthur Lira)", async () => {
     const h = await fichaDe("arthur lira", /LIRA/);
     if (!h) return R(false, "não achou na busca", "acha e abre a ficha");

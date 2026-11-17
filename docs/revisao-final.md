@@ -39,6 +39,6 @@ Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Ou
 ## Pendências conhecidas
 
 - (Resolvido em 17/11) As fichas das 26 pessoas de `receita_descartada` foram regravadas com `ficha_politico.py --pessoas`; o script agora desempata a ordem, e a saída é a mesma a cada rodada.
-- Última rodada (17/11): 174 de 174 testes passaram, no computador e no celular. Numa rodada anterior, o teste de acessibilidade dos formulários falhou uma vez (`page-has-heading-one`) e não se repetiu; se voltar, a página está em `js/formularios.js`.
+- Última rodada (18/11, com o sistema de design): 180 de 180 testes passaram. Rodada anterior (17/11): 174 de 174 testes passaram, no computador e no celular. Numa rodada anterior, o teste de acessibilidade dos formulários falhou uma vez (`page-has-heading-one`) e não se repetiu; se voltar, a página está em `js/formularios.js`.
 - O enunciado foi lido de `questoes_analise_dados_eleitorais.docx` (08/09). Se o professor tiver fechado outra lista, conferir a numeração.
 - A entrega no SIGAA (PDF do relatório, link do site e do repositório) é manual.

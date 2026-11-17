@@ -268,10 +268,12 @@
       const vt = votosDe(RES, uf); if (!vt) return "";
       const sc = vt.t1, tot = sc.reduce((a, x) => a + x[1], 0), mx = sc[0][1], notas = BR.ideo.anos[ano] || {};
       return `<h2 class="lado__titulo">Votos no 1º turno ${NO_UF(uf)}</h2><p class="lado__sub">Todos os candidatos. Cada barra tem a cor da nota do partido ${NOME_REGUA[REGUA]}.</p>
+        <p class="ranking__cab ranking__cab--cand" aria-hidden="true"><span>Candidato</span><span></span><span>Votos</span><span>Nota</span></p>
         <ol class="ranking ranking--cand">${sc.map(([sq, v]) => { const k = RES.c[sq], n = notas[k[1]] ? notas[k[1]][0] : null; return `<li><span class="ranking__sg">${V.esc(V.titulo(k[0]))} <small>${V.esc(V.nomePartido(k[1]))}</small></span><span class="ranking__barra"><i style="width:${(100 * v) / mx}%;background:${V.corNota(n)}"></i></span><b>${V.pct((100 * v) / tot)}</b><small>${fmtNota(n)}</small></li>`; }).join("")}</ol>`;
     }
     const ps = [...r.partidos.values()].sort((a, b) => b.n - a.n).slice(0, 12), mx = ps.length ? ps[0].n : 1;
     return `<h2 class="lado__titulo">${cargo === "PREF" ? "Quem mais elegeu prefeitos" : PROP[cargo] ? `Partido mais votado para ${NOME_CG[cargo]}, em número de cidades` : `Partido do candidato a ${NOME_CG[cargo]} mais votado, em número de cidades`}</h2><p class="lado__sub">A cor é a nota do partido. <span class="so-mouse">Passe o mouse para ver as cidades dele.</span></p>
+      <p class="ranking__cab" aria-hidden="true"><span>Partido</span><span></span><span>Cidades</span><span>Nota</span></p>
       <ol class="ranking">${ps.map((p) => `<li data-sg="${V.esc(p.sg)}"><span class="ranking__sg">${V.esc(V.nomePartido(p.sg))}</span><span class="ranking__barra"><i style="width:${(100 * p.n) / mx}%;background:${V.corNota(p.nota)}"></i></span><b>${V.int(p.n)}</b><small>${fmtNota(p.nota)}</small></li>`).join("")}</ol>`;
   }
   function porEstado(venc, ufSel, cargo) {
@@ -649,9 +651,8 @@
   function montar(main) {
     main.innerHTML = `<div class="pagina pagina--larga">
       <div class="home">
-        <div class="home__camadas" id="camadas"></div>
+        <div class="filtros home__filtros"><div class="home__camadas" id="camadas"></div><div class="controles" id="controles"></div></div>
         <header class="manchete" id="manchete" aria-live="polite"></header>
-        <div class="controles" id="controles"></div>
         <div class="home__mapa"><div class="painel__mapa">
           <div id="mapa-br" class="mapa-br"></div>
           <div class="mapa-zoom"><button class="btn" id="z-mais" aria-label="Aproximar">+</button><button class="btn" id="z-menos" aria-label="Afastar">−</button><button class="btn" id="z-br">Brasil inteiro</button></div>
@@ -663,6 +664,7 @@
       </div>
       <section class="regua-bloco" id="reguas">
         <h2 class="secao__titulo" id="regua-tit">Onde fica cada partido</h2>
+        <details class="mais regua-mais"><summary>Ver a régua dos partidos e escolher a medida que pinta o mapa</summary>
         <p class="regua-escolha__rot" id="regua-rot">Régua que pinta o mapa</p>
         <div class="camadas" role="group" aria-labelledby="regua-rot">${Object.entries({ consenso: "Todas as medidas", harvard: "Pesquisa de Harvard", voto: "Voto na Câmara" }).map(([k, n]) => `<button type="button" class="camadas__op" data-regua="${k}" aria-pressed="${k === REGUA}">${n}</button>`).join("")}</div>
         <p class="secao__sub" id="regua-txt"></p>
@@ -673,6 +675,8 @@
           <p class="secao__sub" id="gov-sub"></p>
           <div id="gov-graf" class="gov-graf"></div>
           <p class="secao__sub">${comoVoto()}</p>
+        </details>
+        <p><a href="#/partidos">Cada medida, ano a ano, na página Partidos</a></p>
         </details>
       </section>
     </div>`;
@@ -706,6 +710,7 @@
     const RES = cargo === "PREF" || PROP[cargo] ? null : await V.dados("br/resumo/" + cargo + ano);
     if (trocouEl) { document.getElementById("regua-box").innerHTML = regua(String(ano), cargo, RES); document.getElementById("regua-tit").textContent = `Onde fica cada partido em ${ano}`; textosRegua(); }
     document.getElementById("controles").innerHTML = controlesHtml(cargo, ano);
+    { const fila = document.querySelector("#controles .tempo"), a = fila && fila.querySelector(".tempo__ano[aria-current]"); if (a && fila.scrollWidth > fila.clientWidth) fila.scrollLeft = a.offsetLeft - fila.offsetLeft - fila.clientWidth / 2 + a.offsetWidth / 2; }
     if (cam === "vira") { document.getElementById("controles").innerHTML = '<p class="controles__nota">Compara o 2º turno para presidente: Haddad (PT) em 2018 e Lula (PT) em 2022, cidade por cidade.</p>'; return atualizarVirada(uf, ib, trocou); }
     if (cam !== "venc") return atualizarMetrica(uf, ib, cargo, ano, cam, trocou);
     if (trocou) { M.colorir(BR.venc); document.getElementById("mapa-leg").innerHTML = legVenc(); }
