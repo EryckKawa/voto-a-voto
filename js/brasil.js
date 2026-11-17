@@ -574,7 +574,7 @@
     document.getElementById("camadas").innerHTML = `<div class="camadas" role="group" aria-label="O que o mapa mostra">${Object.entries(CAMADAS).map(([k, n]) => `<a class="camadas__op" ${k === H.cam ? 'aria-current="true"' : ""} href="${lk(H.uf, H.ib, null, k)}">${n}</a>`).join("")}</div>`;
     return `<div class="controles__linha" role="group" aria-label="Cargo">${Object.entries(ELEICOES).map(([k, e]) => `<a class="chip" role="button" aria-pressed="${k === cargo}" ${e.prontos.length ? `href="${lk(H.uf, null, [k, e.prontos[e.prontos.length - 1]])}"` : 'aria-disabled="true"'}>${e.nome}</a>`).join("")}</div>
       <div class="tempo rolagem-x" role="group" aria-label="Ano">${ELEICOES[cargo].prontos.length > 2 ? `<button type="button" class="tempo__play" id="tocar" aria-label="Passar por todas as eleições de ${ELEICOES[cargo].nome.toLowerCase()}">${tocando ? "■ Parar" : "▶ Passar os anos"}</button>` : ""}${ELEICOES[cargo].anos.map((a) => ELEICOES[cargo].prontos.includes(a) ? `<a class="tempo__ano" ${a === ano ? 'aria-current="true"' : ""} href="${lk(H.uf, H.ib, [cargo, a])}">${a}</a>` : `<span class="tempo__ano" aria-disabled="true">${a}</span>`).join("")}</div>
-      ${ano === 2026 ? '<p class="controles__nota">2026: resultado do 1º turno (4 de outubro). O 2º turno é em 25 de outubro.</p>' : ""}`;
+`;
   }
   function textosRegua() {
     const V2 = BR.ideoV, nv = V2.votacoes;

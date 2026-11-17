@@ -101,7 +101,7 @@
       return g; };
     const g22 = grupo(d22);
     const PARTES = [["mesmo", "#9aa0aa", "Mesmo lado nos dois"], ["ed", "#6d51a3", "Esquerda para presidente, direita para senador"], ["de", "#d49a4a", "Direita para presidente, esquerda para senador"], ["centro", "#e3e5e9", "Um dos dois de centro"]];
-    const linhasVD = VD.map((d) => { const g = grupo(d); return { rot: String(d.ano), sub: d.ano === 2026 ? "só o 1º turno" : "", v: (100 * g.ed) / d.n, vTxt: V.int(g.ed), partes: PARTES.map(([k, cor, t]) => ({ v: (100 * g[k]) / d.n, cor, tit: `${t}: ${V.int(g[k])} cidades (${pct((100 * g[k]) / d.n, 0)})` })) }; });
+    const linhasVD = VD.map((d) => { const g = grupo(d); return { rot: String(d.ano), sub: "", v: (100 * g.ed) / d.n, vTxt: V.int(g.ed), partes: PARTES.map(([k, cor, t]) => ({ v: (100 * g[k]) / d.n, cor, tit: `${t}: ${V.int(g[k])} cidades (${pct((100 * g[k]) / d.n, 0)})` })) }; });
 
     // 4. prefeitos reeleitos que trocaram de partido
     const PF = A.prefeitos, p24 = PF[PF.length - 1];
@@ -117,15 +117,15 @@
       { id: "virada", indice: "A virada de 2006", tema: "Renda e voto · presidente, 1994 a 2026",
         tit: `Em 2002, Lula teve ${pct(r02.pt[0], 0)} dos votos nas cidades mais pobres e ${pct(r02.pt[4], 0)} nas mais ricas. Em 2006, a ordem virou${desde06 ? " e nunca mais desvirou" : ""}`,
         sub: `As 5.570 cidades em cinco grupos do mesmo tamanho, pela riqueza produzida por habitante. Em 2006, o PT foi a ${pct(r06.pt[0], 0)} nas mais pobres e caiu para ${pct(r06.pt[4], 0)} nas mais ricas. Em ${ult.ano}, a distância era de ${V.int(Math.round(ult.pt[0] - ult.pt[4]))} pontos.`,
-        legenda: leg([["#16181d", "20% mais pobres (até R$ " + Q[0] + " mil por pessoa)"], ["#4f6fb3", "20% mais ricas (acima de R$ " + Q[3] + " mil)"], ["#c9ccd1", "grupos do meio"], ["#16181d", "turno único ou só o 1º turno (1994, 1998, 2026)", true]]),
-        grafico: linhas({ anos: anosP, series: serRenda, vazios: [1994, 1998, 2026], rot: "Votos do PT para presidente por grupo de riqueza da cidade" }),
-        como: "Parte dos votos válidos do candidato do PT no turno que decidiu a eleição (em 1994 e 1998 não houve 2º turno; de 2026, por enquanto, só há o 1º), somando todas as cidades de cada grupo (TSE). Grupos pelo PIB por habitante (IBGE, PIB de 2021 e Censo 2022). É a média das cidades, não das pessoas: numa cidade rica também há eleitores pobres. Na ciência política, essa mudança é chamada de realinhamento eleitoral (André Singer, Os sentidos do lulismo, 2012).",
+        legenda: leg([["#16181d", "20% mais pobres (até R$ " + Q[0] + " mil por pessoa)"], ["#4f6fb3", "20% mais ricas (acima de R$ " + Q[3] + " mil)"], ["#c9ccd1", "grupos do meio"], ["#16181d", "turno único (1994 e 1998)", true]]),
+        grafico: linhas({ anos: anosP, series: serRenda, vazios: [1994, 1998], rot: "Votos do PT para presidente por grupo de riqueza da cidade" }),
+        como: "Parte dos votos válidos do candidato do PT no turno que decidiu a eleição (em 1994 e 1998 não houve 2º turno), somando todas as cidades de cada grupo (TSE). Grupos pelo PIB por habitante (IBGE, PIB de 2021 e Censo 2022). É a média das cidades, não das pessoas: numa cidade rica também há eleitores pobres. Na ciência política, essa mudança é chamada de realinhamento eleitoral (André Singer, Os sentidos do lulismo, 2012).",
         link: "#/mapa/e/PRES2002", linkTxt: "Ver 2002 no mapa e passar os anos", fonte: "TSE e IBGE" },
       { id: "nordeste", indice: "Nordeste e Sul", tema: "Território · presidente, 1994 a 2026",
         tit: `Em 1994, o PT ficou em 1º em ${pct(ne94, 0)} das cidades do Nordeste. De 2006 em diante, em ${pct(Math.floor(neMin), 0)} ou mais. No Sul, foi o contrário: de ${pct(sul02, 0)} em 2002 para ${pct(sulU, 0)} em ${anoU}`,
         sub: "Parte das cidades de cada região em que o candidato do PT foi o mais votado para presidente.",
         legenda: leg([["#16181d", "Nordeste"], ["#4f6fb3", "Sul"], ["#c9ccd1", "Norte, Centro-Oeste e Sudeste"]]),
-        grafico: linhas({ anos: anosR, series: serReg, vazios: [1994, 1998, 2026], rot: "Cidades em que o PT ficou em 1º para presidente, por região" }),
+        grafico: linhas({ anos: anosR, series: serReg, vazios: [1994, 1998], rot: "Cidades em que o PT ficou em 1º para presidente, por região" }),
         como: "Mais votado no turno que decidiu a eleição em cada cidade (TSE). Em 1994 o Brasil tinha menos municípios; cada ano é contado sobre as cidades que existiam naquela eleição.",
         link: "#/mapa/e/PRES1994", linkTxt: "Ver no mapa, de 1994 a 2026", fonte: "TSE" },
       { id: "um-lado", indice: "Cidades de um lado só", tema: "Polarização · 2º turno para presidente, 2002 a 2022",

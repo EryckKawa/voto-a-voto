@@ -818,6 +818,30 @@ a.tempo__ano:hover { color: var(--tinta); border-bottom-color: var(--tinta-3); }
 .pq-lista__rot { grid-area: rot; font-size: 16px; color: var(--tinta-2); line-height: 1.4; }
 /* índice agrupado pelos cinco assuntos */
 .pq-assunto { display: grid; gap: var(--e-3); margin-top: var(--e-6); }
+/* tema: a resposta pergunta por pergunta. Cada parte é um cartão; o gráfico dentro dele não tem cartão próprio */
+.pq-partes { display: grid; gap: var(--e-5); margin-top: var(--e-6); }
+.pq-partes__tit { font: var(--t-h2); }
+.pq-parte { background: var(--papel); border: 1px solid var(--linha); border-radius: var(--r-l); padding: var(--e-5) var(--e-6); display: grid; gap: var(--e-4); min-width: 0; }
+.pq-parte > * { min-width: 0; }
+.pq-parte__q { font: 700 22px/1.25 var(--fonte); display: flex; align-items: baseline; gap: var(--e-3); text-wrap: balance; }
+.pq-parte__n { flex: none; display: inline-grid; place-items: center; width: 32px; height: 32px; border-radius: 50%; background: var(--tinta); color: #fff; font: 700 18px/1 var(--num); transform: translateY(-2px); }
+.pq-parte__r { display: grid; gap: var(--e-2); max-width: var(--leitura); }
+.pq-parte__r p { font-size: var(--t-corpo); line-height: 1.55; }
+.pq-parte .pq-painel { background: none; border: 0; border-radius: 0; box-shadow: none; padding: 0; margin: 0; display: grid; gap: var(--e-3); border-top: 1px solid var(--linha); padding-top: var(--e-4); }
+.pq-parte .pq-painel__cab { display: flex; flex-wrap: wrap; justify-content: space-between; align-items: center; gap: var(--e-2) var(--e-4); }
+.pq-parte .pq-graf__cab { border-top: 0; padding-top: 0; margin-top: 0; }
+.pq-graf__tit { font: 700 22px/1.2 var(--num); }
+.pq-comoler { margin: 0; }
+.pq-comoler > summary { font-size: var(--t-meta); padding: var(--e-1) 0; }
+.pq-comoler[open] > summary { margin-bottom: var(--e-1); }
+.pq-pagina > details.pq-origem { margin-top: var(--e-4); }
+.pq-cuidado ul, .pq-pontos ul { margin: var(--e-3) 0 0; padding-left: 22px; display: grid; gap: var(--e-2); max-width: var(--leitura); }
+@media (max-width: 560px) {
+  .pq-parte { padding: var(--e-4); border-radius: var(--r-m); margin: 0 -6px; }
+  .pq-parte__q { font-size: 19px; }
+  .pq-parte__n { width: 28px; height: 28px; font-size: 16px; }
+  .pq-parte .pq-painel__cab { display: grid; }
+}
 .pq-assunto__tit { font: var(--t-h2); display: flex; flex-wrap: wrap; align-items: baseline; gap: var(--e-1) var(--e-3); }
 .pq-assunto__tit span { font: 400 var(--t-meta)/1.4 var(--fonte); color: var(--tinta-3); }
 /* tema: migalha e seletor na mesma linha; a resposta ao lado dos números-chave */
@@ -1238,3 +1262,8 @@ body { font-size: 18px; line-height: 1.6; }
 .pol-hist li { padding-left: 10px !important; padding-right: 10px; border-radius: 8px; }
 .pq-painel .barras li { grid-template-columns: minmax(150px, 260px) minmax(0, 1fr) 104px; }
 @media (max-width: 720px) { .pq-painel .barras li { grid-template-columns: minmax(0, 1fr) 92px; } }
+/* "Outros achados" e "Cuidado ao ler" recolhidos: o mesmo jeito de "De onde vêm esses números", sem cartão */
+details.pq-pontos, details.pq-cuidado { background: none; border: 0; border-top: 1px solid var(--linha); border-radius: 0; padding: 4px 0; margin: 0; display: block; }
+details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
+/* tabelas dentro do gráfico: o cabeçalho não quebra; a tabela rola para o lado */
+.pq-graf th { white-space: nowrap; }

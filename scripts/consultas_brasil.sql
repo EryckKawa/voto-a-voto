@@ -940,7 +940,7 @@ com AS (SELECT par.ida, par.idb, COUNT(*) AS qt_comum FROM par JOIN proposta_pal
 uni AS (SELECT par.ida, par.idb, COUNT(DISTINCT p.palavra) AS qt_uniao FROM par JOIN proposta_palavra p ON p.id_candidatura IN (par.ida, par.idb) GROUP BY 1, 2),
 sim AS (SELECT par.*, COALESCE(com.qt_comum, 0) / uni.qt_uniao AS vr_sim FROM par JOIN uni ON uni.ida = par.ida AND uni.idb = par.idb
         LEFT JOIN com ON com.ida = par.ida AND com.idb = par.idb)
-SELECT COALESCE(CASE WHEN fl_mesmo_cargo THEN 'mesmo cargo' ELSE 'outro cargo' END, 'todos') AS ds_tipo, COUNT(*) AS qt_pares_de_planos,
+SELECT CASE WHEN GROUPING(fl_mesmo_cargo) = 1 THEN 'todos' WHEN fl_mesmo_cargo THEN 'mesmo cargo' ELSE 'outro cargo' END AS ds_tipo, COUNT(*) AS qt_pares_de_planos,
        ROUND(100 * AVG(vr_sim), 1) AS pc_semelhanca_media, ROUND(100 * AVG(CAST(vr_sim >= 0.8 AS INT)), 1) AS pc_quase_igual,
        ROUND(100 * AVG(CAST(vr_sim < 0.3 AS INT)), 1) AS pc_muito_diferente
 FROM sim GROUP BY ROLLUP (fl_mesmo_cargo) ORDER BY qt_pares_de_planos DESC;

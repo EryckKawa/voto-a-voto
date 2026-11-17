@@ -735,7 +735,7 @@
         pontos: [
           `<b>Prefeito troca muito:</b> a cidade típica mudou de lado umas ${N1.format(pfMed)} vezes em 8 eleições. Em 2012, só ${pct(f12.pc_mesmo_lado, 0)} repetiram o lado do prefeito anterior; em 2024, ${pct(f24.pc_mesmo_lado, 0)}.`,
           `<b>Presidente:</b> ${pct(pr1.pc_municipios, 0)} das cidades trocaram de lado uma vez só, e ${pct(pr0.pc_municipios, 0)} nunca trocaram de 1994 a 2026. A polarização deixou o voto mais estável: ${pct(p26.pc_mesmo_lado, 0)} repetiram em 2026 o lado de 2022.`,
-          `<b>Quando viram, viram juntas:</b> de 2022 para 2026, ${V.int(p26.qt_esquerda_para_direita)} cidades passaram da esquerda para a direita para presidente, e ${V.int(p26.qt_direita_para_esquerda)} no sentido contrário.`,
+          `<b>Quando viram, viram juntas:</b> no 1º turno para presidente, de 2022 para 2026, ${V.int(p26.qt_esquerda_para_direita)} cidades passaram da esquerda para a direita, e ${p26.qt_direita_para_esquerda ? V.int(p26.qt_direita_para_esquerda) : "nenhuma"} no sentido contrário.`,
           `<b>Abaixo, a linha da sua cidade,</b> cargo a cargo, de 1994 a 2026.`],
         vistas: [vistaTrocas, vistaAno, ...Q.q9.vistas],
         extra: cidadeHTML, ligar: ligarCidade,
@@ -880,11 +880,65 @@
 
   /* ---------- páginas ---------- */
   const modoSalvo = () => { try { return localStorage.getItem("vav-pq-modo") === "tab" ? "tab" : "graf"; } catch (e) { return "graf"; } };
-  let ATUAL = null;      // tema aberto: { b, vi (recorte escolhido), modo ("graf" | "tab") }
+  let ATUAL = null;      // tema aberto: { b, modo ("graf" | "tab"), paineis: [{ vs (recortes da parte), vi (recorte escolhido), tab }] }
   let CACHE = null;      // { P, C, temas }
   // os endereços antigos (#/perguntas/q1 ... q12) levam ao tema que agora responde a mesma pergunta
   const ANTIGO = { q1: "t1", q2: "t2", q3: "t3", q4: "t4", q5: "t7", q6: "t9", q7: "t10", q8: "t12", q9: "t14", q10: "t15", q11: "e1", q12: "e2" };
   V.TEMA_DE = ANTIGO;
+  /* Pergunta por pergunta: cada item do enunciado (ou cada parte dele) com a resposta direta (os pontos p, pela ordem em que o
+     tema os monta) e os gráficos que a mostram (os recortes v). O que sobra dos pontos vai para "Outros achados". */
+  const PARTES = {
+    t1: [{ q: "Quanto custa, em média, uma cadeira eletiva?", p: [0], v: [0] },
+         { q: "Quanto os candidatos gastam na campanha?", p: [], v: [5] },
+         { q: "Quem gasta mais se elege mais?", p: [1], v: [1] },
+         { q: "O coeficiente entre gasto e votos, e o ranking com o viés ideológico", p: [2, 3], v: [2, 3] },
+         { q: "Escolaridade e custo médio da eleição", p: [4], v: [4] }],
+    t2: [{ q: "Taxa de sucesso por faixa de patrimônio declarado", p: [0], v: [0, 1, 2] }],
+    t3: [{ q: "Os índices da cidade e o lado do voto para presidente", p: [0, 1], v: [0, 3] },
+         { q: "E na eleição local, para governador e prefeito?", p: [2], v: [1, 2, 4, 5] }],
+    t4: [{ q: "Escolaridade e capacidade de ser eleito", p: [0, 1], v: [1, 2, 3] },
+         { q: "A escolaridade do eleitor e a dos candidatos", p: [2], v: [0] },
+         { q: "Escolaridade do eleitorado, dos candidatos e patrimônio", p: [3, 4], v: [4, 5] }],
+    t5: [{ q: "O mesmo sobrenome no poder da cidade", p: [0, 1], v: [1, 2] },
+         { q: "O sobrenome de ex-prefeito ajuda a eleger deputado?", p: [2], v: [0] },
+         { q: "Votos concentrados numa cidade: o “curral eleitoral”", p: [3], v: [3] }],
+    t6: [{ q: "Brancos, nulos e abstenção, e a relação com o resultado", p: [0, 1], v: [0, 2, 4] },
+         { q: "O ranking das cidades", p: [2, 3], v: [1, 3] }],
+    t7: [{ q: "Quantos votos vão só para a legenda?", p: [0, 3], v: [0, 1] },
+         { q: "Quantos se elegem por esse meio?", p: [1, 2], v: [2, 3] }],
+    t8: [{ q: "Quantos vereadores para quantos eleitores", p: [0, 1], v: [0] },
+         { q: "Quantos votos para se eleger vereador", p: [2, 3], v: [1, 2] }],
+    t9: [{ q: "Os assuntos dos planos ao longo do tempo", p: [0], v: [0, 1] },
+         { q: "O mesmo candidato muda de proposta?", p: [1], v: [2] },
+         { q: "Esquerda e direita propõem coisas diferentes?", p: [2, 3], v: [3, 4, 5] }],
+    t10: [{ q: "A idade e a chance de continuar no cargo", p: [], v: [0] },
+          { q: "A alternância de poder ao longo do tempo", p: [1], v: [1] },
+          { q: "Quem entra é mais novo que quem sai?", p: [0], v: [2] },
+          { q: "E na Câmara dos Deputados?", p: [2], v: [3] },
+          { q: "Jovem vota em jovem?", p: [3], v: [4] }],
+    t11: [{ q: "Doações de empresas e Bolsa Família ao longo do tempo", p: [3], v: [0] },
+          { q: "As cidades pelo alcance do programa", p: [0, 1, 2], v: [1, 2, 3] }],
+    t12: [{ q: "Para que lado as empresas doavam?", p: [], v: [0, 1, 2] },
+          { q: "Antes e depois da proibição", p: [0, 1, 2], v: [3] }],
+    t13: [{ q: "O viés predominante em cada região", p: [0, 1, 2], v: [1, 2, 3] },
+          { q: "O mapa de calor", p: [3], v: [0] }],
+    t14: [{ q: "Para prefeito, a cidade mantém o lado?", p: [0], v: [0, 1, 3] },
+          { q: "E para presidente?", p: [1, 2], v: [2] },
+          { q: "A nota média do voto, eleição a eleição", p: [], v: [4, 5] }],
+    t15: [{ q: "Quem depende do fundo público se elege mais ou menos?", p: [3], v: [0, 1, 2] },
+          { q: "Quanto dinheiro público vai para eleitos e não eleitos", p: [0], v: [3] },
+          { q: "Quanto custa o voto de quem vive do fundo", p: [1, 2], v: [4] }],
+    t16: [{ q: "O perfil dos processos", p: [0], v: [1] },
+          { q: "Partido a partido", p: [1], v: [2] },
+          { q: "Ao longo do tempo", p: [3], v: [0] }],
+    e1: [{ q: "Onde o candidato investe em propaganda", p: [0], v: [0, 1, 2] },
+         { q: "Por cargo e por lado político", p: [1], v: [3, 4] }],
+    e2: [{ q: "Quanto tempo dura uma carreira política", p: [], v: [0, 1] },
+         { q: "Na Câmara: segue o partido ou o governo?", p: [], v: [2, 3] }],
+  };
+  // tema sem mapa: uma parte só, com todos os pontos e todos os recortes
+  const partesDe = (b) => (PARTES[b.id] || [{ q: b.enunciado[0], p: b.pontos.map((_, i) => i), v: b.vistas.map((_, i) => i) }])
+    .map((x) => ({ ...x, v: x.v.filter((k) => b.vistas[k]), p: x.p.filter((k) => b.pontos[k]) })).filter((x) => x.v.length || x.p.length);
 
   async function carregar() {
     if (CACHE) return CACHE;
@@ -893,21 +947,41 @@
     return (CACHE = { P, C, temas: montarTemas(C, montarAntigas(C)) });
   }
 
-  function pintarPainel() {
-    const { b, vi, modo } = ATUAL, v = b.vistas[vi];
-    let g; try { g = v.graf(); } catch (e) { console.error(e); g = { html: '<p class="vazio">Não foi possível desenhar este gráfico.</p>', tab: { cols: [""], linhas: [] } }; }
-    document.getElementById("pq-leg").innerHTML = v.legenda || "";
-    document.getElementById("pq-leg").hidden = modo === "tab";
-    document.getElementById("pq-graf").innerHTML = modo === "tab" ? tabelaHTML(g.tab, v.rot) : g.html;
-    let tit = ""; try { tit = v.tit ? v.tit() : ""; } catch (e) { console.error(e); }
-    document.getElementById("pq-graf-tit").textContent = tit || v.rot || b.titulo;
-    document.getElementById("pq-nota").innerHTML = v.nota || "";
-    document.getElementById("pq-nota").hidden = !v.nota;
-    document.getElementById("pq-fonte").innerHTML = `Fonte: ${b.fonte}.`;
-    ATUAL.tab = g.tab;
-    document.querySelectorAll("#pq-painel [data-vista]").forEach((x) => x.setAttribute("aria-pressed", String(+x.dataset.vista === vi)));
-    document.querySelectorAll("#pq-painel [data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.modo === modo)));
+  // o primeiro painel guarda os ids de antes (pq-painel, pq-graf...), que os testes e os links usam
+  const idDe = (i, nome) => (i === 0 ? ` id="${nome}"` : "");
+  function painelHTML(b, parte, i) {
+    const vs = parte.v;
+    if (!vs.length) return "";
+    return `<div class="pq-painel" data-p="${i}"${idDe(i, "pq-painel")}>
+        <div class="pq-painel__cab">
+          ${vs.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Recorte">${vs.map((k) => `<button class="chip" type="button" data-vista="${k}">${b.vistas[k].rot}</button>`).join("")}</div>` : "<span></span>"}
+          <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
+        </div>
+        <div class="pq-graf__cab"><h4 class="pq-graf__tit"${idDe(i, "pq-graf-tit")}></h4>
+          <details class="mais pq-comoler"><summary>Como ler este gráfico</summary><p class="pq-graf__desc"${idDe(i, "pq-nota")}></p></details></div>
+        <div class="pq-leg"${idDe(i, "pq-leg")}></div>
+        <div class="pq-graf"${idDe(i, "pq-graf")}></div>
+        <div class="pq-painel__pe"><p class="pq-fonte"${idDe(i, "pq-fonte")}></p><button type="button" class="btn pq-csv" data-csv>Baixar dados (CSV)</button></div>
+      </div>`;
   }
+  function pintarPainel(i) {
+    const el = document.querySelector(`.pq-painel[data-p="${i}"]`), st = ATUAL.paineis[i];
+    if (!el || !st) return;
+    const { b, modo } = ATUAL, v = b.vistas[st.vi], $ = (c) => el.querySelector(c);
+    let g; try { g = v.graf(); } catch (e) { console.error(e); g = { html: '<p class="vazio">Não foi possível desenhar este gráfico.</p>', tab: { cols: [""], linhas: [] } }; }
+    $(".pq-leg").innerHTML = v.legenda || "";
+    $(".pq-leg").hidden = modo === "tab";
+    $(".pq-graf").innerHTML = modo === "tab" ? tabelaHTML(g.tab, v.rot) : g.html;
+    let tit = ""; try { tit = v.tit ? v.tit() : ""; } catch (e) { console.error(e); }
+    $(".pq-graf__tit").textContent = tit || v.rot || b.titulo;
+    $(".pq-graf__desc").innerHTML = v.nota || "";
+    $(".pq-comoler").hidden = !v.nota;
+    $(".pq-fonte").innerHTML = `Fonte: ${b.fonte}.`;
+    st.tab = g.tab;
+    el.querySelectorAll("[data-vista]").forEach((x) => x.setAttribute("aria-pressed", String(+x.dataset.vista === st.vi)));
+    el.querySelectorAll("[data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.modo === modo)));
+  }
+  const pintarTodos = () => ATUAL.paineis.forEach((_, i) => pintarPainel(i));
 
   /* "Mais números": grupos de frases montados por js/detalhes.js a partir das linhas das consultas antigas */
   function maisHTML(b, C) {
@@ -925,33 +999,31 @@
   const selo = (b) => `<span class="pq-selo">${typeof b.n === "number" ? b.n : b.n}</span>`;
   function paginaTema(b, temas, C) {
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
+    const partes = partesDe(b), usados = new Set(partes.flatMap((x) => x.p)), outros = b.pontos.map((_, j) => j).filter((j) => !usados.has(j));
     return `<div class="pagina pq-pagina">
       <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todos os 16 temas</a></p>
         <label class="pq-ir"><span>Ir para o tema</span><select id="pq-ir">${temas.map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${typeof t.n === "number" ? t.n + ". " : "A mais: "}${V.esc(t.titulo)}</option>`).join("")}</select></label></div>
       <header class="pq-cab">
         <h1 class="pq-titulo">${selo(b)} ${b.titulo}</h1>
-        <details class="pq-enunciado"${V.largura() >= 700 ? " open" : ""}><summary>${typeof b.n === "number" ? "O que o enunciado pede" : "A pergunta do grupo"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
+        <details class="pq-enunciado"><summary>${typeof b.n === "number" ? "O que o enunciado pede" : "A pergunta do grupo"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
         <div class="pq-faixa">
           <p class="pq-resposta">${b.resposta}.</p>
           ${b.kpis.length ? `<ul class="kpis kpis--tema">${b.kpis.map(([v, r]) => `<li><b>${v}</b><span>${r}</span></li>`).join("")}</ul>` : ""}
         </div>
       </header>
-      <section class="pq-pontos" aria-labelledby="pq-pontos-tit"><h2 class="pq-painel__tit" id="pq-pontos-tit">O que os dados mostram</h2>
-        <ul>${b.pontos.map((p) => `<li>${p}</li>`).join("")}</ul></section>
-      <section class="pq-painel" id="pq-painel" aria-labelledby="pq-medida">
-        <div class="pq-painel__cab">
-          <h2 class="pq-painel__tit" id="pq-medida">Os números em gráfico</h2>
-          <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
-        </div>
-        ${b.vistas.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Recorte">${b.vistas.map((v, k) => `<button class="chip" type="button" data-vista="${k}">${v.rot}</button>`).join("")}</div>` : ""}
-        <div class="pq-graf__cab"><h3 class="pq-graf__tit" id="pq-graf-tit"></h3><p class="pq-graf__desc" id="pq-nota"></p></div>
-        <div id="pq-leg"></div>
-        <div class="pq-graf" id="pq-graf"></div>
-        <div class="pq-painel__pe"><p class="pq-fonte" id="pq-fonte"></p><button type="button" class="btn pq-csv" data-csv>Baixar dados (CSV)</button></div>
+      <section class="pq-partes" aria-labelledby="pq-partes-tit">
+        <h2 class="pq-partes__tit" id="pq-partes-tit">${partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
+        ${partes.map((pt, k) => `<article class="pq-parte" aria-labelledby="pq-parte-${k}">
+          <h3 class="pq-parte__q" id="pq-parte-${k}">${partes.length > 1 ? `<span class="pq-parte__n">${k + 1}</span>` : ""}${pt.q}</h3>
+          ${pt.p.length ? `<div class="pq-parte__r">${pt.p.map((j) => `<p>${b.pontos[j]}</p>`).join("")}</div>` : ""}
+          ${painelHTML(b, pt, k)}
+        </article>`).join("")}
       </section>
+      ${outros.length ? `<details class="pq-origem pq-pontos"><summary>Outros achados (${outros.length})</summary>
+        <ul>${outros.map((j) => `<li>${b.pontos[j]}</li>`).join("")}</ul></details>` : ""}
       ${b.extra || ""}
-      <section class="pq-cuidado" aria-labelledby="pq-cuid-tit"><h2 class="pq-painel__tit" id="pq-cuid-tit">Cuidado ao ler</h2>
-        <ul>${b.cuidado.map((c) => `<li>${c}</li>`).join("")}</ul></section>
+      <details class="pq-origem pq-cuidado"><summary>Cuidado ao ler estes números (${b.cuidado.length})</summary>
+        <ul>${b.cuidado.map((c) => `<li>${c}</li>`).join("")}</ul></details>
       <details class="pq-origem"><summary>De onde vêm esses números</summary>
         <p>${b.como}</p>
         <p><b>Fonte:</b> ${b.fonte}.</p>
@@ -995,18 +1067,20 @@
 
   /* o CSV é a tabela do recorte aberto, com o texto que a página mostra (separador ";", como o Excel em português espera) */
   function baixarCSV() {
-    if (ATUAL && ATUAL.tab) V.baixarCSV(ATUAL.tab, ATUAL.b.id + " " + (ATUAL.b.vistas[ATUAL.vi].rot || "dados"));
+    const st = ATUAL && ATUAL.paineis[ATUAL.csv];
+    if (st && st.tab) V.baixarCSV(st.tab, ATUAL.b.id + " " + (ATUAL.b.vistas[st.vi].rot || "dados"));
   }
 
   document.getElementById("conteudo").addEventListener("change", (e) => { if (e.target.id === "pq-ir" && e.target.value) location.hash = "#/perguntas/" + e.target.value; });
 
   /* um só ouvinte de cliques para as páginas dos temas */
   document.getElementById("conteudo").addEventListener("click", (e) => {
-    if (!ATUAL || !e.target.closest("#pq-painel")) return;
-    const vt = e.target.closest("[data-vista]"), md = e.target.closest("[data-modo]");
-    if (e.target.closest("[data-csv]")) { baixarCSV(); return; }
-    if (vt) { ATUAL.vi = +vt.dataset.vista; pintarPainel(); }
-    else if (md) { ATUAL.modo = md.dataset.modo; try { localStorage.setItem("vav-pq-modo", ATUAL.modo); } catch (er) {} pintarPainel(); }
+    const pn = e.target.closest(".pq-painel[data-p]");
+    if (!ATUAL || !pn) return;
+    const i = +pn.dataset.p, vt = e.target.closest("[data-vista]"), md = e.target.closest("[data-modo]");
+    if (e.target.closest("[data-csv]")) { ATUAL.csv = i; baixarCSV(); return; }
+    if (vt) { ATUAL.paineis[i].vi = +vt.dataset.vista; pintarPainel(i); }
+    else if (md) { ATUAL.modo = md.dataset.modo; try { localStorage.setItem("vav-pq-modo", ATUAL.modo); } catch (er) {} pintarTodos(); }
   });
 
   V.rota(/^\/guias$/, async function () { location.replace("#/perguntas"); });
@@ -1021,8 +1095,8 @@
     if (!b) { document.title = "As 16 perguntas · Voto a voto"; main.innerHTML = paginaIndice(P, temas); return; }
     document.title = `${typeof b.n === "number" ? "Tema " + b.n : "Pergunta a mais"}. ${b.titulo} · Voto a voto`;
     main.innerHTML = paginaTema(b, temas, C);
-    ATUAL = { b, vi: 0, modo: modoSalvo() };
-    pintarPainel();
+    ATUAL = { b, modo: modoSalvo(), paineis: partesDe(b).map((pt) => (pt.v.length ? { vi: pt.v[0], tab: null } : null)) };
+    pintarTodos();
     if (b.ligar) await b.ligar();
   });
 })();

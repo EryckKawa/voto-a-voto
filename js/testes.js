@@ -166,7 +166,7 @@
     const ruins = [];
     for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
       await irPara("#/perguntas/" + id); await quadros(1);
-      const r = txt(".pq-resposta"), p = qq(".pq-pontos li").length, c = qq(".pq-cuidado li").length;
+      const r = txt(".pq-resposta"), p = qq(".pq-parte__r p, .pq-pontos li").length, c = qq(".pq-cuidado li").length;
       if (r.length < 60 || p < 1 || c < 1 || /—\s*(das|de|dos)\s/.test(r)) ruins.push(`${id}: resposta ${r.length} letras, ${p} pontos, ${c} cuidados`);
     }
     return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "18 páginas completas", "resposta, pontos e cuidado em todas");
@@ -465,10 +465,11 @@
   });
   teste("Funcionamento", "Tema 9: nuvem de palavras por cargo e por partido", async () => {
     await irPara("#/perguntas/t9");
-    const bs = qq("#pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · Prefeito/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
+    const bs = qq(".pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · Prefeito/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
     if (!bc || !bp) return R(false, "sem os botões das nuvens", "nuvem por cargo e por partido");
-    bc.click(); await quadros(2); const nc = qq("#pq-graf .nuvem span").length;
-    bp.click(); await quadros(2); const np = qq("#pq-graf .nuvem").length;
+    const graf = (b) => b.closest(".pq-painel").querySelector(".pq-graf");
+    bc.click(); await quadros(2); const nc = graf(bc).querySelectorAll(".nuvem span").length;
+    bp.click(); await quadros(2); const np = graf(bp).querySelectorAll(".nuvem").length;
     return R(nc >= 30 && np >= 6, `${nc} palavras nas nuvens de prefeito · ${np} nuvens de partido`, "30 ou mais palavras; 6 ou mais partidos");
   });
   teste("Funcionamento", "Nuvem individual: projetos e discursos de Arthur Lira", async () => {

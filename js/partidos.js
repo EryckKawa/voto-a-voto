@@ -186,7 +186,7 @@
           <li><b>${r2(rmin)} a ${r2(rmax)}</b><span>de correlação entre as quatro medidas (1 seria concordância total)</span></li>
           <li><b>${nUlt}</b><span>partidos com nota em ${ultAno}</span></li>
         </ul>
-        <p class="pq-mais">Deputados federais (Zucco e Power, 2024), 519 cientistas políticos brasileiros (Bolognesi, Ribeiro e Codato, 2023) e especialistas internacionais (V-Party, 2022) deram notas aos partidos. A quarta medida é o que as bancadas mandaram votar na Câmara de 2019 a 2026, a única que já pega o PL de Bolsonaro e o União Brasil. Tudo fica na mesma escala, de −1 (esquerda) a +1 (direita). A nota de cada partido em cada eleição pesa mais a medida feita mais perto dela, e é a régua que pinta o mapa.</p>
+        <details class="mais pt-mais"><summary>Quem deu as notas e como elas viram uma régua só</summary><p class="pq-mais">Deputados federais (Zucco e Power, 2024), 519 cientistas políticos brasileiros (Bolognesi, Ribeiro e Codato, 2023) e especialistas internacionais (V-Party, 2022) deram notas aos partidos. A quarta medida é o que as bancadas mandaram votar na Câmara de 2019 a 2026, a única que já pega o PL de Bolsonaro e o União Brasil. Tudo fica na mesma escala, de −1 (esquerda) a +1 (direita). A nota de cada partido em cada eleição pesa mais a medida feita mais perto dela, e é a régua que pinta o mapa.</p></details>
       </header>
 
       <section class="pq-painel" id="pt-ano" aria-labelledby="pt-ano-tit">
@@ -198,7 +198,7 @@
           <label class="pt-ano-faixa"><span class="visualmente-oculto">Ano da eleição</span><input type="range" id="pt-ano-faixa" min="0" max="${anos.length - 1}" step="1" value="0"><span class="pt-ano-faixa__pontas" aria-hidden="true"><span>${anos[0]}</span><span>${anos[anos.length - 1]}</span></span></label></div>
         <div id="pt-ano-leg">${legenda()}</div>
         <div class="pq-graf" id="pt-ano-graf"></div>
-        <p class="pq-nota">A bolinha colorida é a nota do partido (tracejada quando as medidas discordam do lado); a linha cinza vai da medida que põe o partido mais à esquerda à que põe mais à direita. Marca clara: medida feita longe desta eleição, que pesa menos. Faixa bege: o centro, de −0,25 a +0,25.</p>
+        <details class="mais pt-comoler"><summary>Como ler este gráfico</summary><p class="pq-nota">A bolinha colorida é a nota do partido (tracejada quando as medidas discordam do lado); a linha cinza vai da medida que põe o partido mais à esquerda à que põe mais à direita. Marca clara: medida feita longe desta eleição, que pesa menos. Faixa bege: o centro, de −0,25 a +0,25.</p></details>
       </section>
 
       <section class="pq-painel" id="pt-traj" aria-labelledby="pt-traj-tit">
@@ -217,7 +217,7 @@
         <div class="pq__tabela pq__tabela--leitura" tabindex="0" role="region" aria-label="Concordância entre as medidas"><table>
           <thead><tr><th scope="col">Comparação</th><th scope="col" class="num">Correlação</th><th scope="col" class="num">Mesmo lado</th><th scope="col">Discordam</th></tr></thead>
           <tbody>${pares.map(({ a, b, p }) => `<tr><th scope="row">${NOME_F[a]} × ${NOME_F[b]}</th><td class="num">${r2(p.r)}</td><td class="num">${p.mesmo_lado} de ${p.n}</td><td>${V.esc(agrupa(p.lados_diferentes, D)) || "—"}</td></tr>`).join("")}</tbody></table></div>
-        <p class="pq-mais">Entre os estudos, quem mais aparece em lados diferentes é o PSDB: para os deputados ele fica no centro, para o V-Party, que mede só a economia, ele é de direita. Entre os estudos e o voto, é o centrão: partidos que os especialistas põem à direita, mas que votam com o governo da vez, de Bolsonaro e de Lula, e por isso caem no meio da régua do voto.</p>
+        <details class="mais pt-mais"><summary>Onde as medidas discordam</summary><p class="pq-mais">Entre os estudos, quem mais aparece em lados diferentes é o PSDB: para os deputados ele fica no centro, para o V-Party, que mede só a economia, ele é de direita. Entre os estudos e o voto, é o centrão: partidos que os especialistas põem à direita, mas que votam com o governo da vez, de Bolsonaro e de Lula, e por isso caem no meio da régua do voto.</p></details>
       </section>
 
       <details class="pq-origem"><summary>Como as notas foram feitas</summary>
