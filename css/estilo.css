@@ -1276,3 +1276,25 @@ details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
 .form-leigo { font-size: 19px; font-weight: 700; max-width: 62ch; }
 /* filas de botões que rolam para o lado no celular: a borda direita esmaece, para mostrar que há mais */
 @media (max-width: 720px) { .pq-vistas, .vis-anos { -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); } }
+/* do vereador ao presidente (17/11/2026): o seletor de cargo dos gráficos e a escada de cada parte */
+.pq-cargos { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; padding: var(--e-2) 0; border-top: 1px dashed var(--linha); }
+.pq-cargos[hidden] { display: none; }
+.pq-cargos__rot { font-weight: 700; color: var(--tinta-2); font-size: var(--t-meta); margin-right: 4px; }
+.chip--cargo { padding: 8px 12px; font-size: 14.5px; }
+.chip--cargo small { font-weight: 400; }
+.pq-cargos__falta { flex-basis: 100%; margin: 2px 0 0; font-size: var(--t-meta); color: var(--tinta-2); }
+.pq-escada { max-width: 980px; border-left: 3px solid var(--linha-forte); padding: 2px 0 2px var(--e-3); }
+.pq-escada > summary { font-weight: 700; color: var(--tinta-2); font-size: var(--t-meta); cursor: pointer; }
+.pq-escada ul { list-style: none; margin: var(--e-2) 0 0; padding: 0; display: grid; gap: 6px; }
+.pq-escada li { display: grid; grid-template-columns: minmax(150px, 190px) minmax(0, 1fr); gap: 4px 14px; font-size: var(--t-corpo); line-height: 1.45; }
+.pq-escada li b { color: var(--tinta); }
+.pq-escada li b small { font: 400 15px/1 var(--fonte); color: var(--tinta-3); }
+.chip--cargo small { font: 400 13px/1 var(--fonte); }
+.pq-escada__na span, .pq-escada__na b { color: var(--tinta-3); }
+.pq-escada__na b { font-weight: 600; }
+@media (max-width: 720px) {
+  .pq-escada li { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .pq-cargos { flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px; padding: 8px 14px; scrollbar-width: thin; -webkit-mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, #000 calc(100% - 28px), transparent); }
+  .pq-cargos .chip { flex: none; white-space: nowrap; }
+  .pq-cargos__falta { display: none; }
+}

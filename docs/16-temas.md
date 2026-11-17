@@ -13,6 +13,18 @@ O código SQL fica em `scripts/consultas_brasil.sql` (dialeto DuckDB), não na p
 
 Os endereços antigos `#/perguntas/q1` … `q12` continuam funcionando e levam ao tema que responde a mesma pergunta: q1→t1, q2→t2, q3→t3, q4→t4, q5→t7, q6→t9, q7→t10, q8→t12, q9→t14, q10→t15, q11→e1, q12→e2.
 
+## Do vereador ao presidente (17/11/2026)
+
+Várias partes olhavam um cargo só (quase sempre deputado federal 2022, prefeito 2024 ou presidente). Agora cada parte de cada tema responde cargo a cargo, na ordem **vereador, prefeito, deputado estadual, deputado federal, senador, governador e presidente**:
+
+- **Lista "Do vereador ao presidente"** logo abaixo da afirmação de cada parte: o mesmo número para os sete cargos, na eleição mais recente de cada um (2024 para vereador e prefeito, 2022 para os demais). Quando um cargo não se aplica, a lista diz por quê (ex.: só prefeito, governador e presidente entregam plano de governo; prefeito, senador, governador e presidente não têm voto de legenda).
+- **Botões de cargo nos gráficos**: os recortes que eram de um cargo só ganharam uma fila de botões, do vereador ao presidente (`porCargo` em `js/perguntas.js`); o primeiro aberto é o cargo citado no texto. Alguns gráficos comparam os sete cargos lado a lado (custo por cadeira, milionários, escolaridade, "Ninguém", eleitores por cadeira, despesas, volta ao poder).
+- **Consultas**: 21 consultas passaram a cobrir todos os cargos com as mesmas colunas (`q1`, `q1b`, `q2`, `q2b`, `q2c`, `q3b`, `q3c`, `q7d`, `q10`, `q10b`, `t1a`, `t1b`, `t1c`, `t4a`, `t5c`, `t6a`, `t6c`, `t14a`, `t14b`, `t15a`, `t16c`) e entraram 14 novas, cargo a cargo: `q5c`, `q6f`, `q7e`, `q8c`, `q12f`, `t8c`, `t9c`, `t10d`, `t10e`, `t10f`, `t11c`, `t12a`, `t13b`, `t16d`.
+- **Mudança de regra no tema 5**: o "sobrenome de ex-prefeito" agora exige que o ex-prefeito seja **outra pessoa** (antes, um deputado que tinha sido prefeito contava a si mesmo). Sem isso, o candidato a prefeito que tenta a reeleição apareceria como "família". Por isso o número do deputado estadual mudou de 39% contra 14% (2,7 vezes) para 45% contra 15% (3 vezes).
+- Lado do voto por cidade: para prefeito, senador, governador e presidente, o partido do 1º colocado (o do eleito, para prefeito no tema 14); para vereador e deputado, o partido mais votado na cidade, contando a legenda.
+- **Filtro de ano**: abaixo dos botões de cargo há uma fila "Eleição" com todos os anos que têm dados para aquele cargo (dinheiro de campanha: 2010 a 2026; bens, escolaridade, idade e votos: 1994 a 2026; perfil do eleitorado: 2018 a 2024; Bolsa Família: 2004 a 2024). O ano escolhido vale para o recorte inteiro: ao trocar de cargo, cada um usa a sua eleição até aquele ano. Nos gráficos que comparam os sete cargos lado a lado, a fila escolhe a eleição: vereador e prefeito na municipal até o ano escolhido, os demais na geral. Os rankings (cidades com mais "Ninguém", partidos por gasto por voto, por legenda, eleitores por cadeira estado a estado) ficam assim classificáveis em qualquer eleição. Para isso, 21 consultas deixaram de ter ano fixo (`q1`, `q1b`, `q2`, `q2b`, `q2c`, `q3b`, `q3c`, `q5c`, `q7e`, `q10`, `q10b`, `t1a`, `t1b`, `t1c`, `t4a`, `t5c`, `t6a`, `t8c`, `t11c`, `t15a`, `t16d`). As listas "Do vereador ao presidente" continuam na eleição mais recente de cada cargo.
+- Grupos pequenos: presidente (11 a 14 candidatos), governador e senador (cerca de 200) aparecem com o número de candidatos ao lado da porcentagem.
+
 ## Onde está cada tema
 
 | Tema | Página | Consultas |
@@ -23,18 +35,18 @@ Os endereços antigos `#/perguntas/q1` … `q12` continuam funcionando e levam a
 | 4. Escolaridade, capacidade eleitoral e patrimônio | `#/perguntas/t4` | `t4a`, `t1c`, `q4b`, `q4c`, `q4` |
 | 5. Sobrenome, cidade e concentração eleitoral | `#/perguntas/t5` | `t5a`, `t5b`, `t5c` |
 | 6. Votos brancos, nulos e abstenção | `#/perguntas/t6` | `t6c`, `t6a`, `t6b` |
-| 7. Votos por legenda | `#/perguntas/t7` | `q5`, `q5b`, `t7a` |
-| 8. Quantidade de vereadores e número de votos | `#/perguntas/t8` | `t8a`, `t8b` |
-| 9. Propostas dos candidatos ao longo do tempo | `#/perguntas/t9` | `t9a`, `t9b`, `q6`, `q6b`, `q6c`, `q6d`, `q6e` |
-| 10. Idade e alternância de poder | `#/perguntas/t10` | `t10a`, `t10b`, `t10c`, `q7c`, `q7d`, `q7` |
-| 11. Doações de campanha e Bolsa Família | `#/perguntas/t11` | `t11a`, `t11b` |
-| 12. Doações de pessoas jurídicas e viés político | `#/perguntas/t12` | `q8`, `q8b` |
-| 13. Viés político regional | `#/perguntas/t13` | `t13a` |
+| 7. Votos por legenda | `#/perguntas/t7` | `q5`, `q5b`, `q5c`, `t7a` |
+| 8. Quantidade de vereadores e número de votos | `#/perguntas/t8` | `t8a`, `t8b`, `t8c` |
+| 9. Propostas dos candidatos ao longo do tempo | `#/perguntas/t9` | `t9a`, `t9c`, `t9b`, `q6`, `q6f`, `q6b`, `q6c`, `q6d`, `q6e` |
+| 10. Idade e alternância de poder | `#/perguntas/t10` | `t10a`, `t10d`, `t10b`, `t10f`, `t10c`, `t10e`, `q7c`, `q7d`, `q7e`, `q7` |
+| 11. Doações de campanha e Bolsa Família | `#/perguntas/t11` | `t11a`, `t11b`, `t11c`, `q8c` |
+| 12. Doações de pessoas jurídicas e viés político | `#/perguntas/t12` | `q8`, `q8b`, `q8c`, `t12a` |
+| 13. Viés político regional | `#/perguntas/t13` | `t13a`, `t13b` |
 | 14. Manutenção do viés político ao longo do tempo | `#/perguntas/t14` | `t14a`, `t14b`, `q9`, `q9b` |
 | 15. Dependência de repasses públicos e financiamento | `#/perguntas/t15` | `t15a`, `q10`, `q10b` |
-| 16. Candidatos, partidos e processos | `#/perguntas/t16` | `t16a`, `t16b`, `t16c` |
+| 16. Candidatos, partidos e processos | `#/perguntas/t16` | `t16a`, `t16b`, `t16c`, `t16d` |
 | +1. Onde vai o dinheiro da campanha? | `#/perguntas/e1` | `q11`, `q11b`, `q11c` |
-| +2. Qual é o histórico de cada político? | `#/perguntas/e2` | `q12`, `q12b`, `q12c`, `q12d`, `q12e` |
+| +2. Qual é o histórico de cada político? | `#/perguntas/e2` | `q12`, `q12f`, `q12b`, `q12c`, `q12d`, `q12e` |
 
 ## As respostas
 
@@ -98,11 +110,11 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 
 **O enunciado pede:** Existe relação entre sobrenome e cidade de origem/atuação e a concentração de votos, caracterizando um possível “curral eleitoral”?
 
-**Resposta:** Há sinais fortes: em 16% das cidades, duas ou mais pessoas com o mesmo sobrenome já foram eleitas prefeito desde 2000. E o deputado estadual que tem o sobrenome de um ex-prefeito da cidade onde mais recebe votos se elegeu 2,7 vezes mais (39% contra 14%, em 2022).
+**Resposta:** Há sinais fortes: em 16% das cidades, duas ou mais pessoas com o mesmo sobrenome já foram eleitas prefeito desde 2000. E o deputado estadual que tem o sobrenome de um ex-prefeito da cidade onde mais recebe votos se elegeu 3 vezes mais (45% contra 15%, em 2022).
 
 - Famílias no poder local: 870 cidades tiveram dois ou mais prefeitos com o mesmo sobrenome; em 635, esse sobrenome governou em 3 ou mais mandatos. A região com mais casos é o Nordeste (22% das cidades).
 - Exemplo extremo: em Joca Marques (PI), o sobrenome Marques ganhou 7 das 7 eleições, com 6 pessoas diferentes.
-- O sobrenome ajuda o deputado: para deputado federal em 2022, 18% dos que tinham o sobrenome de um ex-prefeito da sua cidade-reduto se elegeram, contra 10% dos demais.
+- O sobrenome ajuda o deputado: para deputado federal em 2022, 15% dos que tinham o sobrenome de um ex-prefeito da sua cidade-reduto se elegeram, contra 10% dos demais. Para vereador em 2024, 34% contra 14%.
 - Votos concentrados: o deputado estadual eleito típico tirou 33% dos seus votos de uma só cidade; 27% deles tiraram mais da metade de uma cidade só.
 
 **Cuidado:** Sobrenome igual não prova parentesco. Para reduzir coincidências, ficam de fora os 50 sobrenomes mais comuns (Silva, Santos, Oliveira...) e só contam pessoas diferentes. Mulheres que adotam o sobrenome do marido entram como da mesma família, o que costuma ser verdade na política local. 1996 fica de fora porque não há título de eleitor para separar as pessoas.
@@ -337,4 +349,18 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 | `t15a` | Tema 15: candidatos pela parte da receita que veio de dinheiro público (fundos) — chance de se eleger, votos e gasto por voto |
 | `t16a` | Tema 16: os processos de registro das candidaturas, eleição a eleição — candidaturas inaptas (registro negado, cassado, cancelado ou renúncia), 1998 a 2022 |
 | `t16b` | Tema 16: partido a partido — parte das candidaturas inaptas (registro negado, cassado, cancelado ou renúncia), 2020 e 2022 somadas, partidos com 2 mil candidaturas ou mais |
+| `q5c` | Tema 7: quem ainda vive de legenda, cargo a cargo (vereador 2024, deputados 2022) |
+| `q6f` | Tema 9: os temas dos planos de esquerda, centro e direita, cargo a cargo (prefeito, governador, presidente) |
+| `q7e` | Tema 10: chance de se eleger de jovens e mais velhos, cargo a cargo |
+| `q8c` | Temas 11 e 12: dinheiro de empresas na receita, cargo a cargo e ano a ano (com presidente) |
+| `q12f` | +2: dos eleitos em cada cargo, quantos se elegem de novo 4 anos depois e quantos voltam ao mesmo cargo |
+| `t8c` | Tema 8: eleitores por cadeira e votos do eleito típico, do vereador ao presidente, e estado a estado |
+| `t9c` | Tema 9: os assuntos dos planos, cargo a cargo |
+| `t10d` | Tema 10: quem tentou continuar no mesmo cargo e lugar, pela idade, cargo a cargo |
+| `t10e` | Tema 10: renovação (novatos e reeleitos), cargo a cargo |
+| `t10f` | Tema 10: alternância de poder na prefeitura, no governo do estado e na presidência |
+| `t11c` | Tema 11: Bolsa Família e o lado de quem ficou em 1º, cargo a cargo (2022 e 2024) |
+| `t12a` | Tema 12: doação de empresas por campo político, cargo a cargo (2010 a 2014) |
+| `t13b` | Tema 13: mapa de calor cargo a cargo (presidente fica em `t13a`) |
+| `t16d` | Tema 16: candidaturas barradas, cargo a cargo, 2008 a 2022 |
 | `t16c` | Tema 16: o tipo de processo (indeferimento, cassação, inelegibilidade, renúncia) e o voto em quem foi barrado, 2008, 2012 e 2016 (anos com o detalhe) |

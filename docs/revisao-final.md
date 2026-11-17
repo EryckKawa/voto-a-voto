@@ -36,6 +36,15 @@ Fora do repositório (pasta `Trabalho_Votacao`):
 
 Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Our World in Data, GOV.UK, U.S. Web Design System, Microsoft Learn). Mudanças: corpo de texto em 18 px e linhas de até ~68 caracteres; cada gráfico dos temas com título e descrição em cima e, embaixo, a fonte e "Baixar dados (CSV)"; ficha do político com o histórico eleitoral primeiro; menu do celular com as 7 seções à vista; mapa de calor com a coluna dos estados fixa ao rolar.
 
+## Do vereador ao presidente (17/11/2026, à tarde)
+
+- O que mudou: `js/perguntas.js` (`ESCADA`, `porCargo`, `escada`, `escadaHTML`; o painel guarda o cargo escolhido de cada recorte em `ci`), `css/estilo.css` (fim do arquivo), `scripts/consultas_brasil.sql` (bloco final "Do vereador ao presidente" e 21 consultas ampliadas), `data/br/perguntas.json`, `js/detalhes.js` (ordem dos cargos) e dois testes em `js/testes.js` (tema 2 com 7 cargos na tabela; nuvem do tema 9 pelo botão de cargo) mais um teste novo do seletor.
+- Conferido: os 18 temas abrem sem erro; 448 combinações de recorte × cargo × Gráfico/Tabela, sem gráfico vazio, célula vazia ou "NaN". As frases-resumo foram lidas contra a lista de cada cargo (onde a regra não vale para todos, o texto diz qual é a exceção).
+- Filtro de ano (mesma tarde): `porCargo` aceita `anos`, e `porEleicao` faz os gráficos que comparam os sete cargos; o painel guarda o ano em `st.ano`. Varredura: 954 combinações de recorte × cargo × ano sem gráfico vazio nem erro; 188 de 188 testes. `data/br/perguntas.json` passou de 248 KB para 686 KB.
+- Relatório final regerado (60 páginas, 78 consultas, com a lista "Do vereador ao presidente" em cada parte): `relatorio_final/coletar_temas.js` agora coleta a lista, e `gerar_relatorio.py` lê os dados de `voto-a-voto` (antes lia de `.validacao/github`, o clone do repositório publicado, que ainda não tem estas mudanças). `ENTREGA_FINAL/`, o zip e o `ROTEIRO_APRESENTACAO.md` foram atualizados; as versões anteriores estão em `_backup_cargos_2026-11-17/`.
+- Revisar: a regra nova do tema 5 (o ex-prefeito tem de ser outra pessoa) mudou o número do deputado estadual para 45% contra 15% (3 vezes); o `ROTEIRO_APRESENTACAO.md` ainda fala em 2,7 vezes.
+- DuckDB 1.5.6 deu erro interno numa versão da `t11c` (filtro `(ano = 2022 AND cargo IN ...) OR (...)` em `votacao_candidato`); a consulta usa a forma `ano IN (...) AND cargo IN (...) AND (ano = 2022) = (cargo IN (...))`.
+
 ## Pendências conhecidas
 
 - (Resolvido em 17/11) As fichas das 26 pessoas de `receita_descartada` foram regravadas com `ficha_politico.py --pessoas`; o script agora desempata a ordem, e a saída é a mesma a cada rodada.

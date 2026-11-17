@@ -17,7 +17,7 @@
   V.detalhes = {
     q1(C) {
       const { reais, pct, N1 } = U(), M = L(C, "q1c"), P = L(C, "q1");
-      const ult = [[2022, "PRESIDENTE"], [2022, "GOVERNADOR"], [2022, "SENADOR"], [2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2024, "PREFEITO"], [2024, "VEREADOR"]];
+      const ult = [[2024, "VEREADOR"], [2024, "PREFEITO"], [2022, "DEPUTADO ESTADUAL"], [2022, "DEPUTADO FEDERAL"], [2022, "SENADOR"], [2022, "GOVERNADOR"], [2022, "PRESIDENTE"]];   // do vereador ao presidente
       const m = (a, cg) => M.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const serie = (cg) => M.filter((r) => r.ds_cargo === cg).map((r) => `${r.nr_ano_eleicao}: ${reais(r.vr_custo_por_cadeira)}${aviso26(r.nr_ano_eleicao)}`);
       const p22 = P.filter((r) => r.nr_ano_eleicao === 2022 && r.ds_cargo === "DEPUTADO FEDERAL").sort((x, y) => y.vr_custo_por_cadeira - x.vr_custo_por_cadeira);
@@ -25,7 +25,7 @@
         { tit: "Cargo a cargo, na eleição mais recente com contas fechadas", texto: "As duas contas da pergunta: o gasto médio (Σ gastos ÷ número de candidatos), que diz quanto custa disputar, e o custo por cadeira (Σ gastos ÷ eleitos), que diz quanto custa vencer.",
           itens: ult.map(([a, cg]) => { const r = m(a, cg); return r && `${b(`${nomeCargo(cg)} (${a})`)}: ${V.int(r.qt_candidatos)} candidatos (${V.int(r.qt_com_despesa)} declararam algum gasto) disputaram ${V.int(r.qt_eleitos)} ${r.qt_eleitos === 1 ? "vaga" : "vagas"} e gastaram juntos ${reais(r.vr_gasto_total)}. Gasto médio por candidato: ${reais(r.vr_gasto_medio_candidato)}. Custo por cadeira: ${reais(r.vr_custo_por_cadeira)}, ${N1.format(r.vr_custo_por_cadeira / Math.max(1, r.vr_gasto_medio_candidato))} vezes o gasto médio. Por mês de mandato, ${reais(r.vr_custo_por_mes_mandato)}.`; }) },
         { tit: "Ano a ano: o custo de uma cadeira", texto: "Valores da época, sem correção pela inflação. A partir de 2018 entra o Fundo Especial de Financiamento de Campanha, criado depois da proibição da doação de empresas.",
-          itens: ["DEPUTADO FEDERAL", "DEPUTADO ESTADUAL", "SENADOR", "GOVERNADOR", "PREFEITO", "VEREADOR"].map((cg) => { const s = serie(cg); return s.length && `${b(nomeCargo(cg))}: ${s.join(" → ")}.`; }) },
+          itens: ["VEREADOR", "PREFEITO", "DEPUTADO ESTADUAL", "DEPUTADO FEDERAL", "SENADOR", "GOVERNADOR", "PRESIDENTE"].map((cg) => { const s = serie(cg); return s.length && `${b(nomeCargo(cg))}: ${s.join(" → ")}.`; }) },
         { tit: "Partido a partido: deputado federal em 2022", texto: "Entre os partidos que elegeram pelo menos 5 deputados federais. O custo junta o gasto de todos os candidatos do partido, eleitos ou não.",
           itens: [p22.length && `${b("Mais caros")}: ${lista(p22.slice(0, 3).map((r) => `${V.nomePartido(r.sg_partido)} (${reais(r.vr_custo_por_cadeira)} por cadeira, ${r.qt_cadeiras} eleitos)`))}.`,
             p22.length && `${b("Mais baratos")}: ${lista(p22.slice(-3).reverse().map((r) => `${V.nomePartido(r.sg_partido)} (${reais(r.vr_custo_por_cadeira)}, ${r.qt_cadeiras} eleitos)`))}.`,
@@ -42,10 +42,10 @@
       const quint = (a, cg) => R.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg).map((r) => `${QN[r.nr_quintil - 1]} (média de ${V.brl(r.vr_receita_media)}): ${pct(r.pc_taxa_sucesso)}`);
       return [
         { tit: "Taxa de sucesso por faixa de patrimônio declarado", texto: "Parte dos candidatos de cada faixa que se elegeu (eleitos ÷ candidatos da faixa).",
-          itens: [[2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2024, "PREFEITO"], [2024, "VEREADOR"]].map(([a, cg]) => { const f = faixas(a, cg); return f.length && `${b(`${nomeCargo(cg)} (${a})`)}: ${f.join("; ")}.`; }) },
-        { tit: "Patrimônio dos eleitos e dos não eleitos", itens: [[2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2022, "SENADOR"], [2022, "GOVERNADOR"], [2024, "PREFEITO"], [2024, "VEREADOR"]].map(([a, cg]) => med(a, cg)) },
+          itens: [[2024, "VEREADOR"], [2024, "PREFEITO"], [2022, "DEPUTADO ESTADUAL"], [2022, "DEPUTADO FEDERAL"], [2022, "SENADOR"], [2022, "GOVERNADOR"], [2022, "PRESIDENTE"]].map(([a, cg]) => { const f = faixas(a, cg); return f.length && `${b(`${nomeCargo(cg)} (${a})`)}: ${f.join("; ")}.`; }) },
+        { tit: "Patrimônio dos eleitos e dos não eleitos", itens: [[2024, "VEREADOR"], [2024, "PREFEITO"], [2022, "DEPUTADO ESTADUAL"], [2022, "DEPUTADO FEDERAL"], [2022, "SENADOR"], [2022, "GOVERNADOR"], [2022, "PRESIDENTE"]].map(([a, cg]) => med(a, cg)) },
         { tit: "Dinheiro de campanha: taxa de sucesso por grupo de receita", texto: "Os candidatos de cada cargo em cinco grupos do mesmo tamanho, do que menos arrecadou ao que mais arrecadou.",
-          itens: [[2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2024, "PREFEITO"], [2024, "VEREADOR"]].map(([a, cg]) => { const q = quint(a, cg); return q.length && `${b(`${nomeCargo(cg)} (${a})`)}: ${q.join("; ")}.`; }) },
+          itens: [[2024, "VEREADOR"], [2024, "PREFEITO"], [2022, "DEPUTADO ESTADUAL"], [2022, "DEPUTADO FEDERAL"], [2022, "SENADOR"], [2022, "GOVERNADOR"], [2022, "PRESIDENTE"]].map(([a, cg]) => { const q = quint(a, cg); return q.length && `${b(`${nomeCargo(cg)} (${a})`)}: ${q.join("; ")}.`; }) },
       ];
     },
 

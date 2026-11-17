@@ -154,13 +154,26 @@
   teste("Funcionamento", "Perguntas: recorte, Gráfico | Tabela, sem SQL na página", async () => {
     await irPara("#/perguntas/t2"); await quadros(2);
     if (q("[data-modo='graf']")) q("[data-modo='graf']").click();
-    const antes = txt("#pq-graf"); q("[data-vista='2']").click(); await quadros(1);
-    const trocou = antes !== txt("#pq-graf");
-    q("[data-modo='tab']").click(); await quadros(1);
-    await ate(() => qq("#pq-graf tbody tr").length === 6, 3000).catch(() => {});   // computador ocupado: a tabela pode levar alguns quadros
-    const linhasTab = qq("#pq-graf tbody tr").length; q("[data-modo='graf']").click();
+    const bt = q("[data-vista='2']"), pn = bt.closest(".pq-painel"), g = () => pn.querySelector(".pq-graf");
+    const antes = g().textContent; bt.click(); await quadros(1);
+    const trocou = antes !== g().textContent;
+    pn.querySelector("[data-modo='tab']").click(); await quadros(1);
+    await ate(() => g().querySelectorAll("tbody tr").length === 7, 3000).catch(() => {});   // computador ocupado: a tabela pode levar alguns quadros
+    const linhasTab = g().querySelectorAll("tbody tr").length; pn.querySelector("[data-modo='graf']").click();
     const semSQL = !/SELECT\s[\s\S]*\sFROM\s/.test(txt("main")) && !q("main pre code");
-    return R(trocou && linhasTab === 6 && semSQL, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · ${semSQL ? "sem SQL" : "com SQL"}`, "troca o gráfico; tabela com 6 faixas de patrimônio; nenhum código SQL na página");
+    return R(trocou && linhasTab === 7 && semSQL, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · ${semSQL ? "sem SQL" : "com SQL"}`, "troca o gráfico; tabela com os 7 cargos; nenhum código SQL na página");
+  });
+  teste("Funcionamento", "Perguntas: do vereador ao presidente em cada parte e no seletor de cargo", async () => {
+    await irPara("#/perguntas/t2"); await quadros(2);
+    const cs = qq("#pq-painel [data-cargo]"), nomes = cs.map((b) => b.textContent.replace(/\s*\d{4}$/, "").trim());
+    const ordem = nomes.join(",") === "Vereador,Prefeito,Dep. estadual,Dep. federal,Senador,Governador,Presidente";
+    const antes = txt("#pq-graf"); cs[0].click(); await quadros(1); const trocou = antes !== txt("#pq-graf");
+    const vereadorAtivo = q("#pq-painel [data-cargo='0']").getAttribute("aria-pressed") === "true";
+    const anos = qq("#pq-painel [data-ano]"), a0 = txt("#pq-graf"); if (anos[0]) { anos[0].click(); await quadros(1); }
+    const trocouAno = anos.length >= 8 && a0 !== txt("#pq-graf");
+    const sem = [];
+    for (let i = 1; i <= 16; i++) { await irPara("#/perguntas/t" + i); await quadros(1); if (!qq(".pq-escada").length) sem.push(i); }
+    return R(ordem && trocou && vereadorAtivo && trocouAno && !sem.length, `${cs.length} cargos (${nomes.join(", ")}) · ${trocou ? "troca o gráfico" : "não troca"} · ${anos.length} eleições, ${trocouAno ? "o ano troca o gráfico" : "o ano não troca"} · temas sem a lista: ${sem.join(", ") || "nenhum"}`, "7 cargos do vereador ao presidente e 8 ou mais eleições; os botões trocam o gráfico; todo tema tem a lista cargo a cargo");
   });
   teste("Funcionamento", "Todos os temas e as 2 perguntas a mais: com resposta, pontos e cuidado", async () => {
     const ruins = [];
@@ -482,10 +495,12 @@
   });
   teste("Funcionamento", "Tema 9: nuvem de palavras por cargo e por partido", async () => {
     await irPara("#/perguntas/t9");
-    const bs = qq(".pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · Prefeito/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
+    const bs = qq(".pq-painel [data-vista]"), bc = bs.find((b) => /Nuvem · por campo/.test(b.textContent)), bp = bs.find((b) => /por partido/.test(b.textContent));
     if (!bc || !bp) return R(false, "sem os botões das nuvens", "nuvem por cargo e por partido");
     const graf = (b) => b.closest(".pq-painel").querySelector(".pq-graf");
-    bc.click(); await quadros(2); const nc = graf(bc).querySelectorAll(".nuvem span").length;
+    bc.click(); await quadros(2);
+    const pref = [...bc.closest(".pq-painel").querySelectorAll("[data-cargo]")].find((b) => /Prefeito/.test(b.textContent)); if (pref) { pref.click(); await quadros(2); }
+    const nc = graf(bc).querySelectorAll(".nuvem span").length;
     bp.click(); await quadros(2); const np = graf(bp).querySelectorAll(".nuvem").length;
     return R(nc >= 30 && np >= 6, `${nc} palavras nas nuvens de prefeito · ${np} nuvens de partido`, "30 ou mais palavras; 6 ou mais partidos");
   });
