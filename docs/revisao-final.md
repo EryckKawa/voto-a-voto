@@ -65,3 +65,10 @@ Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Ou
 - **Testes:** 186 de 186; varredura de quebras (16 páginas × 7 larguras) sem achados.
 - **Exploração final (18/11):** a cópia offline abre direto do disco em todas as páginas; no site publicado, nenhum arquivo falha e não há erro de JavaScript (testado em 11 páginas, inclusive cidade e fichas); os números de 2026 batem entre Mapa, 3D, ficha e apresentação. Entraram o ícone da aba, a imagem e o resumo de compartilhamento do link (`img/og.jpg`), a página "não encontrada" com as seções do site e o esmaecido nas filas de botões que rolam no celular.
 
+## 18/11: escopo de cada tema e as perguntas do grupo
+
+- Cada tema foi conferido com o enunciado. O tema 11 pergunta só pela doação de empresas em relação ao Bolsa Família; a parte do voto nas cidades com mais e menos Bolsa Família saiu dele e virou a pergunta a mais 3 (`e3`).
+- Perguntas a mais novas: mulheres na política (`e4`: candidatas e eleitas, quem se elege, candidaturas com até 10 votos; consultas `e4a`, `e4b`) e troca de partido (`e5`: quantos eleitos trocam para tentar de novo e se trocar ajuda; consulta `e5a`, com as fusões contadas como o mesmo partido).
+- Pergunta a mais 1 (onde o candidato investe em propaganda) ganhou a nuvem de palavras das despesas, cargo a cargo (consulta `e1n`), como pede a pergunta base 11.
+- O índice das perguntas lista as 12 perguntas base do grupo, cada uma com o link para onde é respondida.
+- O relatório final foi regerado (65 páginas, com o Quadro 3 das perguntas base e a seção 6 com as cinco perguntas a mais); 188 de 188 testes; varredura de quebras (18 páginas × 7 larguras) sem achados.

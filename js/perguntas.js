@@ -392,11 +392,11 @@
     return Q;
   }
 
-  /* ---------- os 16 temas do enunciado (e as duas perguntas a mais do grupo) ---------- */
+  /* ---------- os temas do enunciado (e as perguntas a mais do grupo) ---------- */
   function montarTemas(C, Q) {
     const { G, leg, barras, linhas, pares } = Q;
     const L = (id) => linhasDe(C[id]);
-    const T = [];
+    const T = [], EXTRA = {};   // EXTRA: o que um tema guarda para uma pergunta a mais do grupo usar
     const tema = (o) => T.push(Object.assign(o, { kpis: o.kpis || (o.num ? [[o.num, o.numRot]] : []) }));
     const lista = (xs) => (xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " e " + xs[xs.length - 1]);
     const vistaTabela = (rot, cols, linhasT, nt) => ({ rot, graf: () => { const t = { cols, linhas: linhasT }; return { html: tabelaHTML(t, rot), tab: t }; }, nota: nt });
@@ -907,6 +907,9 @@
       const vistaQ = (a) => ({ rot: `Cidades pelo alcance do programa (${a})`, legenda: leg([[COR.terra, "Empresas na receita das campanhas"], [COR.esq, "Prefeito eleito de esquerda"], [COR.dir, "Prefeito eleito de direita"]]),
         graf: () => pares(Qn.filter((r) => r.nr_ano === a).map((r) => ({ rot: `${pct(r.pc_alcance_min, 0)} a ${r.nr_quintil === 5 ? "mais" : pct(r.pc_alcance_max, 0)}`, sub: `${V.int(r.qt_municipios)} cidades`, v: [r.pc_doacao_empresas, r.pc_prefeito_esquerda, r.pc_prefeito_direita] })), { nomes: ["empresas", "prefeito de esquerda", "prefeito de direita"], cores: [COR.terra, COR.esq, COR.dir], max: 100, fmt: (v) => pct(v, 0), cols: ["Benefícios por 100 eleitores", "Cidades"] }),
         nota: "Cidades em cinco grupos do mesmo tamanho pelo número de benefícios do Bolsa Família por eleitor (dezembro do ano da eleição). Campanhas de prefeito e vereador." });
+      const vistaQD = (a) => ({ rot: `Cidades pelo alcance do programa (${a})`, legenda: leg([[COR.terra, "Empresas"], [COR.azul, "Dinheiro público"]]),
+        graf: () => pares(Qn.filter((r) => r.nr_ano === a).map((r) => ({ rot: `${pct(r.pc_alcance_min, 0)} a ${r.nr_quintil === 5 ? "mais" : pct(r.pc_alcance_max, 0)}`, sub: `${V.int(r.qt_municipios)} cidades`, v: [r.pc_doacao_empresas, r.pc_dinheiro_publico] })), { nomes: ["empresas", "dinheiro público"], cores: [COR.terra, COR.azul], max: 100, fmt: (v) => pct(v, 0), cols: ["Benefícios por 100 eleitores", "Cidades"] }),
+        nota: `Cidades em cinco grupos do mesmo tamanho pelo número de benefícios do Bolsa Família por eleitor (dezembro de ${a}) e a parte da receita das campanhas de prefeito e vereador que veio de empresas e de dinheiro público (fundos eleitoral e partidário).` });
       const BC = L("t11c").map((r) => ({ ...r, nr_ano_eleicao: r.nr_ano })), bc = (cg, n, a = REF[cg]) => BC.find((r) => r.ds_cargo === cg && r.nr_quintil === n && r.nr_ano === a) || {};
       const PJ = L("q8c"), pj = (cg, a) => PJ.find((r) => r.ds_cargo === cg && r.nr_ano_eleicao === a) || {};
       const vistaBF = (a, cg) => ({ rot: `O voto pelo alcance do programa · ${CARGO[cg]} ${a}`, legenda: leg([[COR.esq, "Esquerda em 1º"], [COR.dir, "Direita em 1º"]]),
@@ -922,17 +925,17 @@
         kpis: [[pct(b14.pc_doacao_empresas, 0), "do dinheiro das campanhas veio de empresas em 2014"], [pct(b18.pc_doacao_empresas), "em 2018, depois da proibição; o Bolsa Família seguiu com 14 milhões de benefícios"]], num: `${pct(b14.pc_doacao_empresas, 0)} → ${pct(b18.pc_doacao_empresas)}`, numRot: "das campanhas pagas por empresas (2014 → 2018), enquanto o Bolsa Família seguiu com 14 milhões de benefícios",
         resposta: `As duas linhas seguem caminhos separados: o Bolsa Família cresceu de ${milhoes(b04.qt_beneficios)} de benefícios (2004) para ${milhoes(b14.qt_beneficios)} (2014) enquanto as empresas pagavam de ${pct(Math.min(b10.pc_doacao_empresas, b14.pc_doacao_empresas, y(2012).pc_doacao_empresas), 0)} a ${pct(b10.pc_doacao_empresas, 0)} das campanhas. Depois da proibição de 2015, a doação de empresas caiu a ${pct(b18.pc_doacao_empresas)}, e o programa continuou`,
         partes: [
-          { q: "Doações de empresas e Bolsa Família no tempo", a: "As empresas pararam de pagar campanhas em 2015, em todos os cargos; o Bolsa Família continuou e cresceu.", escada: esPJ, p: [3], v: [0] },
-          { q: "As cidades com mais e menos Bolsa Família", a: `Onde há mais Bolsa Família, a esquerda elegeu ${pct(q24e.pc_prefeito_esquerda, 0)} dos prefeitos em 2024; onde há menos, ${pct(q24a.pc_prefeito_esquerda, 0)}. Para presidente, a diferença é a maior.`, escada: esBF, p: [0, 1, 2], v: [1, 2, 3] }],
+          { q: "Doações de empresas e Bolsa Família no tempo", a: "As empresas pararam de pagar campanhas em 2015, em todos os cargos; o Bolsa Família continuou e cresceu.", escada: esPJ, p: [2], v: [0] },
+          { q: "Onde há mais Bolsa Família, as empresas doavam mais?", a: `Não: em 2012, as empresas pagavam ${pct(q12a.pc_doacao_empresas, 0)} das campanhas municipais onde há menos Bolsa Família e ${pct(q12e.pc_doacao_empresas, 0)} onde há mais.`, p: [0, 1], v: [1, 2] }],
         pontos: [
           `<b>Antes da proibição, as empresas doavam igual em todo lugar:</b> em 2012, pagavam ${pct(q12a.pc_doacao_empresas, 0)} das campanhas municipais nas cidades onde o Bolsa Família alcança menos gente e ${pct(q12e.pc_doacao_empresas, 0)} onde alcança mais.`,
-          `<b>O alcance do programa separa o voto, não o dinheiro:</b> em 2024, a esquerda elegeu o prefeito em ${pct(q24e.pc_prefeito_esquerda, 0)} das cidades com mais benefícios por eleitor e em ${pct(q24a.pc_prefeito_esquerda, 0)} das com menos; a direita, em ${pct(q24e.pc_prefeito_direita, 0)} e ${pct(q24a.pc_prefeito_direita, 0)}.`,
           `<b>Depois de 2015, o dinheiro público ocupou o lugar das empresas:</b> em 2024, ele foi ${pct(q24a.pc_dinheiro_publico, 0)} a ${pct(q24e.pc_dinheiro_publico, 0)} da receita das campanhas municipais, em todos os grupos de cidades.`,
           `<b>O programa ficou maior em 2022:</b> ${milhoes(y(2022).qt_beneficios)} de benefícios em dezembro (como Auxílio Brasil), e ${milhoes(b24.qt_beneficios)} em 2024.`],
-        vistas: [vistaSerie, vistaQ(2012), vistaQ(2024), bfCargo],
-        cuidado: ["O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil.", "Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada.", "Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra."],
+        vistas: [vistaSerie, vistaQD(2012), vistaQD(2024)],
+        cuidado: ["O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil.", "O voto nas cidades com mais e menos Bolsa Família está na pergunta a mais do grupo +3.", "Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada.", "Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra."],
         como: "Bolsa Família: número de benefícios e valor pago em dezembro, por município, de 2004 a 2025 (Ministério do Desenvolvimento e Assistência Social, pela API do IpeaData), carregados na tabela bolsa_familia_municipio. Doações de empresas: receitas dos candidatos com doador pessoa jurídica (TSE). Alcance do programa: benefícios ÷ eleitores aptos da cidade.",
-        tabelas: ["bolsa_familia_municipio", "receita", "candidatura", "comparecimento", "vw_partido_ano"], consultas: ["t11a", "t11b", "t11c", "q8c"], fonte: "MDS (via IpeaData) e TSE" });
+        tabelas: ["bolsa_familia_municipio", "receita", "candidatura"], consultas: ["t11a", "t11b", "q8c"], fonte: "MDS (via IpeaData) e TSE" });
+      EXTRA.bf = { bfCargo, esBF, bc, vistaQ, q24a, q24e, Qn };
     }
 
     // ---------- Tema 12 ----------
@@ -1155,6 +1158,20 @@
       const top = (Q.q11.ano(2024)[0]) || {}, imp = Q.q11.ano(2024).find((r) => /Impulsionamento/i.test(r.ds_origem_despesa)) || {}, imp18 = Q.q11.ano(2018).find((r) => /Impulsionamento/i.test(r.ds_origem_despesa)) || {};
       const nomeT = (t) => { const x = (Q.q11.TB.find((r) => r.nr_tipo === t) || {}).ds_tipo || ""; return x.charAt(0).toLowerCase() + x.slice(1); };
       const esDesp = escada((a, cg) => { const i = Q.q11.pT(a, cg, 1); return i != null && `${pct(i, 0)} em ${nomeT(1)}, ${pct(Q.q11.pT(a, cg, 3) || 0, 0)} em ${nomeT(3)}, ${pct(Q.q11.pT(a, cg, 2) || 0, 0)} em ${nomeT(2)} e ${pct(Q.q11.pT(a, cg, 4) || 0, 0)} em ${nomeT(4)}.`; });
+      const ND = L("e1n"), CGW = new Set(["vereador", "vereadora", "prefeito", "prefeita", "governador", "governadora", "presidente", "senador", "senadora", "deputado", "deputada", "federal", "estadual", "lula", "enviado", "semana"]);
+      // a consulta tira os acentos; aqui eles voltam para as palavras mais comuns, e o plural soma no singular (adesivos → adesivo)
+      const ACENTO = { cabo: "cabo eleitoral", militancia: "militância", mobilizacao: "mobilização", impressao: "impressão", locacao: "locação", divulgacao: "divulgação", coordenacao: "coordenação", eletronico: "eletrônico", eletronicos: "eletrônicos",
+        combustivel: "combustível", combustiveis: "combustíveis", veiculo: "veículo", veiculos: "veículos", grafico: "gráfico", graficos: "gráficos", conteudo: "conteúdo", producao: "produção", contratacao: "contratação", alimentacao: "alimentação",
+        refeicao: "refeição", refeicoes: "refeições", agua: "água", audio: "áudio", video: "vídeo", videos: "vídeos", radio: "rádio", aereo: "aéreo", aerea: "aérea", passagem: "passagem", publicacao: "publicação", criacao: "criação", edicao: "edição", reuniao: "reunião", comicio: "comício", ativista: "ativista", mobilizador: "mobilizador", lanche: "lanche", lanches: "lanches", hospedagem: "hospedagem", gasolina: "gasolina", confeccao: "confecção", cartao: "cartão", couche: "couchê", producoes: "produções", impressoes: "impressões" };
+      const palavras = (a, cg) => { const rs = ND.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && !CGW.has(r.ds_palavra)), soma = new Map(rs.map((r) => [r.ds_palavra, r.qt]));
+        for (const r of rs) { const sg = r.ds_palavra.replace(/s$/, ""); if (sg !== r.ds_palavra && soma.has(sg)) { soma.set(sg, soma.get(sg) + r.qt); soma.delete(r.ds_palavra); } }
+        return [...soma].map(([w, qt]) => ({ ds_palavra: ACENTO[w] || w, qt })).sort((x, y) => y.qt - x.qt).slice(0, 30); };
+      const nuvemDesp = porCargo("Nuvem das despesas", (a, cg) => { const ls = palavras(a, cg); return ls.length ? { rot: `Nuvem · ${CARGO[cg]} ${a}`, graf: () => ({
+          html: G.nuvem(ls.map((x) => ({ w: x.ds_palavra, q: x.qt, cor: COR.terra, tit: `${x.ds_palavra}: em ${V.int(x.qt)} despesas` })), { rot: `Palavras das despesas de ${CARGO[cg].toLowerCase()} em ${a}`, max: 36 }),
+          tab: { cols: ["Palavra", "Despesas com a palavra"], linhas: ls.map((x) => [V.esc(x.ds_palavra), V.int(x.qt)]) } }),
+        nota: "As palavras que os candidatos mais escrevem para descrever o que compraram, sem as genéricas da prestação de contas (serviço, campanha, nota fiscal...). Quanto maior, mais vezes aparece." } : null; },
+        { anos: anosDe(ND), padrao: "VEREADOR" });
+      const pv = palavras(2024, "VEREADOR").slice(0, 6).map((x) => x.ds_palavra);
       tema({ id: "e1", n: "+1", extra1: true, grupo: "A mais", titulo: "Onde vai o dinheiro da campanha?", antigas: ["q11"],
         enunciado: ["Pergunta a mais do grupo: onde o candidato investe em propaganda?"],
         curta: `${pct(top.pc_ano, 0)} do gasto das campanhas de 2024 foi com material impresso.`,
@@ -1162,12 +1179,13 @@
         resposta: `Em papel: em 2024, ${pct(top.pc_ano, 0)} do dinheiro das campanhas foi para material impresso (${reais(top.vr_total)}), a maior despesa em todas as eleições desde 2018`,
         partes: [
           { q: "Onde o candidato gasta a propaganda?", a: `Em papel: ${pct(top.pc_ano, 0)} do dinheiro das campanhas de 2024 foi para material impresso.`, p: [0], v: [0, 1, 2] },
-          { q: "Por cargo e por lado político", a: "Vereador e deputado gastam mais com papel e gente na rua; senador, governador e presidente, com rádio, TV e vídeo.", escada: esDesp, p: [1], v: [3, 4] }],
+          { q: "Por cargo e por lado político", a: "Vereador e deputado gastam mais com papel e gente na rua; senador, governador e presidente, com rádio, TV e vídeo.", escada: esDesp, p: [1], v: [3, 4] },
+          ...(nuvemDesp ? [{ q: "Que palavras aparecem nas despesas?", a: `As da campanha de rua: para vereador, em 2024, as mais escritas foram ${lista(pv.slice(0, 4))}.`, p: [], v: [5] }] : [])],
         pontos: [`<b>A internet cresce devagar:</b> o impulsionamento nas redes foi de ${pct(imp18.pc_ano)} do gasto em 2018 para ${pct(imp.pc_ano)} em 2024.`,
           `<b>Cada cargo gasta de um jeito:</b> em 2024, o vereador pôs ${pct(Q.q11.p24("VEREADOR", 1), 0)} em material impresso e ${pct(Q.q11.p24("VEREADOR", 4), 0)} em militância de rua; o prefeito, ${pct(Q.q11.p24("PREFEITO", 3), 0)} em rádio, TV e vídeo.`],
-        vistas: Q.q11.vistas, cuidado: ["As categorias são as que o próprio candidato escolhe na prestação de contas."],
+        vistas: [...Q.q11.vistas, ...(nuvemDesp ? [nuvemDesp] : [])], cuidado: ["As categorias são as que o próprio candidato escolhe na prestação de contas.", "A nuvem conta palavras da descrição livre de cada despesa; o plural foi somado ao singular (adesivos em adesivo), mas a mesma coisa ainda pode aparecer com nomes diferentes (santinho e praguinha)."],
         como: "Despesas contratadas declaradas pelos candidatos ao TSE, pela categoria escolhida na prestação de contas, juntadas em onze tipos (view vw_despesa_tipo).",
-        tabelas: ["despesa", "vw_despesa_tipo", "candidatura"], consultas: ["q11", "q11b", "q11c"], fonte: "TSE, prestação de contas" });
+        tabelas: ["despesa", "vw_despesa_tipo", "candidatura"], consultas: ["q11", "q11b", "q11c", "e1n"], fonte: "TSE, prestação de contas" });
       const g18 = Q.q12.R.find((r) => r.nr_ano === 2018) || {}, tot = Q.q12.B.reduce((s, r) => s + r.qt_pessoas, 0), um = (Q.q12.B.find((r) => r.qt_vitorias === 1) || {}).qt_pessoas || 0;
       const esVolta = escada((a, cg) => { const r = Q.q12.cf(a, cg); if (!r.qt_eleitos) return null;
         if (r.qt_eleitos === 1) return `o presidente eleito em ${a} ${r.pc_eleito_de_novo_4_anos ? "se elegeu de novo" : "não se elegeu de novo"} em ${a + 4}.`;
@@ -1185,6 +1203,108 @@
         cuidado: ["A mesma pessoa é seguida pelo título de eleitor; 1996 fica de fora.", "Senador tem mandato de oito anos, o que puxa para baixo a volta de 4 anos.", "O voto de cada parlamentar só entra para os deputados federais: é a Câmara dos Deputados que o publica nos dados abertos usados aqui."],
         como: "Candidaturas de 1994 a 2026 (TSE) ligadas pelo título de eleitor; votos na Câmara: dados abertos da Câmara dos Deputados, 2019 a 2026.",
         tabelas: ["candidatura", "pessoa", "situacao_totalizacao", "votacao_camara", "voto_deputado", "orientacao_bancada", "deputado_camara"], consultas: ["q12", "q12f", "q12b", "q12c", "q12d", "q12e"], link: "#/politicos", linkTxt: "Abrir a busca de políticos", fonte: "TSE e Câmara dos Deputados" });
+      // ---------- +3: o Bolsa Família e o voto (saiu do tema 11, que pergunta só da doação de empresas) ----------
+      if (EXTRA.bf) {
+        const { bfCargo, esBF, bc, Qn, q24a, q24e } = EXTRA.bf, p5 = bc("PRESIDENTE", 5), p1 = bc("PRESIDENTE", 1);
+        const vistaQV = (a) => ({ rot: `Prefeitos eleitos (${a})`, legenda: leg([[COR.esq, "Prefeito de esquerda"], [COR.dir, "Prefeito de direita"]]),
+          graf: () => pares(Qn.filter((r) => r.nr_ano === a).map((r) => ({ rot: `${pct(r.pc_alcance_min, 0)} a ${r.nr_quintil === 5 ? "mais" : pct(r.pc_alcance_max, 0)}`, sub: `${V.int(r.qt_municipios)} cidades`, v: [r.pc_prefeito_esquerda, r.pc_prefeito_direita] })), { nomes: ["esquerda", "direita"], cores: [COR.esq, COR.dir], max: 100, fmt: (v) => pct(v, 0), cols: ["Benefícios por 100 eleitores", "Cidades"] }),
+          nota: `Cidades em cinco grupos do mesmo tamanho pelo número de benefícios do Bolsa Família por eleitor (dezembro de ${a}) e o lado do prefeito eleito. O que falta para 100% é o centro.` });
+        tema({ id: "e3", n: "+3", grupo: "A mais", titulo: "O Bolsa Família e o voto",
+          enunciado: ["Pergunta a mais do grupo: as cidades onde o Bolsa Família alcança mais gente votam diferente?"],
+          curta: `Presidente 2022: a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)} das cidades com mais Bolsa Família e em ${pct(p1.pc_esquerda_1o, 0)} das com menos.`,
+          num: pct(p5.pc_esquerda_1o, 0), numRot: `das cidades com mais Bolsa Família deram a vitória à esquerda para presidente (2022); nas com menos, ${pct(p1.pc_esquerda_1o, 0)}`,
+          resposta: `Sim, e muito: para presidente, em 2022, a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)} das cidades onde o programa alcança mais gente e em ${pct(p1.pc_esquerda_1o, 0)} das que ele alcança menos. Nas prefeituras a diferença é bem menor`,
+          partes: [
+            { q: "Onde há mais Bolsa Família, a esquerda vence mais?", a: `Para presidente, sim: ${pct(p5.pc_esquerda_1o, 0)} contra ${pct(p1.pc_esquerda_1o, 0)} em 2022. Para governador também; para deputado e vereador, a diferença é bem menor.`, escada: esBF, p: [0], v: [0] },
+            { q: "E nas prefeituras?", a: `A diferença é menor: em 2024, a esquerda elegeu ${pct(q24e.pc_prefeito_esquerda, 0)} dos prefeitos onde há mais Bolsa Família e ${pct(q24a.pc_prefeito_esquerda, 0)} onde há menos.`, p: [1], v: [1, 2] }],
+          pontos: [`<b>Para presidente, o alcance do programa separa o voto:</b> em 2022, nas cidades com mais benefícios por eleitor, a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)}; nas com menos, em ${pct(p1.pc_esquerda_1o, 0)}.`,
+            `<b>Na prefeitura, pesa mais a política local:</b> em 2024, a direita elegeu ${pct(q24e.pc_prefeito_direita, 0)} dos prefeitos das cidades com mais Bolsa Família e ${pct(q24a.pc_prefeito_direita, 0)} nas com menos.`],
+          vistas: [bfCargo, vistaQV(2024), vistaQV(2016)],
+          cuidado: ["O Bolsa Família vai para as famílias mais pobres; as cidades com mais benefícios são também as mais pobres, onde a esquerda vence mesmo sem o programa (tema 3). Por isso a comparação não mostra que o programa causa o voto.", "O programa é medido pelos benefícios pagos em dezembro do ano da eleição; entre 2021 e 2023 se chamou Auxílio Brasil."],
+          como: "Benefícios do Bolsa Família por município (Ministério do Desenvolvimento e Assistência Social, pela API do IpeaData) divididos pelos eleitores aptos. As cidades são divididas em cinco grupos do mesmo tamanho e, em cada grupo, conta-se o lado de quem ficou em 1º no 1º turno (TSE) pela página Partidos.",
+          tabelas: ["bolsa_familia_municipio", "comparecimento", "candidatura", "vw_partido_ano"], consultas: ["t11c", "t11b"], fonte: "MDS (via IpeaData) e TSE" });
+      }
+
+      // ---------- +4: mulheres na política ----------
+      {
+        const M = L("e4a"), m = (a, cg) => M.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
+        const K = L("e4b"), k = (a, cg, g) => K.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_genero === g) || {};
+        const CF = "#7a3e9d", CF2 = "#c9a3df", CH = "#5f6670";
+        const ULT = escadaAte(2026);
+        const vistaCE = porEleicao("Candidatas e eleitas", (E7, Y) => ({ rot: `Candidatas e eleitas · ${Y}`, legenda: leg([[CF2, "Mulheres entre os candidatos"], [CF, "Mulheres entre os eleitos"]]),
+          graf: () => pares(E7.map(([cg, a]) => { const r = m(a, cg); return r.qt_candidaturas ? { rot: CARGO[cg], sub: `${a} · ${V.int(r.qt_eleitos)} ${r.qt_eleitos === 1 ? "eleito" : "eleitos"}`, v: [r.pc_mulheres_candidatas, r.pc_mulheres_eleitas] } : null; }).filter(Boolean),
+            { nomes: ["candidatas", "eleitas"], cores: [CF2, CF], max: 100, fmt: (v) => pct(v, 0), cols: ["Cargo", "Eleição"] }),
+          nota: "Parte das candidaturas e dos eleitos que é de mulheres, cargo a cargo. Desde 2009 a lei exige pelo menos 30% de candidaturas de cada sexo nas listas de vereador e deputado." }), M.map((r) => r.nr_ano_eleicao), 2024);
+        const vistaTempo = porCargo("Ao longo do tempo", (a, cg) => { const rs = M.filter((r) => r.ds_cargo === cg); if (!rs.length) return null; const mx = Math.max(40, ...rs.map((r) => r.pc_mulheres_candidatas), ...rs.map((r) => r.pc_mulheres_eleitas || 0));
+          return { rot: `Ao longo do tempo · ${CARGO[cg]}`, legenda: leg([[CF2, "Candidatas"], [CF, "Eleitas"]]),
+            graf: () => linhas({ anos: rs.map((r) => r.nr_ano_eleicao), max: Math.ceil(mx / 10) * 10, rot: `Mulheres entre candidatos e eleitos para ${CARGO[cg].toLowerCase()}`, fmt: (v) => pct(v, 0), fmtPonto: (v) => pct(v, 0), fmtEixo: (t) => `${Math.round(t)}%`,
+              series: [{ nome: "Candidatas (%)", curto: "Candidatas", cor: CF2, grossa: true, v: rs.map((r) => r.pc_mulheres_candidatas) }, { nome: "Eleitas (%)", curto: "Eleitas", cor: CF, grossa: true, v: rs.map((r) => r.pc_mulheres_eleitas) }] }),
+            nota: `Parte das candidaturas e dos eleitos para ${CARGO[cg].toLowerCase()} que é de mulheres, em cada eleição desde 1998.` }; }, { padrao: "VEREADOR" });
+        const vistaSuc = porEleicao("Quem se elege", (E7, Y) => ({ rot: `Quem se elege · ${Y}`, legenda: leg([[CF, "Mulheres"], [CH, "Homens"]]),
+          graf: () => pares(E7.map(([cg, a]) => { const r = m(a, cg); return r.qt_candidaturas ? { rot: CARGO[cg], sub: String(a), v: [r.pc_sucesso_mulheres, r.pc_sucesso_homens] } : null; }).filter(Boolean),
+            { nomes: ["mulheres", "homens"], cores: [CF, CH], max: 100, fmt: (v) => pct(v, 0), cols: ["Cargo", "Eleição"] }),
+          nota: "De cada 100 candidatas (ou candidatos), quantas se elegeram, cargo a cargo." }), M.map((r) => r.nr_ano_eleicao), 2024);
+        const vista10 = porEleicao("Até 10 votos", (E7, Y) => ({ rot: `Até 10 votos · ${Y}`, legenda: leg([[CF, "Mulheres"], [CH, "Homens"]]),
+          graf: () => pares(E7.filter(([cg]) => PROPORC(cg)).map(([cg, a]) => { const f = k(a, cg, "FEMININO"), h = k(a, cg, "MASCULINO"); return f.qt_candidaturas ? { rot: CARGO[cg], sub: String(a), v: [f.pc_ate_10_votos, h.pc_ate_10_votos] } : null; }).filter(Boolean),
+            { nomes: ["mulheres", "homens"], cores: [CF, CH], max: 40, fmt: (v) => pct(v, 0), cols: ["Cargo", "Eleição"] }),
+          nota: "Parte das candidaturas com no máximo 10 votos, entre as que estavam aptas no dia da eleição. A barra vai até 40%." }), K.map((r) => r.nr_ano_eleicao), 2016);
+        const v24 = m(2024, "VEREADOR"), d26 = m(2026, "DEPUTADO FEDERAL"), v00 = m(2000, "VEREADOR"), d98 = m(1998, "DEPUTADO FEDERAL");
+        const f16 = k(2016, "VEREADOR", "FEMININO"), h16 = k(2016, "VEREADOR", "MASCULINO"), f24 = k(2024, "VEREADOR", "FEMININO"), h24 = k(2024, "VEREADOR", "MASCULINO");
+        const esCE = escada((a, cg) => { const r = m(a, cg); return r.qt_candidaturas && `${pct(r.pc_mulheres_candidatas, 0)} das candidaturas eram de mulheres; entre os eleitos, ${pct(r.pc_mulheres_eleitas, 0)}${nC(r.qt_eleitos, "eleito", "eleitos")}.`; }, ULT);
+        const esSuc = escada((a, cg) => { const r = m(a, cg); return r.qt_candidaturas && r.qt_eleitos > 1 && `se elegeram ${pct(r.pc_sucesso_mulheres, 0)} das candidatas e ${pct(r.pc_sucesso_homens, 0)} dos candidatos.`; }, ULT);
+        tema({ id: "e4", n: "+4", grupo: "A mais", titulo: "Mulheres na política",
+          enunciado: ["Pergunta a mais do grupo: quantas mulheres se candidatam e quantas se elegem, do vereador ao presidente?"],
+          curta: `Vereador 2024: ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas eram de mulheres, e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos.`,
+          kpis: [[pct(v24.pc_mulheres_candidatas, 0), "das candidaturas a vereador eram de mulheres (2024)"], [pct(v24.pc_mulheres_eleitas, 0), "dos vereadores eleitos eram mulheres"]],
+          resposta: `Elas são cerca de um terço dos candidatos a vereador e deputado, por causa da cota, mas só um em cada cinco eleitos: em 2024, ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas a vereador e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos`,
+          partes: [
+            { q: "Quantas se candidatam e quantas se elegem?", a: `Para vereador, ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas e só ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos em 2024; para deputado federal, ${pct(d26.pc_mulheres_candidatas, 0)} e ${pct(d26.pc_mulheres_eleitas, 0)} em 2026.`, escada: esCE, p: [0], v: [0, 1] },
+            { q: "A candidata se elege menos que o candidato?", a: `Sim, menos da metade: em 2024, ${pct(v24.pc_sucesso_mulheres, 0)} das candidatas a vereador se elegeram; dos candidatos, ${pct(v24.pc_sucesso_homens, 0)}.`, escada: esSuc, p: [1], v: [2] },
+            { q: "Há candidatura só para cumprir a cota?", a: `Há sinais: em 2016, ${pct(f16.pc_ate_10_votos, 0)} das candidatas a vereadora tiveram até 10 votos; entre os homens, ${pct(h16.pc_ate_10_votos, 0)}.`, p: [2], v: [3] }],
+          pontos: [`<b>A cota aumentou as candidatas, e as eleitas cresceram devagar:</b> as mulheres eram ${pct(v00.pc_mulheres_candidatas, 0)} dos candidatos a vereador em 2000 e ${pct(v24.pc_mulheres_candidatas, 0)} em 2024; entre os eleitos, de ${pct(v00.pc_mulheres_eleitas, 0)} para ${pct(v24.pc_mulheres_eleitas, 0)}. Na Câmara dos Deputados, de ${pct(d98.pc_mulheres_eleitas, 0)} (1998) para ${pct(d26.pc_mulheres_eleitas, 0)} (2026).`,
+            `<b>De cada 100 candidatas a vereadora, ${Math.round(v24.pc_sucesso_mulheres)} se elegeram em 2024;</b> de cada 100 candidatos, ${Math.round(v24.pc_sucesso_homens)}.`,
+            `<b>Candidaturas quase sem voto são mais comuns entre mulheres:</b> para vereador, ${pct(f16.pc_ate_10_votos, 0)} delas tiveram até 10 votos em 2016, contra ${pct(h16.pc_ate_10_votos, 0)} dos homens; em 2024, ${pct(f24.pc_ate_10_votos, 0)} contra ${pct(h24.pc_ate_10_votos, 0)}. Uma candidatura com quase nenhum voto pode existir só para o partido cumprir a cota de 30%.`],
+          vistas: [vistaCE, vistaTempo, vistaSuc, vista10],
+          cuidado: ["Gênero declarado no registro da candidatura; 1994 e 1996 quase não têm o campo e ficam de fora.", "Até 10 votos não prova que a candidatura era só para cumprir a cota: há quem desista sem registrar a renúncia. Em 2024 e 2026 o TSE não publicou o detalhe da situação, e as renúncias não puderam ser tiradas, o que aumenta a parte dos dois sexos.", POUCOS],
+          como: "Candidaturas de 1998 a 2026 (TSE), com o gênero da pessoa e a situação final (eleito ou não). Para a cota: votos nominais do 1º turno de cada candidatura a vereador e deputado, sem as barradas pela Justiça Eleitoral.",
+          tabelas: ["candidatura", "pessoa", "cargo", "situacao_totalizacao", "situacao_registro", "votacao_candidato"], consultas: ["e4a", "e4b"], fonte: "TSE" });
+      }
+
+      // ---------- +5: troca de partido ----------
+      {
+        const S = L("e5a"), s = (a, cg) => S.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
+        const CGS = ESCADA.filter(([cg]) => S.some((r) => r.ds_cargo === cg)).map(([cg]) => cg), ULT = escadaAte(2026).filter(([cg]) => CGS.includes(cg));
+        const anosS = S.map((r) => r.nr_ano_eleicao);
+        const vistaT = porEleicao("Quem troca", (E7, Y) => ({ rot: `Quem troca · ${Y}`,
+          graf: () => barras(E7.filter(([cg]) => CGS.includes(cg)).map(([cg, a]) => { const r = s(a, cg); return r.qt_tentaram ? { rot: CARGO[cg], sub: `${a} · ${V.int(r.qt_tentaram)} tentaram de novo`, v: r.pc_trocaram, vTxt: pct(r.pc_trocaram, 0) } : null; }).filter(Boolean),
+            { cor: COR.terra, max: 100, cols: ["Cargo", "Eleição", "Trocaram de partido"] }),
+          nota: "Dos eleitos que tentaram o mesmo cargo na eleição seguinte, quantos foram por outro partido. Fusão e troca de nome não contam como troca." }), anosS, 2024);
+        const vistaTT = porCargo("Ao longo do tempo", (a, cg) => { const rs = S.filter((r) => r.ds_cargo === cg); return rs.length ? { rot: `Ao longo do tempo · ${CARGO[cg]}`,
+          graf: () => linhas({ anos: rs.map((r) => r.nr_ano_eleicao), max: 100, rot: `Eleitos para ${CARGO[cg].toLowerCase()} que trocaram de partido para tentar de novo`, fmt: (v) => pct(v, 0), fmtPonto: (v) => pct(v, 0), fmtEixo: (t) => `${Math.round(t)}%`,
+            series: [{ nome: "Trocaram de partido (%)", curto: "Trocaram", cor: COR.terra, grossa: true, v: rs.map((r) => r.pc_trocaram) }] }),
+          nota: `Cada ponto é a eleição em que o eleito tentou de novo (4 anos depois) a vaga de ${CARGO[cg].toLowerCase()}.` } : null; }, { cargos: ESCADA.filter(([cg]) => CGS.includes(cg)), padrao: "DEPUTADO FEDERAL" });
+        const vistaR = porEleicao("Quem se reelege", (E7, Y) => ({ rot: `Quem se reelege · ${Y}`, legenda: leg([[COR.terra, "Trocou de partido"], [COR.azul, "Ficou no partido"]]),
+          graf: () => pares(E7.filter(([cg]) => CGS.includes(cg)).map(([cg, a]) => { const r = s(a, cg); return r.qt_tentaram ? { rot: CARGO[cg], sub: String(a), v: [r.pc_reeleitos_trocando, r.pc_reeleitos_ficando] } : null; }).filter(Boolean),
+            { nomes: ["trocou", "ficou"], cores: [COR.terra, COR.azul], max: 100, fmt: (v) => pct(v, 0), cols: ["Cargo", "Eleição"] }),
+          nota: "De cada 100 eleitos que tentaram o mesmo cargo de novo, quantos se reelegeram, separando quem trocou de partido de quem ficou." }), anosS, 2024);
+        const df = s(2022, "DEPUTADO FEDERAL"), d26 = s(2026, "DEPUTADO FEDERAL"), ve = s(2024, "VEREADOR"), pr = s(2024, "PREFEITO"), de = s(2022, "DEPUTADO ESTADUAL");
+        const esT = escada((a, cg) => { const r = s(a, cg); return r.qt_tentaram && `dos ${V.int(r.qt_tentaram)} eleitos que tentaram de novo, ${pct(r.pc_trocaram, 0)} foram por outro partido.`; }, ULT);
+        const esR = escada((a, cg) => { const r = s(a, cg); return r.qt_tentaram && r.pc_reeleitos_trocando != null && `se reelegeram ${pct(r.pc_reeleitos_trocando, 0)} dos que trocaram e ${pct(r.pc_reeleitos_ficando, 0)} dos que ficaram${nC(r.qt_tentaram, "eleito", "eleitos")}.`; }, ULT);
+        tema({ id: "e5", n: "+5", grupo: "A mais", titulo: "Troca de partido",
+          enunciado: ["Pergunta a mais do grupo: quantos eleitos trocam de partido para tentar de novo, e trocar ajuda?"],
+          curta: `Vereador 2024: ${pct(ve.pc_trocaram, 0)} dos que tentaram a reeleição foram por outro partido.`,
+          kpis: [[pct(ve.pc_trocaram, 0), "dos vereadores que tentaram a reeleição em 2024 trocaram de partido"], [pct(d26.pc_trocaram, 0), "dos deputados federais, em 2026"]],
+          resposta: `Trocar de partido é comum, e não ajuda a voltar: ${pct(ve.pc_trocaram, 0)} dos vereadores que tentaram a reeleição em 2024 foram por outro partido; para deputado federal, ${pct(d26.pc_trocaram, 0)} em 2026, e quem trocou se reelegeu menos (${pct(d26.pc_reeleitos_trocando, 0)} contra ${pct(d26.pc_reeleitos_ficando, 0)})`,
+          partes: [
+            { q: "Quantos eleitos trocam de partido?", a: `Quanto mais local o cargo, mais se troca: ${pct(ve.pc_trocaram, 0)} dos vereadores e ${pct(pr.pc_trocaram, 0)} dos prefeitos em 2024; ${pct(d26.pc_trocaram, 0)} dos deputados federais em 2026.`, escada: esT, p: [0], v: [0, 1] },
+            { q: "Trocar de partido ajuda a se reeleger?", a: `Não: em 2026, ${pct(d26.pc_reeleitos_trocando, 0)} dos deputados federais que trocaram se reelegeram; dos que ficaram, ${pct(d26.pc_reeleitos_ficando, 0)}. Para prefeito, quase não faz diferença.`, escada: esR, p: [1], v: [2] }],
+          pontos: [`<b>Nas câmaras de vereadores, a maioria troca:</b> ${pct(ve.pc_trocaram, 0)} dos vereadores que tentaram a reeleição em 2024 foram por outro partido; nas assembleias, ${pct(de.pc_trocaram, 0)} dos deputados estaduais em 2022.`,
+            `<b>Quem fica se reelege mais:</b> deputado federal que ficou no partido voltou em ${pct(df.pc_reeleitos_ficando, 0)} dos casos em 2022; quem trocou, em ${pct(df.pc_reeleitos_trocando, 0)}. Para prefeito, em 2024, ${pct(pr.pc_reeleitos_trocando, 0)} e ${pct(pr.pc_reeleitos_ficando, 0)}.`],
+          vistas: [vistaT, vistaTT, vistaR],
+          cuidado: ["O partido é comparado pela linhagem, com as fusões juntas (DEM e PSL → União; PTB, Patriota e PRP → PRD; PSC e PHS → Podemos; PROS → Solidariedade; PPL → PCdoB): quem só acompanhou uma fusão ou troca de nome não trocou.", "Senador fica de fora: o mandato é de 8 anos. A pessoa é seguida pelo título de eleitor, e 1996 fica de fora.", "É associação: quem troca pode estar saindo de um partido que já ia mal na região."],
+          como: "Candidaturas eleitas (TSE) ligadas à candidatura da mesma pessoa, ao mesmo cargo, 4 anos depois, pelo título de eleitor. O partido de cada uma é comparado pela linhagem do partido (página Partidos).",
+          tabelas: ["candidatura", "pessoa", "partido", "partido_linhagem", "situacao_totalizacao"], consultas: ["e5a"], fonte: "TSE" });
+      }
     }
     return T;
   }
@@ -1252,7 +1372,9 @@
     if (CACHE) return CACHE;
     const P = await V.dados("br/perguntas");
     const C = Object.fromEntries(P.consultas.map((c) => [c.id, c]));
-    return (CACHE = { P, C, temas: montarTemas(C, montarAntigas(C)) });
+    CACHE = { P, C, temas: montarTemas(C, montarAntigas(C)) };
+    V.pqTemas = CACHE.temas;   // o relatório (relatorio_final/coletar_temas.js) lê daqui as frases cargo a cargo de cada parte
+    return CACHE;
   }
 
   // o primeiro painel guarda os ids de antes (pq-painel, pq-graf...), que os testes e os links usam
@@ -1365,6 +1487,11 @@
     const item = (b) => `<li><a href="#/perguntas/${b.id}">${selo(b)}
         <strong class="pq-lista__q">${b.titulo}</strong><span class="pq-lista__rot">${b.curta}</span></a></li>`;
     const principais = temas.filter((b) => typeof b.n === "number"), extras = temas.filter((b) => typeof b.n !== "number");
+    // as 12 perguntas que o grupo escolheu no começo do trabalho, e o tema que responde cada uma
+    const BASE = [["Quanto custa cada cadeira?", "t1"], ["O dinheiro aumenta a chance de vencer?", "t2"], ["O desenvolvimento da cidade (IBGE) muda o partido votado e a abstenção?", "t3"],
+      ["A escolaridade dos candidatos é parecida com a da população?", "t4"], ["Quanto vale o voto só no partido (legenda)?", "t7"], ["O que dizem as propostas dos candidatos? (nuvem de palavras)", "t9"],
+      ["Jovens e não jovens votam diferente?", "t10"], ["A doação de empresas tem lado político?", "t12"], ["O lado político de cada cidade e região mudou com o tempo?", "t14"],
+      ["Dinheiro público ou privado: quem se elege com qual?", "t15"], ["Onde o candidato investe em propaganda? (nuvem de palavras)", "e1"], ["O político e sua linha do tempo: quanto dura uma carreira?", "e2"]];
     const ASSUNTOS = [["Dinheiro", "Quanto custa, quem paga e o que isso muda"], ["Perfil", "Quem são os candidatos e os eleitos"], ["Território", "O lugar e o voto"], ["Voto", "Como o eleitor vota (ou não vota)"], ["Partidos", "Propostas, partidos e Justiça Eleitoral"]];
     return `<div class="pagina pq-pagina">
       <header class="pq-cab">
@@ -1380,8 +1507,11 @@
       ${ASSUNTOS.map(([g, sub]) => { const ts = principais.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
         <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
         <ol class="pq-lista">${ts.map(item).join("")}</ol></section>` : ""; }).join("")}
-      <section class="pq-assunto" aria-labelledby="pq-g-mais"><h2 class="pq-assunto__tit" id="pq-g-mais">Duas perguntas a mais do grupo</h2>
+      <section class="pq-assunto" aria-labelledby="pq-g-mais"><h2 class="pq-assunto__tit" id="pq-g-mais">Perguntas a mais do grupo <span>O que o grupo quis saber além do enunciado</span></h2>
       <ol class="pq-lista">${extras.map(item).join("")}</ol></section>
+      <section class="pq-assunto" aria-labelledby="pq-g-base"><h2 class="pq-assunto__tit" id="pq-g-base">As 12 perguntas base do grupo <span>Onde cada uma é respondida</span></h2>
+      <ol class="pq-lista">${BASE.map(([q, id], i) => { const t = temas.find((x) => x.id === id); return t ? `<li><a href="#/perguntas/${id}"><span class="pq-selo">${i + 1}</span>
+        <strong class="pq-lista__q">${q}</strong><span class="pq-lista__rot">Respondida em ${typeof t.n === "number" ? `tema ${t.n}` : `pergunta a mais ${t.n}`}: ${t.titulo}</span></a></li>` : ""; }).join("")}</ol></section>
       <p class="pq__rodape">Consultas em <code>scripts/consultas_brasil.sql</code>, rodadas em ${P.gerado.split("-").reverse().join("/")} no banco nacional (DuckDB).</p>
     </div>`;
   }

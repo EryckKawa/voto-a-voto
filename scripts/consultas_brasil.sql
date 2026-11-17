@@ -1444,3 +1444,85 @@ SELECT b.nr_ano_eleicao, cg.ds_cargo, b.cd_cargo, COUNT(*) AS qt_candidaturas, C
        ROUND(100.0 * COUNT_IF(COALESCE(fl_inapta, false)) / COUNT(*), 2) AS pc_inaptas
 FROM b JOIN cargo cg ON cg.cd_cargo = b.cd_cargo
 GROUP BY 1, 2, 3 ORDER BY 3 DESC, 1;
+
+-- @e4a | Pergunta a mais do grupo: mulheres na política — candidatas e eleitas, cargo a cargo, eleição a eleição
+-- Gênero declarado no registro (pessoa.ds_genero); ficam de fora os registros sem gênero (1994 e 1996 quase não têm).
+WITH c AS (
+    SELECT e.nr_ano_eleicao, cg.ds_cargo, p.ds_genero, COALESCE(st.fl_eleito, false) AS fl_eleito
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN pessoa p ON p.id_pessoa = c.id_pessoa
+    JOIN cargo cg ON cg.cd_cargo = c.cd_cargo LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE p.ds_genero IN ('MASCULINO', 'FEMININO') AND c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13) AND e.nr_ano_eleicao >= 1998
+)
+SELECT nr_ano_eleicao, ds_cargo, COUNT(*) AS qt_candidaturas,
+       ROUND(100 * AVG(CAST(ds_genero = 'FEMININO' AS INT)), 1) AS pc_mulheres_candidatas,
+       COUNT_IF(fl_eleito) AS qt_eleitos,
+       ROUND(100 * COUNT_IF(fl_eleito AND ds_genero = 'FEMININO') / NULLIF(COUNT_IF(fl_eleito), 0), 1) AS pc_mulheres_eleitas,
+       ROUND(100 * COUNT_IF(fl_eleito AND ds_genero = 'FEMININO') / NULLIF(COUNT_IF(ds_genero = 'FEMININO'), 0), 1) AS pc_sucesso_mulheres,
+       ROUND(100 * COUNT_IF(fl_eleito AND ds_genero = 'MASCULINO') / NULLIF(COUNT_IF(ds_genero = 'MASCULINO'), 0), 1) AS pc_sucesso_homens
+FROM c GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @e4b | Pergunta a mais do grupo: candidaturas com até 10 votos, por gênero (vereador e deputados)
+-- Desde 2009 a lei exige pelo menos 30% de candidaturas de cada sexo nas listas proporcionais. Candidatura com quase nenhum voto
+-- pode ser só para cumprir a cota. Ficam de fora as barradas pela Justiça Eleitoral (que não recebem voto válido).
+WITH v AS (SELECT id_candidatura, SUM(qt_votos_nominais) AS qt FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+c AS (
+    SELECT e.nr_ano_eleicao, cg.ds_cargo, p.ds_genero, COALESCE(v.qt, 0) AS qt_votos
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN pessoa p ON p.id_pessoa = c.id_pessoa
+    JOIN cargo cg ON cg.cd_cargo = c.cd_cargo LEFT JOIN v ON v.id_candidatura = c.id_candidatura
+    LEFT JOIN situacao_registro r ON r.id_candidatura = c.id_candidatura
+    WHERE c.cd_cargo IN (6, 7, 13) AND p.ds_genero IN ('MASCULINO', 'FEMININO') AND e.nr_ano_eleicao >= 2010
+      AND COALESCE(r.ds_situacao_candidatura, '') NOT LIKE 'INAPTO%'
+      AND COALESCE(r.ds_detalhe_situacao, '') NOT SIMILAR TO '.*(INDEFERIDO|RENÚNCIA|CANCELADO|CASSADO|FALECI).*'
+)
+SELECT nr_ano_eleicao, ds_cargo, ds_genero, COUNT(*) AS qt_candidaturas, COUNT_IF(qt_votos <= 10) AS qt_ate_10_votos,
+       ROUND(100 * COUNT_IF(qt_votos <= 10) / COUNT(*), 1) AS pc_ate_10_votos
+FROM c GROUP BY 1, 2, 3 ORDER BY 1, 2, 3;
+
+-- @e5a | Pergunta a mais do grupo: troca de partido — quem foi eleito e tentou o mesmo cargo na eleição seguinte (4 anos depois)
+-- O partido é comparado pela linhagem (partido_linhagem), com as fusões juntas (DEM e PSL → União; PTB, Patriota e PRP → PRD;
+-- PSC e PHS → Podemos; PROS → Solidariedade; PPL → PCdoB): troca de nome ou fusão não conta como troca.
+-- Senador fica de fora (mandato de 8 anos). A pessoa é seguida pelo título de eleitor.
+WITH c AS (
+    SELECT c.id_pessoa, e.nr_ano_eleicao AS ano, c.cd_cargo, cg.ds_cargo,
+           -- quem só acompanhou uma fusão não trocou de partido: as linhagens que se fundiram contam como uma
+           CASE WHEN COALESCE(l.cd_linhagem, p.sg_partido) IN ('DEM', 'PSL', 'UNIAO') THEN 'UNIAO'
+                WHEN COALESCE(l.cd_linhagem, p.sg_partido) IN ('PTB', 'PATRIOTA', 'PRP', 'PRD') THEN 'PRD'
+                WHEN COALESCE(l.cd_linhagem, p.sg_partido) IN ('PSC', 'PHS', 'PODE') THEN 'PODE'
+                WHEN COALESCE(l.cd_linhagem, p.sg_partido) IN ('PROS', 'SD') THEN 'SD'
+                WHEN COALESCE(l.cd_linhagem, p.sg_partido) IN ('PPL', 'PCDOB') THEN 'PCDOB'
+                ELSE COALESCE(l.cd_linhagem, p.sg_partido) END AS ds_linhagem,
+           COALESCE(st.fl_eleito, false) AS fl_eleito
+    FROM candidatura c JOIN eleicao e ON e.id_eleicao = c.id_eleicao JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+    JOIN partido p ON p.id_partido = c.id_partido JOIN pessoa ps ON ps.id_pessoa = c.id_pessoa
+    LEFT JOIN partido_linhagem l ON l.id_partido = c.id_partido AND l.nr_ano_eleicao = e.nr_ano_eleicao
+    LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+    WHERE c.cd_cargo IN (3, 6, 7, 11, 13) AND ps.nr_titulo_eleitoral NOT LIKE 'SQ%'
+)
+SELECT b.ano AS nr_ano_eleicao, b.ds_cargo, COUNT(*) AS qt_tentaram,
+       COUNT_IF(a.ds_linhagem <> b.ds_linhagem) AS qt_trocaram,
+       ROUND(100 * COUNT_IF(a.ds_linhagem <> b.ds_linhagem) / COUNT(*), 1) AS pc_trocaram,
+       ROUND(100 * COUNT_IF(b.fl_eleito AND a.ds_linhagem <> b.ds_linhagem) / NULLIF(COUNT_IF(a.ds_linhagem <> b.ds_linhagem), 0), 1) AS pc_reeleitos_trocando,
+       ROUND(100 * COUNT_IF(b.fl_eleito AND a.ds_linhagem = b.ds_linhagem) / NULLIF(COUNT_IF(a.ds_linhagem = b.ds_linhagem), 0), 1) AS pc_reeleitos_ficando
+FROM c a JOIN c b ON b.id_pessoa = a.id_pessoa AND b.cd_cargo = a.cd_cargo AND b.ano = a.ano + 4
+WHERE a.fl_eleito
+GROUP BY 1, 2 ORDER BY 2, 1;
+
+-- @e1n | Pergunta a mais do grupo (+1): as palavras que os candidatos usam para descrever as despesas da campanha, cargo a cargo
+-- A descrição que o candidato escreve em cada despesa (despesa.ds_despesa), sem acento e em minúsculas, cortada em palavras de 4 letras
+-- ou mais; ficam de fora as palavras genéricas de prestação de contas. As 40 mais frequentes de cada cargo e eleição.
+WITH d AS (SELECT d.nr_ano_eleicao, cg.ds_cargo, lower(strip_accents(d.ds_despesa)) AS t
+           FROM despesa d JOIN candidatura c ON c.id_candidatura = d.id_candidatura JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+           WHERE d.nr_ano_eleicao >= 2018 AND c.cd_cargo IN (1, 3, 5, 6, 7, 11, 13) AND d.ds_despesa IS NOT NULL AND d.ds_despesa <> '#NULO'),
+p AS (SELECT nr_ano_eleicao, ds_cargo, unnest(regexp_split_to_array(t, '[^a-z]+')) AS ds_palavra FROM d)
+SELECT nr_ano_eleicao, ds_cargo, ds_palavra, COUNT(*) AS qt
+FROM p
+WHERE length(ds_palavra) >= 4 AND ds_palavra NOT IN ('nulo', 'para', 'servicos', 'servico', 'serv', 'prestacao', 'prest', 'eleitoral', 'eleitorais',
+      'campanha', 'comum', 'contrato', 'atividade', 'atividades', 'tamanho', 'cores', 'eleicao', 'eleicoes', 'politico', 'politica', 'referente',
+      'conforme', 'nota', 'fiscal', 'valor', 'pagamento', 'despesa', 'despesas', 'outros', 'outras', 'diversos', 'diversas', 'candidato',
+      'candidata', 'como', 'pelo', 'pela', 'com', 'sobre', 'periodo', 'unidades', 'unid', 'tipo', 'medida', 'medidas', 'quantidade',
+      -- tarifas do banco, contador e advogado não são propaganda; abreviações soltas
+      'tarifa', 'tarifas', 'bancaria', 'bancarias', 'banco', 'contabeis', 'contabil', 'contador', 'honorarios', 'advocaticios', 'juridicos',
+      'juridica', 'assessoria', 'pgto', 'transp', 'hosped', 'aquisicao', 'compra', 'pagto', 'mensal', 'parcela')
+GROUP BY 1, 2, 3
+QUALIFY ROW_NUMBER() OVER (PARTITION BY nr_ano_eleicao, ds_cargo ORDER BY COUNT(*) DESC, ds_palavra) <= 40
+ORDER BY 1, 2, 4 DESC;

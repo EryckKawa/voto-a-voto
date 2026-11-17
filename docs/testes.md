@@ -96,5 +96,5 @@ Para medir velocidade, mantenha a janela do navegador restaurada e visível. Uma
 
 ## Varredura de quebras de layout
 
-`node testes/auditar_quebras.js http://localhost:8766/ quebras.json` abre 16 páginas em 7 larguras (360 a 1920 px) e lista: página mais larga que a tela, elemento que vaza para fora da tela, rótulo curto (menu, botão, chip, selo, número) que quebra em duas linhas e texto cortado. Em 18/11 ela achou o menu quebrando entre 721 e 1100 px e entre 521 e 720 px, o "42,6 milhões" da Ninguém em duas linhas no celular, as camadas do Mapa quebrando no celular, os cartões do Revela vazando 3 px a 360 px e o cabeçalho "Mesmo lado" em Partidos; depois das correções, nenhum achado.
+`node testes/auditar_quebras.js http://localhost:8766/ quebras.json` abre 18 páginas em 7 larguras (360 a 1920 px) e lista: página mais larga que a tela, elemento que vaza para fora da tela, rótulo curto (menu, botão, chip, selo, número) que quebra em duas linhas e texto cortado. Em 18/11 ela achou o menu quebrando entre 721 e 1100 px e entre 521 e 720 px, o "42,6 milhões" da Ninguém em duas linhas no celular, as camadas do Mapa quebrando no celular, os cartões do Revela vazando 3 px a 360 px e o cabeçalho "Mesmo lado" em Partidos; depois das correções, nenhum achado.
 

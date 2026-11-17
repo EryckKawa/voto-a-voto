@@ -1,6 +1,6 @@
-# Os 16 temas do enunciado
+# As perguntas do trabalho
 
-As perguntas do trabalho são os 16 temas de `questoes_analise_dados_eleitorais` (o enunciado da disciplina), respondidos com as eleições de todo o Brasil, de 1994 a 2026. No site, cada tema é uma página (`#/perguntas/t1` … `t16`), com:
+As perguntas do trabalho são os temas de `questoes_analise_dados_eleitorais` (o enunciado da disciplina), respondidos com as eleições de todo o Brasil, de 1994 a 2026. No site, cada tema é uma página (`#/perguntas/t1` … `t16`), e as perguntas a mais do grupo, em `#/perguntas/e1` … `e5`, com:
 
 - o que o enunciado pede, com as palavras dele;
 - a **resposta** em uma frase;
@@ -191,11 +191,10 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 **Resposta:** As duas linhas seguem caminhos separados: o Bolsa Família cresceu de 6,6 milhões de benefícios (2004) para 14,1 milhões (2014) enquanto as empresas pagavam de 24% a 35% das campanhas. Depois da proibição de 2015, a doação de empresas caiu a 0,6%, e o programa continuou.
 
 - Antes da proibição, as empresas doavam igual em todo lugar: em 2012, pagavam 24% das campanhas municipais nas cidades onde o Bolsa Família alcança menos gente e 25% onde alcança mais.
-- O alcance do programa separa o voto, não o dinheiro: em 2024, a esquerda elegeu o prefeito em 21% das cidades com mais benefícios por eleitor e em 6% das com menos; a direita, em 50% e 69%.
 - Depois de 2015, o dinheiro público ocupou o lugar das empresas: em 2024, ele foi 69% a 73% da receita das campanhas municipais, em todos os grupos de cidades.
 - O programa ficou maior em 2022: 21 milhões de benefícios em dezembro (como Auxílio Brasil), e 20,4 milhões em 2024.
 
-**Cuidado:** O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil. Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada. Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra.
+**Cuidado:** O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil. O voto nas cidades com mais e menos Bolsa Família saiu deste tema (o enunciado pergunta só pela doação de empresas) e virou a pergunta a mais 3. Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada. Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra.
 
 ### Tema 12. Doações de pessoas jurídicas e viés político
 
@@ -270,6 +269,8 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 - A internet cresce devagar: o impulsionamento nas redes foi de 2,3% do gasto em 2018 para 5,0% em 2024.
 - Cada cargo gasta de um jeito: em 2024, o vereador pôs 24% em material impresso e 18% em militância de rua; o prefeito, 10% em rádio, TV e vídeo.
 
+- Que palavras aparecem nas despesas? As da campanha de rua: para vereador, em 2024, as mais escritas foram adesivo, cabo eleitoral, santinho e militância. (nuvem por cargo e eleição, consulta `e1n`)
+
 **Cuidado:** As categorias são as que o próprio candidato escolhe na prestação de contas.
 
 ### Pergunta a mais 2. Qual é o histórico de cada político?
@@ -281,6 +282,59 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 - A ficha de cada um dos 2,4 milhões de candidatos está na página Políticos: cada eleição, partido, votos, dinheiro, bens e, para deputado federal, como votou na Câmara.
 
 **Cuidado:** A mesma pessoa é seguida pelo título de eleitor; 1996 fica de fora. Senador tem mandato de oito anos, o que puxa para baixo a volta de 4 anos.
+
+### Pergunta a mais 3. O Bolsa Família e o voto
+
+**O enunciado pede:** Pergunta a mais do grupo: as cidades onde o Bolsa Família alcança mais gente votam diferente?
+
+**Resposta:** Presidente 2022: a esquerda ficou em 1º em 96% das cidades com mais Bolsa Família e em 16% das com menos.
+
+- **Onde há mais Bolsa Família, a esquerda vence mais?** Para presidente, sim: 96% contra 16% em 2022. Para governador também; para deputado e vereador, a diferença é bem menor.
+- **E nas prefeituras?** A diferença é menor: em 2024, a esquerda elegeu 21% dos prefeitos onde há mais Bolsa Família e 6% onde há menos.
+
+**Cuidado:** O Bolsa Família vai para as famílias mais pobres; as cidades com mais benefícios são também as mais pobres, onde a esquerda vence mesmo sem o programa (tema 3). Por isso a comparação não mostra que o programa causa o voto. O programa é medido pelos benefícios pagos em dezembro do ano da eleição; entre 2021 e 2023 se chamou Auxílio Brasil.
+
+### Pergunta a mais 4. Mulheres na política
+
+**O enunciado pede:** Pergunta a mais do grupo: quantas mulheres se candidatam e quantas se elegem, do vereador ao presidente?
+
+**Resposta:** Vereador 2024: 35% das candidaturas eram de mulheres, e 18% dos eleitos.
+
+- **Quantas se candidatam e quantas se elegem?** Para vereador, 35% das candidaturas e só 18% dos eleitos em 2024; para deputado federal, 37% e 21% em 2026.
+- **A candidata se elege menos que o candidato?** Sim, menos da metade: em 2024, 7% das candidatas a vereador se elegeram; dos candidatos, 17%.
+- **Há candidatura só para cumprir a cota?** Há sinais: em 2016, 31% das candidatas a vereadora tiveram até 10 votos; entre os homens, 5%.
+
+**Cuidado:** Gênero declarado no registro da candidatura; 1994 e 1996 quase não têm o campo e ficam de fora. Até 10 votos não prova que a candidatura era só para cumprir a cota: há quem desista sem registrar a renúncia. Em 2024 e 2026 o TSE não publicou o detalhe da situação, e as renúncias não puderam ser tiradas, o que aumenta a parte dos dois sexos. Para presidente (11 candidatos em 2022), governador e senador (cerca de 200 cada), os grupos são pequenos: um candidato a mais ou a menos muda muito a porcentagem.
+
+### Pergunta a mais 5. Troca de partido
+
+**O enunciado pede:** Pergunta a mais do grupo: quantos eleitos trocam de partido para tentar de novo, e trocar ajuda?
+
+**Resposta:** Vereador 2024: 61% dos que tentaram a reeleição foram por outro partido.
+
+- **Quantos eleitos trocam de partido?** Quanto mais local o cargo, mais se troca: 61% dos vereadores e 48% dos prefeitos em 2024; 30% dos deputados federais em 2026.
+- **Trocar de partido ajuda a se reeleger?** Não: em 2026, 62% dos deputados federais que trocaram se reelegeram; dos que ficaram, 74%. Para prefeito, quase não faz diferença.
+
+**Cuidado:** O partido é comparado pela linhagem, com as fusões juntas (DEM e PSL → União; PTB, Patriota e PRP → PRD; PSC e PHS → Podemos; PROS → Solidariedade; PPL → PCdoB): quem só acompanhou uma fusão ou troca de nome não trocou. Senador fica de fora: o mandato é de 8 anos. A pessoa é seguida pelo título de eleitor, e 1996 fica de fora. É associação: quem troca pode estar saindo de um partido que já ia mal na região.
+
+## As 12 perguntas base do grupo
+
+No começo do trabalho, o grupo definiu 12 perguntas. A página `#/perguntas` lista cada uma com o link para onde ela é respondida:
+
+| Nº | Pergunta base | Onde é respondida |
+|---|---|---|
+| 1 | Quanto custa cada cadeira? | Tema 1 |
+| 2 | O dinheiro aumenta a chance de vencer? | Tema 2 |
+| 3 | O desenvolvimento da cidade (IBGE) muda o partido votado e a abstenção? | Tema 3 |
+| 4 | A escolaridade dos candidatos é parecida com a da população? | Tema 4 |
+| 5 | Quanto vale o voto só no partido (legenda)? | Tema 7 |
+| 6 | O que dizem as propostas dos candidatos? (nuvem de palavras) | Tema 9 |
+| 7 | Jovens e não jovens votam diferente? | Tema 10 |
+| 8 | A doação de empresas tem lado político? | Tema 12 |
+| 9 | O lado político de cada cidade e região mudou com o tempo? | Tema 14 |
+| 10 | Dinheiro público ou privado: quem se elege com qual? | Tema 15 |
+| 11 | Onde o candidato investe em propaganda? (nuvem de palavras) | Pergunta a mais 1 |
+| 12 | O político e sua linha do tempo: quanto dura uma carreira? | Pergunta a mais 2 |
 
 ## As consultas
 
@@ -364,3 +418,7 @@ Os números abaixo são os da última rodada das consultas (17/11/2026), copiado
 | `t13b` | Tema 13: mapa de calor cargo a cargo (presidente fica em `t13a`) |
 | `t16d` | Tema 16: candidaturas barradas, cargo a cargo, 2008 a 2022 |
 | `t16c` | Tema 16: o tipo de processo (indeferimento, cassação, inelegibilidade, renúncia) e o voto em quem foi barrado, 2008, 2012 e 2016 (anos com o detalhe) |
+| `e1n` | Pergunta a mais do grupo (+1): as palavras que os candidatos usam para descrever as despesas da campanha, cargo a cargo |
+| `e4a` | Pergunta a mais do grupo: mulheres na política — candidatas e eleitas, cargo a cargo, eleição a eleição |
+| `e4b` | Pergunta a mais do grupo: candidaturas com até 10 votos, por gênero (vereador e deputados) |
+| `e5a` | Pergunta a mais do grupo: troca de partido — quem foi eleito e tentou o mesmo cargo na eleição seguinte (4 anos depois) |

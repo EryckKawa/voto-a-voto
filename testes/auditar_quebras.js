@@ -8,7 +8,7 @@ const { spawn } = require("child_process"); const fs = require("fs"), path = req
 const EDGE = "C:/Program Files (x86)/Microsoft/Edge/Application/msedge.exe", PORTA = 9780;
 const BASE = process.argv[2] || "http://localhost:8766/", SAIDA = process.argv[3] || "quebras.json";
 const LARGURAS = [360, 390, 600, 768, 1024, 1280, 1920];
-const ROTAS = ["#/", "#/mapa", "#/mapa/br/PI/c/2211001", "#/mapa/e/PRES2022", "#/revela", "#/perguntas", "#/perguntas/t1", "#/perguntas/t9", "#/perguntas/t13",
+const ROTAS = ["#/", "#/mapa", "#/mapa/br/PI/c/2211001", "#/mapa/e/PRES2022", "#/revela", "#/perguntas", "#/perguntas/t1", "#/perguntas/t9", "#/perguntas/t13", "#/perguntas/e4", "#/perguntas/e5",
   "#/partidos", "#/politicos", "#/politico/1713641", "#/politico/437785", "#/explorar", "#/formularios", "#/formularios/relatorios"];
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 const INSPECAO = `(() => {

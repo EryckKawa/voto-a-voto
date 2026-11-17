@@ -66,7 +66,7 @@
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
-  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 18, 1500, 400));
+  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 33, 1500, 400));
   teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
   teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
   teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
@@ -175,14 +175,14 @@
     const semResumo = !qq(".pq-escada, .pq-mais-num, .em-resumo").length;
     return R(ordem && trocou && vereadorAtivo && trocouAno && semResumo, `${cs.length} cargos (${nomes.join(", ")}) · ${trocou ? "troca o gráfico" : "não troca"} · ${nAnos} eleições, ${trocouAno ? "o ano troca o gráfico" : "o ano não troca"} · ${semResumo ? "sem blocos de resumo" : "com blocos de resumo"}`, "7 cargos do vereador ao presidente e 8 ou mais eleições; os filtros trocam o gráfico; nenhum bloco de resumo");
   });
-  teste("Funcionamento", "Todos os temas e as 2 perguntas a mais: com resposta, pontos e cuidado", async () => {
+  teste("Funcionamento", "Todos os temas e as perguntas a mais: com resposta, pontos e cuidado", async () => {
     const ruins = [];
-    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5"]) {
       await irPara("#/perguntas/" + id); await quadros(1);
       const r = txt(".pq-resposta"), p = qq(".pq-parte__r p, .pq-pontos li").length, c = qq(".pq-cuidado li").length;
       if (r.length < 60 || p < 1 || c < 1 || /—\s*(das|de|dos)\s/.test(r)) ruins.push(`${id}: resposta ${r.length} letras, ${p} pontos, ${c} cuidados`);
     }
-    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "18 páginas completas", "resposta, pontos e cuidado em todas");
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "21 páginas completas", "resposta, pontos e cuidado em todas");
   });
   teste("Funcionamento", "Endereços antigos das 12 perguntas levam ao tema certo", async () => {
     await irPara("#/perguntas/q9"); await ate(() => /t14$/.test(location.hash), 3000).catch(() => {});
@@ -428,14 +428,14 @@
     return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
   });
   teste("Funcionamento", "Perguntas: índice pelos 5 assuntos e número-chave em cada tema", async () => {
-    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 18, 8000).catch(() => {});
-    const grupos = qq(".pq-assunto").length; let sem = [];
-    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
-    return R(grupos === 6 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as 2 a mais; número com rótulo inteiro; seletor de tema");
+    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 33, 8000).catch(() => {});
+    const grupos = qq(".pq-assunto").length, base = qq("#pq-g-base + .pq-lista a").length; let sem = [];
+    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
+    return R(grupos === 7 && base === 12 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${base} perguntas base; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as a mais + as 12 perguntas base com link; número com rótulo inteiro; seletor de tema");
   });
   teste("Funcionamento", "Perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
     const ruins = []; let n = 0;
-    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5"]) {
       await irPara("#/perguntas/" + id); await ate(() => q(".pq-parte__a"), 8000).catch(() => {});
       const partes = qq(".pq-parte");
       partes.forEach((pt, k) => { n++; const a = pt.querySelector(".pq-parte__a"), t = a ? a.textContent.trim() : "";
