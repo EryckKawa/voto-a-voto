@@ -1261,3 +1261,16 @@ details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
 .pq-parte .pq-painel { gap: var(--e-2); }
 .pq-parte .pq-graf__cab { gap: 0; }
 @media (max-width: 560px) { .kpis--tema { grid-template-columns: minmax(0, 1fr); } }
+.pol-resumo { font-size: var(--t-corpo); font-weight: 700; color: var(--tinta); margin-top: var(--e-2); }
+.pt-escala { color: var(--tinta-2); font-size: var(--t-meta); margin-top: var(--e-2); }
+.pt-estudos-linha { margin: 0; }
+.pt-conc-mais { margin-top: var(--e-5); }
+.pt-conc-mais[open] > .pt-concorda { margin-top: var(--e-3); }
+.mapa-leg__ler { flex-basis: 100%; color: var(--tinta-2); font-size: var(--t-meta); }
+.vis-barra__leg { font-size: var(--t-min); color: var(--tinta-2); margin-top: var(--e-1); }
+/* "Em resumo": três frases para quem só passa os olhos */
+.em-resumo { background: var(--papel); border: 1px solid var(--linha); border-radius: var(--r-l); padding: var(--e-4) var(--e-5); max-width: 980px; }
+.em-resumo__tit { font: var(--t-h3); margin-bottom: var(--e-2); }
+.em-resumo ul { margin: 0; padding-left: 20px; display: grid; gap: var(--e-1); }
+.em-resumo li { font-size: var(--t-corpo); }
+.form-leigo { font-size: 19px; font-weight: 700; max-width: 62ch; }

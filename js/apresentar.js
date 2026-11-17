@@ -7,9 +7,10 @@
     ["#/", "O candidato mais votado do Brasil se chama Ninguém", "Em 2024, 42,6 milhões de eleitores faltaram, anularam ou votaram em branco para prefeito."],
     ["#/multidao", "Ninguém, em pessoas", "Cada ponto são mil eleitores. Eles saem das cidades onde moram e lotam o Maracanã 539 vezes."],
     ["#/mapa", "As 5.570 cidades", "Cada cidade com a cor do lado de quem venceu, de 1994 a 2026, em sete cargos."],
+    ["#/mapa/e/PRES2026", "2026: Lula eleito no 2º turno", "64,3 milhões de votos contra 59,8 milhões de Flávio Bolsonaro. Do 1º para o 2º turno, 215 cidades mudaram de lado."],
     ["#/tempo", "Trinta anos em um minuto", "As eleições para presidente passando uma a uma, cidade por cidade."],
     ["#/3d", "O Brasil em 3D", "Cada coluna é uma cidade: a altura é o número de eleitores; a cor, o lado de quem venceu."],
-    ["#/perguntas", "As 16 perguntas do trabalho", "Cada tema do enunciado com a resposta em uma frase, os números que a sustentam e os gráficos, do banco nacional."],
+    ["#/perguntas/t1", "As 16 perguntas do trabalho", "Cada tema respondido pergunta por pergunta: uma frase direta e o gráfico que a mostra, com os números do banco nacional."],
     ["#/partidos", "Onde fica cada partido", "Entre a esquerda e a direita, segundo três estudos acadêmicos e o voto na Câmara."],
     ["#/politico/1713641", "A ficha de 2,4 milhões de candidatos", "Cada eleição, partido, votos, dinheiro e bens."],
     ["#/patrimonio", "Quem declarou mais bens", "Os eleitos com mais bens declarados ao TSE, eleição por eleição, de 2006 a 2026."],
@@ -93,8 +94,7 @@
           <p>O site inteiro em ${ROTEIRO.length} passos, do Ninguém às 16 perguntas, em tela cheia. Passe com as setas do teclado ou com o passador de slides; Esc sai.</p></div>
         <button type="button" class="btn btn--confirma vis-comecar" id="vis-comecar">Começar a apresentação</button>
       </section>
-      <section aria-labelledby="vis-ver"><h2 class="secao__titulo" id="vis-ver">Para ver</h2><ul class="vis-cards">${VER.map(cartao).join("")}</ul></section>
-      <section aria-labelledby="vis-usar"><h2 class="secao__titulo" id="vis-usar">Para usar</h2><ul class="vis-cards vis-cards--usar">${USAR.map(cartao).join("")}</ul></section>
+      <section aria-labelledby="vis-ver"><h2 class="secao__titulo" id="vis-ver">Para ver e usar</h2><ul class="vis-cards">${[...VER, ...USAR].map(cartao).join("")}</ul></section>
     </div>`;
     document.getElementById("vis-comecar").addEventListener("click", () => V.comecarTour(0));
   });

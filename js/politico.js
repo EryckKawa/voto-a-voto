@@ -84,7 +84,7 @@
       return `<li class="${sit === "E" ? "pol-hist--eleito" : ""}">
         <span class="pol-hist__ano">${ano}</span>
         <span class="pol-hist__cargo"><b>${CARGO[cg] || "Cargo " + cg}</b> <span class="selo ${s[1]}"${s[2] ? ` title="${V.esc(s[2])}"` : ""}>${s[0]}</span><small>${V.esc(V.lugarPol(lugar, BR))}${nr ? ` · nº ${nr}` : ""}${ui >= 0 && !semUrna(urnas[ui]) ? ` · na urna: ${V.esc(V.titulo(urnas[ui]))}` : ""}</small></span>
-        <span class="pol-hist__partido">${partido(sg, n)} <small>${n != null ? nota(n) : "sem nota"}</small></span>
+        <span class="pol-hist__partido">${partido(sg, n)} <small>${n != null ? `${V.ESPN[faixa(n)].toLowerCase()} (${nota(n)})` : "partido sem nota"}</small></span>
         <span class="pol-hist__num"><span><small>Votos${v2 ? " (1º turno)" : ""}</small>${v1 != null ? V.int(v1) : "—"}</span>${v2 ? `<span><small>2º turno</small>${V.int(v2)}</span>` : ""}${din}${patr != null ? `<span><small>Bens declarados</small>${V.brl(patr)}</span>` : ""}</span>
       </li>`; }).join("")}</ol>`;
   }
@@ -208,21 +208,24 @@
     const fotos = await (FOTOS || (FOTOS = V.dados("br/pol/fotos").then((ids) => new Set(ids)).catch(() => new Set())));
     const foto = cf ? V.fotoOu(cf[0], cf[18], ini) : fotos.has(+id) ? `<img alt="" src="img/pol/${id % 100}/${id}.webp" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="${V.esc(ini)}">` : ini;
     const maior = cands.reduce((m, c) => ((c[7] || 0) > (m[7] || 0) ? c : m), cands[0]);
+    // a maior votação olha os dois turnos (Lula: 64,3 milhões no 2º turno de 2026) e diz qual foi
+    const topo = cands.reduce((m, c) => { const v = Math.max(c[7] || 0, c[8] || 0); return v > m.v ? { v, c, t2: (c[8] || 0) > (c[7] || 0) } : m; }, { v: 0, c: cands[0], t2: false });
     // partidos na ordem em que passou por eles
     const trajeto = []; cands.forEach((c) => { const u = trajeto[trajeto.length - 1]; if (!u || u.sg !== c[3]) trajeto.push({ sg: c[3], de: c[0], ate: c[0] }); else u.ate = c[0]; });
     document.title = `${V.titulo(nome)} · Voto a voto`;
-    let selGasto = 0, selPlano = 0, filtro = "", nVotos = 30;
+    let selGasto = Math.max(0, cands.filter((c) => c[15] && c[15].length).length - 1), selPlano = 0, filtro = "", nVotos = 30;   // gastos: abre na eleição mais recente
     main.innerHTML = `<div class="pagina pol">
       <p class="pq-migalha"><a href="#/perguntas/e2">Histórico eleitoral</a> · <a href="#/perguntas">As 16 perguntas</a></p>
       <header class="pol-cab">
         <div class="pol-foto">${foto}</div>
         <div><h1 class="pol-nome">${V.esc(V.titulo(nome))}</h1>
           <p class="pol-sub">${urnasVal.length ? `Na urna: ${urnasVal.map((u) => V.esc(V.titulo(u))).join(", ")}` : ""}${nasc ? ` · nasceu em ${nasc}` : ""}${genero ? ` · ${V.esc(genero.toLowerCase())}` : ""}${cor && !/^#|N[ÃA]O INFORMADO|N[ÃA]O DIVULG/i.test(cor) ? ` · cor ou raça declarada: ${V.esc(cor.toLowerCase())}` : ""}</p>
+          <p class="pol-resumo">${V.esc(V.titulo(urnasVal.length ? urnasVal[urnasVal.length - 1] : nome))} disputou ${anos.length} ${anos.length === 1 ? "eleição" : "eleições"}${anos.length > 1 ? `, de ${anos[0]} a ${anos[anos.length - 1]},` : ` em ${anos[0]}`} e ${vit ? `venceu ${vit === anos.length && vit > 1 ? "todas" : vit}` : "não venceu nenhuma"}.</p>
           <ul class="pq-banco pol-banco">
             <li><b>${cands.length}</b><span>${cands.length === 1 ? "candidatura" : "candidaturas"}</span></li>
             <li><b>${vit}</b><span>${vit === 1 ? "vitória" : "vitórias"}</span></li>
             <li><b>${anos[0]}${anos.length > 1 ? "–" + anos[anos.length - 1] : ""}</b><span>${anos.length} ${anos.length === 1 ? "eleição" : "eleições"}</span></li>
-            <li><b>${maior[7] ? V.int(maior[7]) : "—"}</b><span>maior votação (${CARGO[maior[1]]} ${maior[0]})</span></li>
+            <li><b>${topo.v ? V.int(topo.v) : "—"}</b><span>maior votação (${CARGO[topo.c[1]]} ${topo.c[0]}${topo.t2 ? ", 2º turno" : ""})</span></li>
           </ul></div>
       </header>
       ${semTitulo ? '<p class="aviso">O arquivo do TSE não trouxe o título de eleitor desta candidatura (acontece em 1996 e em registros incompletos). Sem ele, não dá para ligar com certeza as candidaturas desta pessoa em outros anos, que podem estar em outra ficha.</p>' : ""}

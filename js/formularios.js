@@ -360,6 +360,7 @@
       <header class="pq-cab nao-imprime">
         <p class="manchete__onde"><a href="#/explorar">Explorar</a> · Formulários e relatórios</p>
         <h1 class="titulo-grande">Formulários e relatórios</h1>
+        <p class="form-leigo">Aqui dá para testar o banco de dados: cadastrar, mudar e apagar candidatos, partidos e votos. Quando uma regra não deixa (um número repetido, um partido que não existe), o sistema avisa e mostra por quê.</p>
         <p class="pq-mais">Inclua, altere e exclua registros com as regras do banco (chave primária, UNIQUE, chave estrangeira e CHECK) e imprima os relatórios. Amostra real: eleições municipais de 2020 e 2024 em ${esc(BASE.cidade.nome)} (${BASE.cidade.uf}), ${V.int(DB.candidatura.length)} candidaturas.</p>
         <p class="form-aviso"><b id="form-ops"></b>. As mudanças ficam só neste navegador.</p>
       </header>

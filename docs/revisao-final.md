@@ -42,3 +42,15 @@ Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Ou
 - Última rodada (18/11, fase 5): 182 de 182 testes passaram; a varredura de quebras (`testes/auditar_quebras.js`) não achou nada. Rodada anterior (18/11, sistema de design): 180 de 180. Rodada anterior (17/11): 174 de 174 testes passaram, no computador e no celular. Numa rodada anterior, o teste de acessibilidade dos formulários falhou uma vez (`page-has-heading-one`) e não se repetiu; se voltar, a página está em `js/formularios.js`.
 - O enunciado foi lido de `questoes_analise_dados_eleitorais.docx` (08/09). Se o professor tiver fechado outra lista, conferir a numeração.
 - A entrega no SIGAA (PDF do relatório, link do site e do repositório) é manual.
+
+## 18/11/2026: o que mudou para a entrega
+
+- **2026 final:** o TSE republicou os arquivos em 16/11 (2º turno de presidente e governador, contas finais). `scripts/atualizar_2026.py` atualiza só as linhas de 2026 no banco, e `scripts/web_2026.py` regrava os dados do site (mapas, histórico, busca, achados); consultas, viés por cidade, fichas e a corrida do patrimônio foram regerados.
+- **Perguntas:** cada tema responde pergunta por pergunta, com uma afirmação direta para leigo, o gráfico daquela parte e os números completos recolhidos.
+- **Mapa:** malha do IBGE com as 5.570 cidades; não há mais áreas em branco.
+- **Abas revisadas:** "Em resumo" em Ninguém e Revela; Partidos com a nota explicada e só a nota de cada partido no gráfico (os estudos num botão); ficha com a maior votação dos dois turnos, a nota em palavras e os gastos da eleição mais recente; Máquina do tempo e 3D com nomes conhecidos e números com rótulo; modo apresentação com o passo de 2026.
+- **Carta do político:** removida.
+- **Relatório final:** regerado com os textos atuais do site (`relatorio_final/coletar_temas.js`) e com o **sumário montado** (`relatorio_final/montar_pdf.py`); o PDF de 17/11 tinha saído com o sumário vazio. Corrigido "Grupo 5" para "Grupo 6" nos arquivos da 1ª etapa, que iam para o Apêndice B.
+- **Entrega:** `Trabalho_Votacao/ENTREGA_FINAL/` e `ENTREGA_FINAL_Grupo6_BDR.zip` (relatório .pdf e .docx, consultas, modelo, DER e LEIA-ME).
+- **Testes:** 186 de 186; varredura de quebras (16 páginas × 7 larguras) sem achados.
+

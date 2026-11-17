@@ -99,7 +99,7 @@
       });
       const r = V.resumoVis(venc, cg2);
       document.getElementById("tres-ano").textContent = a;
-      document.getElementById("tres-resumo").innerHTML = `${V.NOME_VIS[cg2]} ${a}: ${r.top[0] ? `<b>${V.esc(r.top[0][0])}</b> ficou em 1º em ${V.int(r.top[0][1])} cidades. ` : ""}Esquerda em ${V.int(r.lados.esquerda)}, centro em ${V.int(r.lados.centro)}, direita em ${V.int(r.lados.direita)}.`;
+      document.getElementById("tres-resumo").innerHTML = `${V.NOME_VIS[cg2]} ${a}: ${r.top[0] ? `<b>${V.esc(r.top[0][0])}</b> ficou em 1º em ${V.int(r.top[0][1])} cidades${r.top[1] ? `; <b>${V.esc(r.top[1][0])}</b>, em ${V.int(r.top[1][1])}` : ""}.` : "sem resultados."}`;
       renderer.domElement.setAttribute("aria-label", `Brasil em 3D, ${V.NOME_VIS[cg2].toLowerCase()} ${a}: colunas com a altura ${medida === "eleitores" ? "do número de eleitores" : "da parte que faltou"} e a cor do lado vencedor.`);
       document.getElementById("tres-sub").textContent = medida === "eleitores" ? "A altura é o número de eleitores; a cor, o lado de quem ficou em primeiro. Arraste para girar, use a roda ou dois dedos para aproximar." : "A altura é a parte dos eleitores que não foi votar; a cor, o lado de quem ficou em primeiro. Arraste para girar.";
       main.querySelectorAll("[data-vis-ano]").forEach((b) => b.setAttribute("aria-pressed", +b.dataset.visAno === a));

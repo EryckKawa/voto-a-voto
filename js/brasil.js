@@ -421,12 +421,13 @@
 
   /* ---------- o ato de votar: quem foi, quem faltou, quem anulou ou votou em branco ---------- */
   const legVenc = () => `<span class="mapa-leg__escala"><span>Esquerda</span><i></i><span>Direita</span></span>
-      <a class="mapa-leg__regua" href="#/mapa" data-alvo="reguas">Régua ${REGUA === "voto" && H && H.ano < 2018 ? "de Harvard (para anos antes de 2019)" : NOME_REGUA[REGUA]}</a>
+      <a class="mapa-leg__regua" href="#/mapa" data-alvo="reguas" title="Régua ${REGUA === "voto" && H && H.ano < 2018 ? "de Harvard (para anos antes de 2019)" : NOME_REGUA[REGUA]}">Como a cor é decidida</a>
       <span class="mapa-leg__item" id="leg-indef-box" hidden><i class="mapa-leg__risco"></i><span>Sem resultado oficial: eleição anulada ou em julgamento (<span id="leg-indef"></span>)</span></span>
       <span class="mapa-leg__item" id="leg-novo-box" hidden><i class="mapa-leg__novo"></i><span>Ainda não era município neste ano (<span id="leg-novo"></span>)</span></span>
       <span class="mapa-leg__item" id="leg-pref-box" hidden><i class="mapa-leg__novo"></i><span id="leg-pref">Não elege prefeito: Brasília e Fernando de Noronha</span></span>
       <span class="mapa-leg__item" id="leg-sem-box" hidden><i class="mapa-leg__sem"></i><span>Partido que os estudos não medem (<span id="leg-sem"></span>)</span></span>
-      <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>`;
+      <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>
+      <span class="mapa-leg__ler">Como ler: cada cidade tem a cor do partido de quem venceu ali. Quanto mais forte o vermelho, mais à esquerda; quanto mais forte o azul, mais à direita; bege é centro.</span>`;
   const MET = {
     abst: { cores: ["#f7f1e6", "#ecd2a4", "#d49a4a", "#9c5d16", "#58320a"], valor: (t) => (t[0] ? (100 * t[2]) / t[0] : null), rot: "eleitores que não foram votar" },
     bn: { cores: ["#f4f1f8", "#d3c7e6", "#a48ccb", "#6d51a3", "#3b2766"], valor: (t) => (t[1] ? (100 * (t[3] + t[4])) / t[1] : null), rot: "votos brancos e nulos" },

@@ -39,8 +39,8 @@
       const dica = V.esc(`${r.sg} em ${ano}: nota ${fmt(s.c)} (${faixa(s.c)})` + F.filter((f) => s.f[f]).map((f) => `; ${NOME_F[f]} ${fmt(s.f[f].v)}${s.f[f].antiga || s.f[f].ano !== +ano ? " (medida de " + s.f[f].ano + ")" : ""}`).join("") + (s.incerta ? ". As medidas discordam do lado." : "") + (s.distante ? " Medida feita longe desta eleição." : ""));
       return `<g><title>${dica}</title>
         <text x="${lab - 10}" y="${y + 5}" text-anchor="end" font-size="${fs}" font-weight="700" fill="#16181d">${V.esc(r.sg)}</text>
-        ${s.max - s.min > 0.005 ? `<line x1="${x(s.min)}" x2="${x(s.max)}" y1="${y}" y2="${y}" stroke="#9aa0aa" stroke-width="2"/>` : ""}
-        ${F.filter((f) => s.f[f]).map((f) => marca(f, x(s.f[f].v), y, est ? 3.5 : 4.5, s.f[f].antiga ? 'opacity=".35"' : 'opacity=".8"')).join("")}
+        ${EST && EST.estudos && s.max - s.min > 0.005 ? `<line x1="${x(s.min)}" x2="${x(s.max)}" y1="${y}" y2="${y}" stroke="#9aa0aa" stroke-width="2"/>` : ""}
+        ${EST && EST.estudos ? F.filter((f) => s.f[f]).map((f) => marca(f, x(s.f[f].v), y, est ? 3.5 : 4.5, s.f[f].antiga ? 'opacity=".35"' : 'opacity=".8"')).join("") : ""}
         <circle cx="${x(s.c)}" cy="${y}" r="${est ? 6.5 : 7.5}" fill="${cor(s.c)}" stroke="#16181d" stroke-width="1.5"${s.incerta ? ' stroke-dasharray="3 2"' : ""}/>
         ${est || !s.incerta ? "" : `<text x="${W - dir + 12}" y="${y + 5}" font-size="14" font-weight="700" fill="#9c5d16">incerto</text>`}</g>`;
     }).join("");
@@ -118,7 +118,7 @@
     document.getElementById("pt-ano-tit").textContent = `Onde fica cada partido em ${ano}`;
     document.getElementById("pt-ano-sub").textContent = `${L.length} partidos que disputaram a eleição e foram medidos por pelo menos uma das quatro fontes. ${inc.length ? `As medidas discordam sobre o lado de ${inc.join(", ").replace(/, ([^,]*)$/, " e $1")}.` : "As medidas concordam sobre o lado de todos."}`;
     document.getElementById("pt-ano-graf").innerHTML = modo === "tab" ? tabelaAno(L, ano) : graficoAno(L, ano);
-    document.getElementById("pt-ano-leg").hidden = modo === "tab";
+    document.getElementById("pt-ano-leg").hidden = modo === "tab" || !EST.estudos;
     const i = EST.anos.indexOf(ano), fx = document.getElementById("pt-ano-faixa");
     if (fx) { fx.value = i; fx.setAttribute("aria-valuetext", ano); document.getElementById("pt-ano-num").textContent = ano;
       document.querySelector('[data-passo="-1"]').disabled = i <= 0; document.querySelector('[data-passo="1"]').disabled = i >= EST.anos.length - 1; }
@@ -140,6 +140,8 @@
 
   document.getElementById("conteudo").addEventListener("click", (e) => {
     if (!EST || !e.target.closest(".pt-pagina")) return;
+    const es = e.target.closest("[data-estudos]");
+    if (es) { EST.estudos = !EST.estudos; es.setAttribute("aria-pressed", String(EST.estudos)); es.textContent = EST.estudos ? "Esconder a nota de cada estudo" : "Mostrar a nota de cada estudo"; pintarAno(); return; }
     const ps = e.target.closest("[data-passo]");
     if (ps) { const j = EST.anos.indexOf(EST.ano) + +ps.dataset.passo; if (EST.anos[j]) { EST.ano = EST.anos[j]; pintarAno(); } return; }
     const a = e.target.closest("[data-ano]"), md = e.target.closest("#pt-ano [data-modo]"), p = e.target.closest("[data-partido]"), pr = e.target.closest("[data-par]");
@@ -171,7 +173,7 @@
     const rmin = Math.min(...pares.map((x) => x.p.r)), rmax = Math.max(...pares.map((x) => x.p.r));
     const anos = Object.keys(D.presentes).sort();
     let modo = "graf"; try { modo = localStorage.getItem("vav-pq-modo") === "tab" ? "tab" : "graf"; } catch (e) {}
-    EST = { D, anos, ano: anos.includes("2022") ? "2022" : anos[anos.length - 1], k: "PSDB", modo, par: 3, pares };
+    EST = { D, estudos: false, anos, ano: anos.includes("2022") ? "2022" : anos[anos.length - 1], k: "PSDB", modo, par: 3, pares };
     const nUlt = Object.keys(D.presentes[ultAno] || {}).filter((k) => D.partidos[k] && D.partidos[k].serie[ultAno]).length;
     const outros = Object.entries(D.partidos).filter(([k]) => !PRINC.includes(k) && Object.keys(D.partidos[k].serie).length > 1).sort((a, b) => a[1].nome.localeCompare(b[1].nome));
     const fonte = (f) => D.fontes[f];
@@ -183,9 +185,10 @@
         <p class="pq-resposta">Três estudos feitos por gente diferente põem o partido do mesmo lado em ${pct(igual, n)} das vezes. O voto na Câmara concorda com eles, menos no centrão${afast.length ? `: ${nomesL(afast)} votam mais ao centro do que os estudos dizem, porque acompanham o governo da vez` : ""}.</p>
         <ul class="kpis pt-kpis">
           <li><b>${pct(igual, n)}</b><span>das vezes, os três estudos põem o partido do mesmo lado</span></li>
-          <li><b>${r2(rmin)} a ${r2(rmax)}</b><span>de correlação entre as quatro medidas (1 seria concordância total)</span></li>
+          <li><b>Quase sempre</b><span>as quatro medidas dão notas parecidas a cada partido (correlação de ${r2(rmin)} a ${r2(rmax)}; 1 seria igual)</span></li>
           <li><b>${nUlt}</b><span>partidos com nota em ${ultAno}</span></li>
         </ul>
+        <p class="pt-escala">A nota de cada partido vai de <b>−1</b> (mais à esquerda) a <b>+1</b> (mais à direita); entre −0,25 e +0,25 é centro.</p>
         <details class="mais pt-mais"><summary>Quem deu as notas e como elas viram uma régua só</summary><p class="pq-mais">Deputados federais (Zucco e Power, 2024), 519 cientistas políticos brasileiros (Bolognesi, Ribeiro e Codato, 2023) e especialistas internacionais (V-Party, 2022) deram notas aos partidos. A quarta medida é o que as bancadas mandaram votar na Câmara de 2019 a 2026, a única que já pega o PL de Bolsonaro e o União Brasil. Tudo fica na mesma escala, de −1 (esquerda) a +1 (direita). A nota de cada partido em cada eleição pesa mais a medida feita mais perto dela, e é a régua que pinta o mapa.</p></details>
       </header>
 
@@ -196,7 +199,8 @@
         </div>
         <div class="pt-ano-passo"><button type="button" class="btn pt-seta" data-passo="-1" aria-label="Eleição anterior"></button><output id="pt-ano-num" class="pt-ano-num" for="pt-ano-faixa"></output><button type="button" class="btn pt-seta pt-seta--prox" data-passo="1" aria-label="Próxima eleição"></button>
           <label class="pt-ano-faixa"><span class="visualmente-oculto">Ano da eleição</span><input type="range" id="pt-ano-faixa" min="0" max="${anos.length - 1}" step="1" value="0"><span class="pt-ano-faixa__pontas" aria-hidden="true"><span>${anos[0]}</span><span>${anos[anos.length - 1]}</span></span></label></div>
-        <div id="pt-ano-leg">${legenda()}</div>
+        <p class="pt-estudos-linha"><button type="button" class="chip" data-estudos aria-pressed="false">Mostrar a nota de cada estudo</button></p>
+        <div id="pt-ano-leg" hidden>${legenda()}</div>
         <div class="pq-graf" id="pt-ano-graf"></div>
         <details class="mais pt-comoler"><summary>Como ler este gráfico</summary><p class="pq-nota">A bolinha colorida é a nota do partido (tracejada quando as medidas discordam do lado); a linha cinza vai da medida que põe o partido mais à esquerda à que põe mais à direita. Marca clara: medida feita longe desta eleição, que pesa menos. Faixa bege: o centro, de −0,25 a +0,25.</p></details>
       </section>
@@ -209,6 +213,7 @@
         <div class="pq-graf" id="pt-traj-graf"></div>
       </section>
 
+      <details class="mais pt-conc-mais"><summary>Como sabemos que a régua é confiável: os estudos comparados um a um</summary>
       <section class="pq-painel pt-concorda" id="pt-conc" aria-labelledby="pt-conc-tit">
         <div><h2 class="pq-painel__tit" id="pt-conc-tit">As medidas concordam entre si: correlação de ${r2(rmin)} a ${r2(rmax)}</h2>
           <p class="pq-painel__rec">Cada ponto é um partido medido pelas duas fontes em datas próximas (até 2 anos; até 5 com o voto na Câmara). Na diagonal, as duas dão a mesma nota. Em laranja, os casos em que põem o partido em lados diferentes.</p></div>
@@ -219,6 +224,7 @@
           <tbody>${pares.map(({ a, b, p }) => `<tr><th scope="row">${NOME_F[a]} × ${NOME_F[b]}</th><td class="num">${r2(p.r)}</td><td class="num">${p.mesmo_lado} de ${p.n}</td><td>${V.esc(agrupa(p.lados_diferentes, D)) || "—"}</td></tr>`).join("")}</tbody></table></div>
         <details class="mais pt-mais"><summary>Onde as medidas discordam</summary><p class="pq-mais">Entre os estudos, quem mais aparece em lados diferentes é o PSDB: para os deputados ele fica no centro, para o V-Party, que mede só a economia, ele é de direita. Entre os estudos e o voto, é o centrão: partidos que os especialistas põem à direita, mas que votam com o governo da vez, de Bolsonaro e de Lula, e por isso caem no meio da régua do voto.</p></details>
       </section>
+      </details>
 
       <details class="pq-origem"><summary>Como as notas foram feitas</summary>
         <p><b>As quatro medidas.</b> ${F.map((f) => `${fonte(f).nome}: ${fonte(f).quem}.`).join(" ")}</p>

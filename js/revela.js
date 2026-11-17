@@ -173,6 +173,7 @@
     main.innerHTML = `<div class="pagina revela">
       <header class="revela__topo"><h1 class="titulo-grande">O que o voto revela</h1>
         <p class="lead">Oito achados de trinta anos de eleições, de 1994 a 2026, nas 5.570 cidades. Cada título já é a resposta; o gráfico mostra de onde ela vem.</p>
+        <div class="em-resumo"><h2 class="em-resumo__tit">Em resumo</h2><ul>${[blocos[0], blocos[1], blocos[7]].map((b) => `<li>${b.tit}.</li>`).join("")}</ul></div>
       </header>
       <nav aria-label="Os oito achados"><ol class="capitulos revela__indice">${blocos.map((b, i) => `<li><a href="#/revela" data-alvo="${b.id}"><span class="capitulos__n">${i + 1}</span><span><b>${b.indice}</b><small>${b.tema}</small></span></a></li>`).join("")}</ol></nav>
       ${blocos.map(bloco).join("")}

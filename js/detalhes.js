@@ -11,8 +11,8 @@
   const lado = { esquerda: "esquerda", centro: "centro", direita: "direita" };
   const ESP = { ESQUERDA: "esquerda", "CENTRO-ESQUERDA": "centro-esquerda", CENTRO: "centro", "CENTRO-DIREITA": "centro-direita", DIREITA: "direita" };
   const lista = (xs) => (xs.length < 2 ? xs.join("") : xs.slice(0, -1).join(", ") + " e " + xs[xs.length - 1]);
-  // a prestação de contas de 2026 ainda está chegando ao TSE (o prazo final é 30 dias depois da eleição)
-  const aviso26 = (a) => (a === 2026 ? " <small>(prestação de contas de 2026 ainda parcial)</small>" : "");
+  // as contas de 2026 já são as finais (TSE, 16/11/2026): nenhum aviso
+  const aviso26 = () => "";
 
   V.detalhes = {
     q1(C) {

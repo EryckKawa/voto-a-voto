@@ -23,13 +23,16 @@
   V.SEM_COR = "#d9dce1";
   V.corVenc = (w) => (w && w[9] ? V.corNota(w[8]) : V.SEM_COR);
 
+  // os presidenciáveis pelo nome que o eleitor conhece (o arquivo antigo do TSE traz o nome completo)
+  const CURTO = { "LUIZ INACIO LULA DA SILVA": "Lula", "FERNANDO HENRIQUE CARDOSO": "Fernando Henrique", "ESPERIDIAO AMIN HELOU FILHO": "Esperidião Amin", "LEONEL DE MOURA BRIZOLA": "Brizola", "ORESTES QUERCIA": "Quércia" };
+  V.nomeCurto = (n) => CURTO[String(n || "").toUpperCase()] || V.titulo(n);
   // resumo de uma eleição: cidades por lado e os nomes (ou partidos) que mais ficaram em 1º
   V.resumoVis = (venc, cargo) => {
     const lados = { esquerda: 0, centro: 0, direita: 0, sem: 0 }, nomes = new Map();
     for (const w of Object.values(venc)) {
       if (!w || !w[9]) { lados.sem++; continue; }
       lados[V.faixa(w[8]) || "sem"]++;
-      const k = cargo === "PRES" ? V.titulo(w[1]) : V.nomePartido(w[2]);
+      const k = cargo === "PRES" ? V.nomeCurto(w[1]) : V.nomePartido(w[2]);
       nomes.set(k, (nomes.get(k) || 0) + 1);
     }
     return { lados, top: [...nomes].sort((a, b) => b[1] - a[1]).slice(0, 3) };
@@ -42,7 +45,8 @@
   V.barraLados = (r) => {
     const t = r.lados.esquerda + r.lados.centro + r.lados.direita + r.lados.sem || 1;
     const f = [["esquerda", V.corNota(-0.75), "#fff"], ["centro", V.corNota(0), "#16181d"], ["direita", V.corNota(0.75), "#fff"], ["sem", V.SEM_COR, "#16181d"]];
-    return `<div class="vis-barra" role="img" aria-label="${f.map(([k]) => `${k === "sem" ? "sem resultado" : k}: ${V.int(r.lados[k])} cidades`).join(", ")}">${f.map(([k, c, tc]) => r.lados[k] ? `<i style="flex-basis:${(100 * r.lados[k]) / t}%;background:${c};color:${tc}">${(100 * r.lados[k]) / t >= 9 ? V.int(r.lados[k]) : ""}</i>` : "").join("")}</div>`;
+    return `<div class="vis-barra" role="img" aria-label="${f.map(([k]) => `${k === "sem" ? "sem resultado" : k}: ${V.int(r.lados[k])} cidades`).join(", ")}">${f.map(([k, c, tc]) => r.lados[k] ? `<i style="flex-basis:${(100 * r.lados[k]) / t}%;background:${c};color:${tc}">${(100 * r.lados[k]) / t >= 9 ? V.int(r.lados[k]) : ""}</i>` : "").join("")}</div>
+      <p class="vis-barra__leg">Cidades onde venceu a esquerda: <b>${V.int(r.lados.esquerda)}</b> · o centro: <b>${V.int(r.lados.centro)}</b> · a direita: <b>${V.int(r.lados.direita)}</b>${r.lados.sem ? ` · sem resultado: ${V.int(r.lados.sem)}` : ""}</p>`;
   };
 
   // um mapa do Brasil em <canvas>, com as cidades já projetadas (data/br/geo_proj): bem mais leve que 5.570 <path> para animar

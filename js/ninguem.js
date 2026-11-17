@@ -100,6 +100,11 @@
           <li><b>${(ning / top[1]).toFixed(1).replace(".", ",")} vezes</b><span>os votos do partido mais votado, o ${V.esc(top[0])} (${mi(top[1])})</span></li>
           <li><b>${V.int(cidadesNinguem)}</b><span>cidades onde Ninguém teve mais votos que o candidato mais votado</span></li>
         </ul>
+        <div class="em-resumo"><h2 class="em-resumo__tit">Em resumo</h2><ul>
+          <li>De cada 10 votos do Ninguém, ${Math.round(pf / 10)} são de quem nem foi votar; os outros anularam ou votaram em branco.</li>
+          <li>Ele é maior na cidade grande: ${V.pct(porTam[4].v, 0)} do eleitorado, contra ${V.pct(porTam[0].v, 0)} na cidade pequena.</li>
+          <li>Quem mais falta é o jovem de 21 a 29 anos: ${V.pct(p2129, 0)} não foram votar.</li>
+        </ul></div>
       </header>
       <section class="urna-hero" aria-label="Urna: experimente digitar">
         <div class="urna-corpo">
