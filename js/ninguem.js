@@ -204,7 +204,7 @@
         <h2 class="ninguem__h2" id="ning-prox">Para continuar</h2>
         <ul class="proximos">
           <li><a href="#/mapa/v/abst"><b>O mapa de quem faltou</b><span>Cidade por cidade, em qualquer eleição desde 1994</span></a></li>
-          <li><a href="#/perguntas/t6"><b>Tema 6: brancos, nulos e abstenção</b><span>A resposta do trabalho, com os números e a fonte</span></a></li>
+          <li><a href="#/perguntas/t6"><b>Votos brancos, nulos e abstenção</b><span>A resposta do trabalho, com os números e a fonte</span></a></li>
           <li><a href="#/multidao"><b>A multidão do Ninguém</b><span>Um ponto para cada mil eleitores, enchendo estádios</span></a></li>
         </ul>
       </section>

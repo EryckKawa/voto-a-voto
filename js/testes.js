@@ -66,7 +66,7 @@
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
-  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 33, 1500, 400));
+  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 21, 1500, 400));
   teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
   teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
   teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
@@ -427,11 +427,11 @@
     const some = q("#pol-sugestoes").hidden;
     return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
   });
-  teste("Funcionamento", "Perguntas: índice pelos 5 assuntos e número-chave em cada tema", async () => {
-    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 33, 8000).catch(() => {});
-    const grupos = qq(".pq-assunto").length, base = qq("#pq-g-base + .pq-lista a").length; let sem = [];
+  teste("Funcionamento", "Perguntas: índice por blocos, sem numeração, e número-chave em cada tema", async () => {
+    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 21, 8000).catch(() => {});
+    const grupos = qq(".pq-assunto").length, base = qq(".pq-base a").length, numeros = qq(".pq-lista .pq-selo").length, doGrupo = qq(".pq-lista .pq-tag").length; let sem = [];
     for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
-    return R(grupos === 7 && base === 12 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${base} perguntas base; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as a mais + as 12 perguntas base com link; número com rótulo inteiro; seletor de tema");
+    return R(grupos === 5 && base === 12 && !numeros && doGrupo === 5 && !sem.length && !!q("#pq-ir"), `${grupos} blocos; ${doGrupo} perguntas do grupo nos blocos; ${base} perguntas base com link; ${numeros ? numeros + " números à mostra" : "sem números"}; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número-chave e rótulo"}`, "5 blocos com os temas e as perguntas do grupo, sem numeração; as 12 perguntas base com link; número-chave em cada tema; seletor");
   });
   teste("Funcionamento", "Perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
     const ruins = []; let n = 0;

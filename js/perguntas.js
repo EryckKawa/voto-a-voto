@@ -932,7 +932,7 @@
           `<b>Depois de 2015, o dinheiro público ocupou o lugar das empresas:</b> em 2024, ele foi ${pct(q24a.pc_dinheiro_publico, 0)} a ${pct(q24e.pc_dinheiro_publico, 0)} da receita das campanhas municipais, em todos os grupos de cidades.`,
           `<b>O programa ficou maior em 2022:</b> ${milhoes(y(2022).qt_beneficios)} de benefícios em dezembro (como Auxílio Brasil), e ${milhoes(b24.qt_beneficios)} em 2024.`],
         vistas: [vistaSerie, vistaQD(2012), vistaQD(2024)],
-        cuidado: ["O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil.", "O voto nas cidades com mais e menos Bolsa Família está na pergunta a mais do grupo +3.", "Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada.", "Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra."],
+        cuidado: ["O Bolsa Família é medido pelos benefícios pagos em dezembro; entre 2021 e 2023 o programa se chamou Auxílio Brasil.", "O voto nas cidades com mais e menos Bolsa Família está na pergunta do grupo “O Bolsa Família e o voto”, no bloco Território.", "Em 2010, 2012 e 2014 parte do dinheiro de empresas passava pelo partido antes de chegar ao candidato, então a parte das empresas é no mínimo a mostrada.", "Comparar as duas séries mostra o que aconteceu ao mesmo tempo, não que uma causou a outra."],
         como: "Bolsa Família: número de benefícios e valor pago em dezembro, por município, de 2004 a 2025 (Ministério do Desenvolvimento e Assistência Social, pela API do IpeaData), carregados na tabela bolsa_familia_municipio. Doações de empresas: receitas dos candidatos com doador pessoa jurídica (TSE). Alcance do programa: benefícios ÷ eleitores aptos da cidade.",
         tabelas: ["bolsa_familia_municipio", "receita", "candidatura"], consultas: ["t11a", "t11b", "q8c"], fonte: "MDS (via IpeaData) e TSE" });
       EXTRA.bf = { bfCargo, esBF, bc, vistaQ, q24a, q24e, Qn };
@@ -1172,8 +1172,8 @@
         nota: "As palavras que os candidatos mais escrevem para descrever o que compraram, sem as genéricas da prestação de contas (serviço, campanha, nota fiscal...). Quanto maior, mais vezes aparece." } : null; },
         { anos: anosDe(ND), padrao: "VEREADOR" });
       const pv = palavras(2024, "VEREADOR").slice(0, 6).map((x) => x.ds_palavra);
-      tema({ id: "e1", n: "+1", extra1: true, grupo: "A mais", titulo: "Onde vai o dinheiro da campanha?", antigas: ["q11"],
-        enunciado: ["Pergunta a mais do grupo: onde o candidato investe em propaganda?"],
+      tema({ id: "e1", n: "+1", extra1: true, grupo: "Dinheiro", doGrupo: true, titulo: "Onde vai o dinheiro da campanha?", antigas: ["q11"],
+        enunciado: ["Onde o candidato investe em propaganda?"],
         curta: `${pct(top.pc_ano, 0)} do gasto das campanhas de 2024 foi com material impresso.`,
         num: pct(top.pc_ano, 0), numRot: "do gasto das campanhas foi com material impresso (2024)",
         resposta: `Em papel: em 2024, ${pct(top.pc_ano, 0)} do dinheiro das campanhas foi para material impresso (${reais(top.vr_total)}), a maior despesa em todas as eleições desde 2018`,
@@ -1190,8 +1190,8 @@
       const esVolta = escada((a, cg) => { const r = Q.q12.cf(a, cg); if (!r.qt_eleitos) return null;
         if (r.qt_eleitos === 1) return `o presidente eleito em ${a} ${r.pc_eleito_de_novo_4_anos ? "se elegeu de novo" : "não se elegeu de novo"} em ${a + 4}.`;
         return `dos ${V.int(r.qt_eleitos)} eleitos em ${a}, ${pct(r.pc_eleito_de_novo_4_anos, 0)} se elegeram de novo em ${a + 4} (para qualquer cargo) e ${pct(r.pc_mesmo_cargo, 0)} voltaram ao mesmo cargo${cg === "SENADOR" ? ` em ${a + 8}, quando o mandato acabou` : ""}.`; }, Q.q12.VOLTA);
-      tema({ id: "e2", n: "+2", grupo: "A mais", titulo: "Qual é o histórico de cada político?", antigas: ["q12"],
-        enunciado: ["Pergunta a mais do grupo: o político e sua linha do tempo — sobrevivência na carreira."],
+      tema({ id: "e2", n: "+2", grupo: "Perfil", doGrupo: true, titulo: "Qual é o histórico de cada político?", antigas: ["q12"],
+        enunciado: ["O político e sua linha do tempo — sobrevivência na carreira."],
         curta: `De quem já venceu uma eleição desde 1994, ${pct((100 * um) / tot, 0)} venceu uma só.`,
         num: pct(g18.pc_eleito_de_novo_4_anos, 0), numRot: "dos deputados, senadores e governadores de 2018 se elegeram de novo em 2022",
         resposta: `A carreira é curta para a maioria: de 1994 a 2026, ${V.int(tot)} pessoas venceram alguma eleição, e ${pct((100 * um) / tot, 0)} delas venceram uma só. Dos deputados, senadores e governadores eleitos em 2018, ${Math.round(g18.pc_eleito_de_novo_4_anos)} em cada 100 voltaram em 2022`,
@@ -1209,8 +1209,8 @@
         const vistaQV = (a) => ({ rot: `Prefeitos eleitos (${a})`, legenda: leg([[COR.esq, "Prefeito de esquerda"], [COR.dir, "Prefeito de direita"]]),
           graf: () => pares(Qn.filter((r) => r.nr_ano === a).map((r) => ({ rot: `${pct(r.pc_alcance_min, 0)} a ${r.nr_quintil === 5 ? "mais" : pct(r.pc_alcance_max, 0)}`, sub: `${V.int(r.qt_municipios)} cidades`, v: [r.pc_prefeito_esquerda, r.pc_prefeito_direita] })), { nomes: ["esquerda", "direita"], cores: [COR.esq, COR.dir], max: 100, fmt: (v) => pct(v, 0), cols: ["Benefícios por 100 eleitores", "Cidades"] }),
           nota: `Cidades em cinco grupos do mesmo tamanho pelo número de benefícios do Bolsa Família por eleitor (dezembro de ${a}) e o lado do prefeito eleito. O que falta para 100% é o centro.` });
-        tema({ id: "e3", n: "+3", grupo: "A mais", titulo: "O Bolsa Família e o voto",
-          enunciado: ["Pergunta a mais do grupo: as cidades onde o Bolsa Família alcança mais gente votam diferente?"],
+        tema({ id: "e3", n: "+3", grupo: "Território", doGrupo: true, titulo: "O Bolsa Família e o voto",
+          enunciado: ["As cidades onde o Bolsa Família alcança mais gente votam diferente?"],
           curta: `Presidente 2022: a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)} das cidades com mais Bolsa Família e em ${pct(p1.pc_esquerda_1o, 0)} das com menos.`,
           num: pct(p5.pc_esquerda_1o, 0), numRot: `das cidades com mais Bolsa Família deram a vitória à esquerda para presidente (2022); nas com menos, ${pct(p1.pc_esquerda_1o, 0)}`,
           resposta: `Sim, e muito: para presidente, em 2022, a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)} das cidades onde o programa alcança mais gente e em ${pct(p1.pc_esquerda_1o, 0)} das que ele alcança menos. Nas prefeituras a diferença é bem menor`,
@@ -1220,7 +1220,7 @@
           pontos: [`<b>Para presidente, o alcance do programa separa o voto:</b> em 2022, nas cidades com mais benefícios por eleitor, a esquerda ficou em 1º em ${pct(p5.pc_esquerda_1o, 0)}; nas com menos, em ${pct(p1.pc_esquerda_1o, 0)}.`,
             `<b>Na prefeitura, pesa mais a política local:</b> em 2024, a direita elegeu ${pct(q24e.pc_prefeito_direita, 0)} dos prefeitos das cidades com mais Bolsa Família e ${pct(q24a.pc_prefeito_direita, 0)} nas com menos.`],
           vistas: [bfCargo, vistaQV(2024), vistaQV(2016)],
-          cuidado: ["O Bolsa Família vai para as famílias mais pobres; as cidades com mais benefícios são também as mais pobres, onde a esquerda vence mesmo sem o programa (tema 3). Por isso a comparação não mostra que o programa causa o voto.", "O programa é medido pelos benefícios pagos em dezembro do ano da eleição; entre 2021 e 2023 se chamou Auxílio Brasil."],
+          cuidado: ["O Bolsa Família vai para as famílias mais pobres; as cidades com mais benefícios são também as mais pobres, onde a esquerda vence mesmo sem o programa (veja “Índices municipais e comportamento eleitoral”). Por isso a comparação não mostra que o programa causa o voto.", "O programa é medido pelos benefícios pagos em dezembro do ano da eleição; entre 2021 e 2023 se chamou Auxílio Brasil."],
           como: "Benefícios do Bolsa Família por município (Ministério do Desenvolvimento e Assistência Social, pela API do IpeaData) divididos pelos eleitores aptos. As cidades são divididas em cinco grupos do mesmo tamanho e, em cada grupo, conta-se o lado de quem ficou em 1º no 1º turno (TSE) pela página Partidos.",
           tabelas: ["bolsa_familia_municipio", "comparecimento", "candidatura", "vw_partido_ano"], consultas: ["t11c", "t11b"], fonte: "MDS (via IpeaData) e TSE" });
       }
@@ -1252,8 +1252,8 @@
         const f16 = k(2016, "VEREADOR", "FEMININO"), h16 = k(2016, "VEREADOR", "MASCULINO"), f24 = k(2024, "VEREADOR", "FEMININO"), h24 = k(2024, "VEREADOR", "MASCULINO");
         const esCE = escada((a, cg) => { const r = m(a, cg); return r.qt_candidaturas && `${pct(r.pc_mulheres_candidatas, 0)} das candidaturas eram de mulheres; entre os eleitos, ${pct(r.pc_mulheres_eleitas, 0)}${nC(r.qt_eleitos, "eleito", "eleitos")}.`; }, ULT);
         const esSuc = escada((a, cg) => { const r = m(a, cg); return r.qt_candidaturas && r.qt_eleitos > 1 && `se elegeram ${pct(r.pc_sucesso_mulheres, 0)} das candidatas e ${pct(r.pc_sucesso_homens, 0)} dos candidatos.`; }, ULT);
-        tema({ id: "e4", n: "+4", grupo: "A mais", titulo: "Mulheres na política",
-          enunciado: ["Pergunta a mais do grupo: quantas mulheres se candidatam e quantas se elegem, do vereador ao presidente?"],
+        tema({ id: "e4", n: "+4", grupo: "Perfil", doGrupo: true, titulo: "Mulheres na política",
+          enunciado: ["Quantas mulheres se candidatam e quantas se elegem, do vereador ao presidente?"],
           curta: `Vereador 2024: ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas eram de mulheres, e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos.`,
           kpis: [[pct(v24.pc_mulheres_candidatas, 0), "das candidaturas a vereador eram de mulheres (2024)"], [pct(v24.pc_mulheres_eleitas, 0), "dos vereadores eleitos eram mulheres"]],
           resposta: `Elas são cerca de um terço dos candidatos a vereador e deputado, por causa da cota, mas só um em cada cinco eleitos: em 2024, ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas a vereador e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos`,
@@ -1290,8 +1290,8 @@
         const df = s(2022, "DEPUTADO FEDERAL"), d26 = s(2026, "DEPUTADO FEDERAL"), ve = s(2024, "VEREADOR"), pr = s(2024, "PREFEITO"), de = s(2022, "DEPUTADO ESTADUAL");
         const esT = escada((a, cg) => { const r = s(a, cg); return r.qt_tentaram && `dos ${V.int(r.qt_tentaram)} eleitos que tentaram de novo, ${pct(r.pc_trocaram, 0)} foram por outro partido.`; }, ULT);
         const esR = escada((a, cg) => { const r = s(a, cg); return r.qt_tentaram && r.pc_reeleitos_trocando != null && `se reelegeram ${pct(r.pc_reeleitos_trocando, 0)} dos que trocaram e ${pct(r.pc_reeleitos_ficando, 0)} dos que ficaram${nC(r.qt_tentaram, "eleito", "eleitos")}.`; }, ULT);
-        tema({ id: "e5", n: "+5", grupo: "A mais", titulo: "Troca de partido",
-          enunciado: ["Pergunta a mais do grupo: quantos eleitos trocam de partido para tentar de novo, e trocar ajuda?"],
+        tema({ id: "e5", n: "+5", grupo: "Partidos", doGrupo: true, titulo: "Troca de partido",
+          enunciado: ["Quantos eleitos trocam de partido para tentar de novo, e trocar ajuda?"],
           curta: `Vereador 2024: ${pct(ve.pc_trocaram, 0)} dos que tentaram a reeleição foram por outro partido.`,
           kpis: [[pct(ve.pc_trocaram, 0), "dos vereadores que tentaram a reeleição em 2024 trocaram de partido"], [pct(d26.pc_trocaram, 0), "dos deputados federais, em 2026"]],
           resposta: `Trocar de partido é comum, e não ajuda a voltar: ${pct(ve.pc_trocaram, 0)} dos vereadores que tentaram a reeleição em 2024 foram por outro partido; para deputado federal, ${pct(d26.pc_trocaram, 0)} em 2026, e quem trocou se reelegeu menos (${pct(d26.pc_reeleitos_trocando, 0)} contra ${pct(d26.pc_reeleitos_ficando, 0)})`,
@@ -1306,7 +1306,9 @@
           tabelas: ["candidatura", "pessoa", "partido", "partido_linhagem", "situacao_totalizacao"], consultas: ["e5a"], fonte: "TSE" });
       }
     }
-    return T;
+    // a ordem segue os blocos do índice; dentro do bloco, os temas do enunciado e depois as perguntas do grupo
+    const ORDEM = ["Dinheiro", "Perfil", "Território", "Voto", "Partidos"];
+    return T.sort((a, b) => ORDEM.indexOf(a.grupo) - ORDEM.indexOf(b.grupo));
   }
 
   /* ---------- tema 14: a linha do tempo de uma cidade (data/br/vies/{UF}, feito por scripts/vies_cidades.py) ---------- */
@@ -1438,16 +1440,17 @@
   const pintarTodos = () => ATUAL.paineis.forEach((_, i) => pintarPainel(i));
 
 
-  const selo = (b) => `<span class="pq-selo">${typeof b.n === "number" ? b.n : b.n}</span>`;
+  const BLOCOS = [["Dinheiro", "Quanto custa, quem paga e o que isso muda"], ["Perfil", "Quem são os candidatos e os eleitos"], ["Território", "O lugar e o voto"], ["Voto", "Como o eleitor vota (ou não vota)"], ["Partidos", "Propostas, partidos e Justiça Eleitoral"]];
+  const tagGrupo = (b) => (b.doGrupo ? '<span class="pq-tag">Pergunta do grupo</span>' : "");
   function paginaTema(b, temas, C) {
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
     const partes = partesDe(b), usados = new Set(partes.flatMap((x) => x.p)), outros = b.pontos.map((_, j) => j).filter((j) => !usados.has(j));
     return `<div class="pagina pq-pagina">
-      <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a></p>
-        <label class="pq-ir"><span>Ir para o tema</span><select id="pq-ir">${temas.map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${typeof t.n === "number" ? t.n + ". " : "A mais: "}${V.esc(t.titulo)}</option>`).join("")}</select></label></div>
+      <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a> <span aria-hidden="true">/</span> ${b.grupo}</p>
+        <label class="pq-ir"><span>Ir para a pergunta</span><select id="pq-ir">${BLOCOS.map(([g]) => `<optgroup label="${g}">${temas.filter((t) => t.grupo === g).map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${V.esc(t.titulo)}${t.doGrupo ? " (do grupo)" : ""}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
       <header class="pq-cab">
-        <h1 class="pq-titulo">${selo(b)} ${b.titulo}</h1>
-        <details class="pq-enunciado"><summary>${typeof b.n === "number" ? "O que o enunciado pede" : "A pergunta do grupo"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
+        <h1 class="pq-titulo">${b.titulo}</h1>${tagGrupo(b)}
+        <details class="pq-enunciado"><summary>${b.doGrupo ? "A pergunta do grupo" : "O que o enunciado pede"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
         <div class="pq-faixa">
           <p class="pq-resposta">${b.curta || b.resposta + "."}</p>
           ${b.kpis.length ? `<ul class="kpis kpis--tema">${b.kpis.map(([v, r]) => `<li><b>${v}</b><span>${r}</span></li>`).join("")}</ul>` : ""}
@@ -1455,9 +1458,9 @@
       </header>
       <section class="pq-partes" aria-labelledby="pq-partes-tit">
         <h2 class="pq-partes__tit" id="pq-partes-tit">${partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
-        ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span class="pq-parte__n">${k + 1}</span><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
+        ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
         ${partes.map((pt, k) => `<article class="pq-parte" aria-labelledby="pq-parte-${k}">
-          <h3 class="pq-parte__q" id="pq-parte-${k}" tabindex="-1">${partes.length > 1 ? `<span class="pq-parte__n">${k + 1}</span>` : ""}${pt.q}</h3>
+          <h3 class="pq-parte__q" id="pq-parte-${k}" tabindex="-1">${pt.q}</h3>
           ${pt.a ? `<p class="pq-parte__a">${pt.a}</p>` : ""}
           ${painelHTML(b, pt, k)}
           ${pt.p.length ? `<details class="mais pq-parte__r"><summary>Os números em detalhe</summary>${pt.p.map((j) => `<p>${b.pontos[j]}</p>`).join("")}</details>` : ""}
@@ -1475,28 +1478,25 @@
         <p><b>Consultas:</b> ${b.consultas.map((id) => `<code title="${V.esc((C[id] || {}).descricao || "")}">${id}</code>`).join(", ")}, no arquivo <a href="${GH}" rel="noopener"><code>scripts/consultas_brasil.sql</code></a>, rodadas no banco nacional em DuckDB.</p>
       </details>
       ${b.link ? `<p class="pq-link"><a href="${b.link}">${b.linkTxt}</a></p>` : ""}
-      <nav class="pq-passos" aria-label="Outros temas">
-        ${ant ? `<a href="#/perguntas/${ant.id}" class="pq-passos__ant"><small>Anterior</small><span><b>${ant.n}</b> ${ant.titulo}</span></a>` : "<span></span>"}
-        ${prox ? `<a href="#/perguntas/${prox.id}" class="pq-passos__prox"><small>Próximo</small><span><b>${prox.n}</b> ${prox.titulo}</span></a>` : ""}
+      <nav class="pq-passos" aria-label="Outras perguntas">
+        ${ant ? `<a href="#/perguntas/${ant.id}" class="pq-passos__ant"><small>Anterior</small><span>${ant.titulo}</span></a>` : "<span></span>"}
+        ${prox ? `<a href="#/perguntas/${prox.id}" class="pq-passos__prox"><small>Próximo</small><span>${prox.titulo}</span></a>` : ""}
       </nav>
     </div>`;
   }
 
   function paginaIndice(P, temas) {
     const T = P.tamanho || {}, mi = (v) => N1.format(v / 1e6).replace(/,0$/, "");
-    const item = (b) => `<li><a href="#/perguntas/${b.id}">${selo(b)}
-        <strong class="pq-lista__q">${b.titulo}</strong><span class="pq-lista__rot">${b.curta}</span></a></li>`;
-    const principais = temas.filter((b) => typeof b.n === "number"), extras = temas.filter((b) => typeof b.n !== "number");
-    // as 12 perguntas que o grupo escolheu no começo do trabalho, e o tema que responde cada uma
+    const item = (b) => `<li><a href="#/perguntas/${b.id}"><strong class="pq-lista__q">${b.titulo}</strong>${tagGrupo(b)}<span class="pq-lista__rot">${b.curta}</span></a></li>`;
+    // as perguntas que o grupo escolheu no começo do trabalho, e onde cada uma é respondida
     const BASE = [["Quanto custa cada cadeira?", "t1"], ["O dinheiro aumenta a chance de vencer?", "t2"], ["O desenvolvimento da cidade (IBGE) muda o partido votado e a abstenção?", "t3"],
       ["A escolaridade dos candidatos é parecida com a da população?", "t4"], ["Quanto vale o voto só no partido (legenda)?", "t7"], ["O que dizem as propostas dos candidatos? (nuvem de palavras)", "t9"],
       ["Jovens e não jovens votam diferente?", "t10"], ["A doação de empresas tem lado político?", "t12"], ["O lado político de cada cidade e região mudou com o tempo?", "t14"],
       ["Dinheiro público ou privado: quem se elege com qual?", "t15"], ["Onde o candidato investe em propaganda? (nuvem de palavras)", "e1"], ["O político e sua linha do tempo: quanto dura uma carreira?", "e2"]];
-    const ASSUNTOS = [["Dinheiro", "Quanto custa, quem paga e o que isso muda"], ["Perfil", "Quem são os candidatos e os eleitos"], ["Território", "O lugar e o voto"], ["Voto", "Como o eleitor vota (ou não vota)"], ["Partidos", "Propostas, partidos e Justiça Eleitoral"]];
     return `<div class="pagina pq-pagina">
       <header class="pq-cab">
         <h1 class="titulo-grande">Perguntas do trabalho</h1>
-        <p class="pq-mais">Os temas do enunciado do trabalho, respondidos com as eleições de 1994 a 2026 no Brasil inteiro, em ${P.consultas.length} consultas ao banco.</p>
+        <p class="pq-mais">Os temas do enunciado e as perguntas do grupo, separados por assunto e respondidos com as eleições de 1994 a 2026 no Brasil inteiro, em ${P.consultas.length} consultas ao banco.</p>
         <ul class="pq-banco">
           <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
           <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
@@ -1504,14 +1504,11 @@
           <li><b>${V.int(T.municipios)}</b><span>cidades</span></li>
         </ul>
       </header>
-      ${ASSUNTOS.map(([g, sub]) => { const ts = principais.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
+      ${BLOCOS.map(([g, sub]) => { const ts = temas.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
         <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
-        <ol class="pq-lista">${ts.map(item).join("")}</ol></section>` : ""; }).join("")}
-      <section class="pq-assunto" aria-labelledby="pq-g-mais"><h2 class="pq-assunto__tit" id="pq-g-mais">Perguntas a mais do grupo <span>O que o grupo quis saber além do enunciado</span></h2>
-      <ol class="pq-lista">${extras.map(item).join("")}</ol></section>
-      <section class="pq-assunto" aria-labelledby="pq-g-base"><h2 class="pq-assunto__tit" id="pq-g-base">As 12 perguntas base do grupo <span>Onde cada uma é respondida</span></h2>
-      <ol class="pq-lista">${BASE.map(([q, id], i) => { const t = temas.find((x) => x.id === id); return t ? `<li><a href="#/perguntas/${id}"><span class="pq-selo">${i + 1}</span>
-        <strong class="pq-lista__q">${q}</strong><span class="pq-lista__rot">Respondida em ${typeof t.n === "number" ? `tema ${t.n}` : `pergunta a mais ${t.n}`}: ${t.titulo}</span></a></li>` : ""; }).join("")}</ol></section>
+        <ul class="pq-lista">${ts.map(item).join("")}</ul></section>` : ""; }).join("")}
+      <details class="pq-origem pq-base"><summary>As perguntas que o grupo escolheu no começo do trabalho</summary>
+        <ul>${BASE.map(([q, id]) => { const t = temas.find((x) => x.id === id); return t ? `<li>${q} <a href="#/perguntas/${id}">${t.titulo}</a></li>` : ""; }).join("")}</ul></details>
       <p class="pq__rodape">Consultas em <code>scripts/consultas_brasil.sql</code>, rodadas em ${P.gerado.split("-").reverse().join("/")} no banco nacional (DuckDB).</p>
     </div>`;
   }
@@ -1554,7 +1551,7 @@
     const b = id && temas.find((x) => x.id === id);
     ATUAL = null;
     if (!b) { document.title = "Perguntas do trabalho · Voto a voto"; main.innerHTML = paginaIndice(P, temas); return; }
-    document.title = `${typeof b.n === "number" ? "Tema " + b.n : "Pergunta a mais"}. ${b.titulo} · Voto a voto`;
+    document.title = `${b.titulo} · Perguntas do trabalho · Voto a voto`;
     main.innerHTML = paginaTema(b, temas, C);
     ATUAL = { b, modo: modoSalvo(), paineis: partesDe(b).map((pt) => (pt.v.length ? { vi: pt.v[0], ci: {}, ano: {}, tab: null } : null)) };
     pintarTodos();
