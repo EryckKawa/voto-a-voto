@@ -37,7 +37,7 @@ index.html          página única; as seções são trocadas pelo endereço (#/
 css/estilo.css      todo o visual (tema claro, fontes Atkinson Hyperlegible e Barlow Condensed)
 js/                 código do site, um arquivo por página (detalhes em docs/arquitetura.md)
 data/               dados já prontos, em .json (origem) e .js (para abrir sem servidor)
-img/fotos/          fotos oficiais dos candidatos (TSE), em miniatura
+img/fotos/, img/pol/ fotos oficiais dos candidatos (TSE), em WebP na resolução do TSE (161×214)
 scripts/            como os dados foram feitos, a partir dos arquivos do TSE, IBGE e Câmara
 testes/             robô que roda os testes do site no computador e no celular (Playwright)
 vendor/             D3 7.9.0, topojson-client 3.1.0, axe-core 4.10.2, three.js r147 (só na página 3D)

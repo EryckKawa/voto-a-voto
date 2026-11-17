@@ -153,6 +153,8 @@ As três últimas etapas (16/11/2026): `registro` relê os arquivos de candidato
 
 A amostra da página de formulários (Teresina, 2020 e 2024) sai de `python scripts/formularios_amostra.py caminho/eleicoes_brasil.duckdb`, que grava `data/br/form/base.json` e `.js`.
 
+**Fotos em alta (17/11/2026):** as miniaturas de 90×120 em JPEG foram trocadas pelas fotos na resolução que o TSE publica (161×214, recortadas em 3:4) em WebP, feitas por `scripts/fotos_alta.py` (lê os pacotes do TSE direto do servidor) e completadas por `scripts/fotos_completar.py` (quem não veio do TSE é convertido da miniatura antiga). São 91.004 fotos, cerca de 3,5 KB cada.
+
 As fotos por pessoa são geradas por `fotos_politicos.py`: 81.214 miniaturas em `img/pol`, de 81.296 pessoas nas eleições gerais de 2014 a 2026. Foram processados os 112 pacotes; 82 pessoas não tinham foto aproveitável no pacote. A ficha usa esse índice quando não há uma foto dos pacotes já usados pelo mapa. Rode novamente depois da exportação das fichas com `--indice` para atualizar apenas `data/br/pol/fotos.js`, sem repetir downloads.
 
 A etapa `propostas` guarda quais zips já leu (tabela `proposta_carga`): rodada de novo, ela só lê os zips que chegaram depois. A etapa `camara` lê a pasta `camara` ao lado de `brasil` (`baixar_votos_propostas.ps1`). No Windows, rode com `PYTHONUTF8=1` (o `montar_banco.py` já faz isso).
