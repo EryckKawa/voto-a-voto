@@ -9,7 +9,7 @@
     ["#/mapa", "As 5.570 cidades", "Cada cidade com a cor do lado de quem venceu, de 1994 a 2026, em sete cargos."],
     ["#/tempo", "Trinta anos em um minuto", "As eleições para presidente passando uma a uma, cidade por cidade."],
     ["#/3d", "O Brasil em 3D", "Cada coluna é uma cidade: a altura é o número de eleitores; a cor, o lado de quem venceu."],
-    ["#/perguntas", "As 12 perguntas do trabalho", "Cada resposta traz o gráfico, a tabela e a consulta SQL que a produziu, no banco nacional."],
+    ["#/perguntas", "As 16 perguntas do trabalho", "Cada tema do enunciado com a resposta em uma frase, os números que a sustentam e os gráficos, do banco nacional."],
     ["#/partidos", "Onde fica cada partido", "Entre a esquerda e a direita, segundo três estudos acadêmicos e o voto na Câmara."],
     ["#/politico/1713641", "A ficha de 2,4 milhões de candidatos", "Cada eleição, partido, votos, dinheiro e bens. E cada ficha vira uma carta.", () => esperar("#pol-carta", 6000).then((b) => b && setTimeout(() => b.isConnected && b.click(), 1200))],
     ["#/patrimonio", "Quem declarou mais bens", "Os eleitos com mais bens declarados ao TSE, eleição por eleição, de 2006 a 2026."],
@@ -80,6 +80,7 @@
       ["#/tempo", "Máquina do tempo", "As eleições de 1994 a 2026 passando como um filme, cidade por cidade.", "vis-card--tempo"],
       ["#/multidao", "A multidão do Ninguém", "42,6 milhões de eleitores que não escolheram ninguém, um ponto para cada mil, enchendo estádios.", "vis-card--multidao"],
       ["#/patrimonio", "Corrida do patrimônio", "Os eleitos com mais bens declarados, ultrapassando uns aos outros eleição a eleição.", "vis-card--patrimonio"],
+      ["#/formularios", "Formulários e relatórios", "O protótipo do sistema: cadastre, altere e exclua candidatos, partidos e votos com as regras do banco, e imprima os relatórios.", "vis-card--form"],
       ["#/politico/1713641", "Carta do político", "Toda ficha de político vira uma carta colecionável, que dá para virar e baixar. Exemplo: Lula.", "vis-card--carta"],
     ];
     main.innerHTML = `<div class="pagina vis">

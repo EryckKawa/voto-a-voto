@@ -19,7 +19,7 @@
     pend[chave] = new Promise((ok, falha) => {
       const tentar = (n) => {
         const s = document.createElement("script");
-        s.src = "data/" + chave + ".js?v=20261027-nuvens" + (n ? "&t=" + n : "");
+        s.src = "data/" + chave + ".js?v=20261116-temas" + (n ? "&t=" + n : "");
         s.onload = () => (window.__D[chave] ? ok(window.__D[chave]) : falha(new Error("Arquivo sem dados: " + chave)));
         s.onerror = () => { s.remove(); if (n < 2) setTimeout(() => tentar(n + 1), 600 * (n + 1)); else { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); } };
         document.head.appendChild(s);

@@ -49,7 +49,7 @@
     return `<p class="nuvem" role="img" aria-label="${V.esc(rot)}: ${ord.map((it) => `${it.w} (${V.int(it.q)})`).join(", ")}">${meio.map((it) =>
       `<span style="font-size:${tam(it.q).toFixed(1)}px;color:${it.cor || cor}" title="${V.esc(it.tit || `${it.w}: ${V.int(it.q)} vezes`)}">${V.esc(it.w)}</span>`).join(" ")}</p>`;
   }
-  V.graf = { barras, linhas, leg, nuvem };   // usados também na página das 12 perguntas e na ficha do político
+  V.graf = { barras, linhas, leg, nuvem };   // usados também na página dos 16 temas e na ficha do político
 
   const bloco = (b) => `<article class="achado" id="${b.id}">
       <h2 class="achado__titulo">${b.tit}</h2>
@@ -164,7 +164,7 @@
         <p class="lead">Oito achados de trinta anos de eleições, de 1994 a 2026, nas 5.570 cidades. Cada título já é a resposta; o gráfico mostra de onde ela vem.</p>
         <nav class="revela__indice" aria-label="Achados">${blocos.map((b) => `<a href="#/revela" data-alvo="${b.id}">${b.indice}</a>`).join("")}</nav></header>
       ${blocos.map(bloco).join("")}
-      <p class="revela__fim"><a href="#/perguntas">Ver as 12 perguntas do trabalho, cada uma com a consulta SQL</a></p>
+      <p class="revela__fim"><a href="#/perguntas">Ver as 16 perguntas do trabalho, cada uma com a resposta e os gráficos</a></p>
     </div>`;
     main.querySelectorAll("[data-alvo]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); document.getElementById(a.dataset.alvo).scrollIntoView({ behavior: "smooth", block: "start" }); }));
   });
