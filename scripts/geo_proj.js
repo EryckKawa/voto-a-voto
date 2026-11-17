@@ -1,5 +1,8 @@
 /* Mapa leve: projeta as cidades e os estados uma vez só (aqui, não no navegador) e grava os desenhos prontos.
    Uso: node scripts/geo_proj.js MUN_TOPOJSON UF_TOPOJSON SAIDA.json
+   Desde 18/11/2026: malhas de qualidade mínima da API de malhas v3 do IBGE (propriedade "codarea"), com as 5.570 cidades:
+     .../api/v3/malhas/paises/BR?formato=application/json&qualidade=minima&intrarregiao=municipio   (e intrarregiao=UF)
+   A malha antiga tinha 5.566 cidades (faltavam as 4 criadas em 2013) e pedaços sem cidade, que apareciam em branco no mapa.
    Mesma projeção do mapa (Mercator encaixada em 960 x 900, margem 12), coordenadas com 1 casa decimal. */
 const fs = require("fs"), vm = require("vm");
 const ctx = { window: {}, self: {}, console }; ctx.globalThis = ctx; vm.createContext(ctx);
@@ -17,8 +20,8 @@ const r1 = (v) => Math.round(v * 10) / 10;
 const caixa = (f) => path.bounds(f).flat().map(r1);
 const out = {
   W, H,
-  m: mun.features.map((f) => [String(f.properties.id), path(f), ...caixa(f), ...path.centroid(f).map(r1)]),
-  uf: ufs.features.map((f) => [COD_UF[f.properties.uf], path(f), ...caixa(f)]),
+  m: mun.features.map((f) => [String(f.properties.codarea || f.properties.id), path(f), ...caixa(f), ...path.centroid(f).map(r1)]),
+  uf: ufs.features.map((f) => [COD_UF[f.properties.uf || f.properties.codarea], path(f), ...caixa(f)]),
   mesh: path(topojson.mesh(gu, gu.objects[Object.keys(gu.objects)[0]], (a, b) => a !== b)),
 };
 fs.writeFileSync(saida, JSON.stringify(out));

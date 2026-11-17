@@ -45,7 +45,7 @@
     return `<div class="vis-barra" role="img" aria-label="${f.map(([k]) => `${k === "sem" ? "sem resultado" : k}: ${V.int(r.lados[k])} cidades`).join(", ")}">${f.map(([k, c, tc]) => r.lados[k] ? `<i style="flex-basis:${(100 * r.lados[k]) / t}%;background:${c};color:${tc}">${(100 * r.lados[k]) / t >= 9 ? V.int(r.lados[k]) : ""}</i>` : "").join("")}</div>`;
   };
 
-  // um mapa do Brasil em <canvas>, com as cidades já projetadas (data/br/geo_proj): bem mais leve que 5.566 <path> para animar
+  // um mapa do Brasil em <canvas>, com as cidades já projetadas (data/br/geo_proj): bem mais leve que 5.570 <path> para animar
   V.mapaCanvas = async (canvas) => {
     const G = await V.geoBR(), BR = await V.baseBR();
     const cids = G.mun.map((f) => ({ id: f.id, p: new Path2D(f.d), c: f.c })), ufs = G.ufs.map((u) => new Path2D(u.d));

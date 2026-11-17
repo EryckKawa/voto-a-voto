@@ -65,7 +65,7 @@ Cada item diz o problema visto nas capturas (1280 px e 390 px) e a regra que res
 
 ### Explorar
 - A · As artes dos cartões são gradientes e desenhos genéricos que não mostram o que há dentro. Trocar por miniaturas reais de cada visual (cheiro de informação, NN/g).
-- B · Grade 4 + 2 desigual: passar para 3 + 3 e separar "Ver" (3D, máquina do tempo, multidão, patrimônio) de "Usar" (formulários, carta).
+- B · Grade 4 + 2 desigual: passar para 3 + 3 e separar "Ver" (3D, máquina do tempo, multidão, patrimônio) de "Usar" (formulários). A carta do político saiu em 18/11.
 - B · A dica das setas do modo apresentação vai para dentro do próprio modo.
 
 ### Em todas
@@ -112,4 +112,20 @@ O plano completo (fundamentos, componentes, página por página e fases) foi fei
 
 ### O que ainda fica (fase 6 e depois)
 Reduzir os 12 pontos de quebra a três e devolver os blocos de conserto do fim do CSS às regras de origem (sem mudança visual, por isso depois da entrega); o ensaio da apresentação no projetor.
+
+## Afirmações para leigos e o gráfico certo (18/11/2026)
+
+**Pedido:** respostas simples e diretas, que passem a informação principal para quem não é da área; a melhor forma de ver cada dado; tirar a carta do político.
+
+**Regras de escrita** (valem para as 16 perguntas e para "O que o voto revela"):
+1. Uma afirmação por parte: sujeito, verbo e número, numa frase. Exemplo: "Uma vaga de deputado federal custou R$ 6,2 milhões em 2022; uma de vereador, R$ 45 mil em 2024."
+2. Sem jargão: no lugar de "correlação", o efeito ("quem gasta mais quase sempre tem mais votos"); "IDHM" vira "cidade mais ou menos desenvolvida"; "quintil" vira "os 20% que mais…"; "voto de legenda" vem explicado ("só no número do partido").
+3. Número redondo; zero vira palavra ("nenhum bem").
+4. A pergunta fica pequena, a afirmação grande, logo depois o gráfico; os números completos ficam em "Os números em detalhe", recolhido.
+
+**Onde está no código:** cada tema em `montarTemas` (`js/perguntas.js`) tem `partes: [{ q, a, p, v }]`. `a` é a afirmação, montada com os mesmos valores dos pontos, para continuar certa quando os dados mudam; `p` diz quais pontos detalham; `v`, quais gráficos (no máximo 3). No topo de cada tema fica a frase curta do índice (`curta`). Um teste confere que as 48 partes têm afirmação de até 140 letras, sem jargão nem número faltando.
+
+**O que o voto revela:** os 8 títulos viraram afirmações curtas ("O PT ganhou o Nordeste e perdeu o Sul", "Quase ninguém anula mais o voto, mas cada vez mais gente falta"), com o número no subtítulo.
+
+**Carta do político:** removida (o arquivo `js/carta.js`, o botão da ficha, o passo da apresentação, o cartão do Explorar e o estilo).
 

@@ -420,6 +420,23 @@
     for (const t of ["t1", "t2", "t6", "t13", "t16", "e2"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
     return R(grupos === 6 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as 2 a mais; número com rótulo inteiro; seletor de tema");
   });
+  teste("Funcionamento", "16 perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
+    const ruins = []; let n = 0;
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
+      await irPara("#/perguntas/" + id); await ate(() => q(".pq-parte__a"), 8000).catch(() => {});
+      const partes = qq(".pq-parte");
+      partes.forEach((pt, k) => { n++; const a = pt.querySelector(".pq-parte__a"), t = a ? a.textContent.trim() : "";
+        const jargao = /correla|quintil|coeficiente|IDHM/i.test(t.replace(/\([^)]*\)/g, ""));
+        if (!t || t.length > 140 || jargao || /—\s|undefined|NaN/.test(t)) ruins.push(`${id}.${k + 1}: ${t ? t.slice(0, 50) : "sem afirmação"}`); });
+    }
+    return R(ruins.length === 0 && n >= 40, ruins.length ? ruins.slice(0, 3).join(" · ") : `${n} partes, todas com afirmação curta`, "toda parte com uma frase de até 140 letras, sem jargão nem número faltando");
+  });
+  teste("Dados", "Mapa: as 5.570 cidades desenhadas, sem buracos", async () => {
+    await irPara("#/mapa"); await ate(() => qq("#mapa-br path.mun").length > 5000, 8000).catch(() => {});
+    const n = qq("#mapa-br path.mun").length, ids = new Set(qq("#mapa-br path.mun").map((p) => String(p.__data__ && p.__data__.id)));
+    const novas = ["1504752", "2206720", "4314548", "5006275"].filter((i) => ids.has(i)).length;
+    return R(n === 5570 && novas === 4, `${V.int(n)} cidades; ${novas} das 4 criadas em 2013`, "5.570 cidades, com Mojuí dos Campos, Nazária, Pinto Bandeira e Paraíso das Águas");
+  });
   teste("Funcionamento", "Mapa: os filtros vêm antes do mapa", async () => {
     await irPara("#/mapa"); await ate(() => q("#controles .chip") && q("#mapa-br path.mun"), 8000).catch(() => {});
     const f = q(".home__filtros").getBoundingClientRect(), m = q("#mapa-br").getBoundingClientRect(), cab = qq(".ranking__cab").length;

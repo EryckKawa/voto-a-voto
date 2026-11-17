@@ -11,7 +11,6 @@ const VISTAS = [
   ["multidao", "#/multidao", 9000, ""],
   ["patrimonio", "#/patrimonio", 7000, ""],
   ["formularios", "#/formularios", 3500, ""],
-  ["carta", "#/politico/1713641", 5000, "document.getElementById('pol-carta') && document.getElementById('pol-carta').click()"],
 ];
 const espera = (ms) => new Promise((r) => setTimeout(r, ms));
 fs.mkdirSync(DIR, { recursive: true });
@@ -32,7 +31,6 @@ fs.mkdirSync(DIR, { recursive: true });
     const shot = await C("Page.captureScreenshot", { format: "png" });
     fs.writeFileSync(path.join(DIR, nome + ".png"), Buffer.from(shot.result.data, "base64"));
     console.log(nome);
-    await C("Runtime.evaluate", { expression: "document.querySelector('.vis-carta') && document.querySelector('.vis-carta').remove()" });
   }
   ws.close(); edge.kill();
 })();

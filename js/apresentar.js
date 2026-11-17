@@ -11,11 +11,10 @@
     ["#/3d", "O Brasil em 3D", "Cada coluna é uma cidade: a altura é o número de eleitores; a cor, o lado de quem venceu."],
     ["#/perguntas", "As 16 perguntas do trabalho", "Cada tema do enunciado com a resposta em uma frase, os números que a sustentam e os gráficos, do banco nacional."],
     ["#/partidos", "Onde fica cada partido", "Entre a esquerda e a direita, segundo três estudos acadêmicos e o voto na Câmara."],
-    ["#/politico/1713641", "A ficha de 2,4 milhões de candidatos", "Cada eleição, partido, votos, dinheiro e bens. E cada ficha vira uma carta.", () => esperar("#pol-carta", 6000).then((b) => b && setTimeout(() => b.isConnected && b.click(), 1200))],
+    ["#/politico/1713641", "A ficha de 2,4 milhões de candidatos", "Cada eleição, partido, votos, dinheiro e bens."],
     ["#/patrimonio", "Quem declarou mais bens", "Os eleitos com mais bens declarados ao TSE, eleição por eleição, de 2006 a 2026."],
     ["#/testes", "Tudo conferido", "Testes de velocidade, funcionamento, acessibilidade e dos números com os resultados oficiais do TSE."],
   ];
-  const esperar = (sel, ms) => new Promise((ok) => { const t0 = Date.now(); const f = () => { const e = document.querySelector(sel); if (e || Date.now() - t0 > ms) ok(e); else setTimeout(f, 150); }; f(); });
   let passo = -1, barra = null;
   V.tourAtivo = () => passo >= 0;
 
@@ -27,7 +26,6 @@
     barra.querySelector(".vis-tour__n").textContent = `${passo + 1} de ${ROTEIRO.length}`;
     barra.querySelector("[data-t='ant']").disabled = passo === 0;
     barra.querySelector("[data-t='prox']").textContent = passo === ROTEIRO.length - 1 ? "Fim" : "Próximo ›";
-    const carta = document.querySelector(".vis-carta"); if (carta) carta.remove();
     V.ir(h);
     if (depois) depois();
   }
@@ -41,7 +39,7 @@
     if (e.target.closest && e.target.closest("input, textarea, select")) return;
     if (["ArrowRight", "PageDown"].includes(e.key)) { e.preventDefault(); e.stopPropagation(); passo === ROTEIRO.length - 1 ? sair() : mostrar(passo + 1); }
     else if (["ArrowLeft", "PageUp"].includes(e.key)) { e.preventDefault(); e.stopPropagation(); mostrar(passo - 1); }
-    else if (e.key === "Escape" && !document.querySelector(".vis-carta")) sair();
+    else if (e.key === "Escape") sair();
   }
   V.comecarTour = (k = 0) => {
     if (!barra) {
@@ -84,7 +82,6 @@
     ];
     const USAR = [
       ["#/formularios", "Formulários e relatórios", "Cadastre, altere e exclua candidatos, partidos e votos com as regras do banco, e imprima os relatórios.", "formularios"],
-      ["#/politico/1713641", "Carta do político", "Toda ficha vira uma carta que dá para virar e baixar. Exemplo: Lula.", "carta"],
     ];
     const cartao = ([h, t, d, img]) => `<li><a class="vis-card" href="${h}"><img class="vis-card__arte" src="img/explorar/${img}.webp" alt="" loading="lazy" width="640" height="360"><span class="vis-card__tit">${t}</span><span class="vis-card__txt">${d}</span></a></li>`;
     main.innerHTML = `<div class="pagina vis">

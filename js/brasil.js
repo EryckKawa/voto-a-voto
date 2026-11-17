@@ -51,7 +51,7 @@
   let BR = null;
   async function base() {
     if (BR) return BR;
-    // desenhos do mapa já projetados (scripts/geo_proj.js): o navegador não precisa calcular a projeção de 5.566 cidades
+    // desenhos do mapa já projetados (scripts/geo_proj.js): o navegador não precisa calcular a projeção de 5.570 cidades
     const [cid, ideoH, ideoV, ideoC] = await Promise.all([V.dados("br/cidades"), V.dados("br/ideologia"), V.dados("br/ideologia_voto"), V.dados("br/ideologia_consenso")]);
     const lista = cid.map((r) => ({ tse: r[0], ibge: r[1], nome: r[2], uf: r[3], capital: !!r[4], pop: r[5], pib: r[6], prim: r[7] || 1994, n: V.norm(r[2]) }));
     BR = { lista, porIbge: new Map(lista.map((c) => [c.ibge, c])), porTse: new Map(lista.map((c) => [c.tse, c])), ideoH, ideoV, ideoC, geo: null };
@@ -342,7 +342,7 @@
     const corDe = (w, id) => (w && w[9] ? V.corNota(w[8]) : FUNDO[porQue(id, w, agora().ano, agora().cargo)]);
     const dicaSem = (c, w) => { const [t, s] = textoPorQue(porQue(c.ibge, w, agora().ano, agora().cargo), c, agora().ano, agora().cargo); return `<b>${V.esc(c.nome)} (${c.uf})</b>${V.esc(t.replace(c.nome + " ", "").replace(/^./, (x) => x.toUpperCase()))}.<br><small>${V.esc(s)}</small>`; };
     const elPor = new Map(); mun.each(function (f) { elPor.set(f.id, this); });
-    // um único ouvinte para as 5.566 cidades (em vez de três por cidade)
+    // um único ouvinte para as 5.570 cidades (em vez de três por cidade)
     let aoMover = null;
     munG.on("mousemove", (ev) => { const f = ev.target.__data__; if (f && aoMover) aoMover(ev, f); }).on("mouseleave", () => V.dica(null, null))
       .on("click", (ev) => { const f = ev.target.__data__; if (!f) return; V.dica(null, null); aoClicar(f.id, k >= PERTO); });
@@ -422,9 +422,9 @@
   /* ---------- o ato de votar: quem foi, quem faltou, quem anulou ou votou em branco ---------- */
   const legVenc = () => `<span class="mapa-leg__escala"><span>Esquerda</span><i></i><span>Direita</span></span>
       <a class="mapa-leg__regua" href="#/mapa" data-alvo="reguas">Régua ${REGUA === "voto" && H && H.ano < 2018 ? "de Harvard (para anos antes de 2019)" : NOME_REGUA[REGUA]}</a>
-      <span class="mapa-leg__item" id="leg-indef-box" hidden><i class="mapa-leg__risco"></i><span>Sem resultado oficial (<span id="leg-indef"></span>)</span></span>
-      <span class="mapa-leg__item" id="leg-novo-box" hidden><i class="mapa-leg__novo"></i><span>Ainda não era município (<span id="leg-novo"></span>)</span></span>
-      <span class="mapa-leg__item" id="leg-pref-box" hidden><i class="mapa-leg__novo"></i><span id="leg-pref">Brasília e Fernando de Noronha não têm prefeito</span></span>
+      <span class="mapa-leg__item" id="leg-indef-box" hidden><i class="mapa-leg__risco"></i><span>Sem resultado oficial: eleição anulada ou em julgamento (<span id="leg-indef"></span>)</span></span>
+      <span class="mapa-leg__item" id="leg-novo-box" hidden><i class="mapa-leg__novo"></i><span>Ainda não era município neste ano (<span id="leg-novo"></span>)</span></span>
+      <span class="mapa-leg__item" id="leg-pref-box" hidden><i class="mapa-leg__novo"></i><span id="leg-pref">Não elege prefeito: Brasília e Fernando de Noronha</span></span>
       <span class="mapa-leg__item" id="leg-sem-box" hidden><i class="mapa-leg__sem"></i><span>Partido que os estudos não medem (<span id="leg-sem"></span>)</span></span>
       <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>`;
   const MET = {
@@ -738,7 +738,7 @@
     if (Object.keys(fatAntes).length) { const novo = []; fats.forEach((el) => { novo.push(el.style.flexBasis); el.style.flexBasis = fatAntes[el.dataset.f]; }); requestAnimationFrame(() => requestAnimationFrame(() => fats.forEach((el, i) => (el.style.flexBasis = novo[i])))); }
     document.getElementById("leg-indef").textContent = plural(r.semRes, "cidade", "cidades"); document.getElementById("leg-indef-box").hidden = !r.semRes;
     document.getElementById("leg-novo").textContent = plural(r.novo, "cidade de hoje", "cidades de hoje"); document.getElementById("leg-novo-box").hidden = !r.novo;
-    document.getElementById("leg-pref-box").hidden = !r.semPref; document.getElementById("leg-pref").textContent = `Brasília e Fernando de Noronha não têm ${cargo === "VER" ? "vereadores" : "prefeito"}`;
+    document.getElementById("leg-pref-box").hidden = !r.semPref; document.getElementById("leg-pref").textContent = `Não elege ${cargo === "VER" ? "vereadores" : "prefeito"}: Brasília e Fernando de Noronha`;
     document.getElementById("leg-sem").textContent = plural(r.semNota, "cidade", "cidades"); document.getElementById("leg-sem-box").hidden = !r.semNota;
     const lado = document.getElementById("lado");
     lado.classList.remove("lado--chega");

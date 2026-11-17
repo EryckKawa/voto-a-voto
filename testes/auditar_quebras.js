@@ -28,6 +28,12 @@ const INSPECAO = `(() => {
     const tops = new Set(rects.filter((x) => x.width > 1).map((x) => Math.round(x.top / 4)));
     if (tops.size > 1) out.push({ tipo: "rótulo curto quebrou", el: nome(el), txt: t });
   }
+  // 3b. número ou rótulo que passa da borda do próprio cartão (texto que não quebra, mas não cabe)
+  for (const el of document.querySelectorAll(".kpis b, .chip, .btn, .selo, .camadas__op")) {
+    if (!visivel(el)) continue; const caixa = el.closest("li, .kpis li, .filtros, .painel, .pq-parte, .cartao") || el.parentElement;
+    const r = el.getBoundingClientRect(), c = caixa.getBoundingClientRect();
+    if (r.right > c.right + 1 && !rola(el)) out.push({ tipo: "passa da borda do cartão", el: nome(el), txt: el.textContent.trim().slice(0, 40) + " (" + Math.round(r.right - c.right) + " px)" });
+  }
   // 4. texto cortado
   for (const el of todos) { if (!visivel(el) || el.children.length || !el.textContent.trim()) continue; const cs = getComputedStyle(el); if (cs.textOverflow === "ellipsis") continue;
     if (/(hidden|clip)/.test(cs.overflowX) && el.scrollWidth > el.clientWidth + 2) out.push({ tipo: "texto cortado", el: nome(el), txt: el.textContent.trim().slice(0, 50) }); }

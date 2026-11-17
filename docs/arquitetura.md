@@ -88,7 +88,9 @@ O mapa usa o desenho atual das cidades em todas as eleições. Uma cidade sem ve
 
 A explicação aparece ao passar o mouse, no título e no painel da cidade. A função `porQue()`, em `js/brasil.js`, decide o motivo.
 
-Quatro cidades criadas em 2013 (Mojuí dos Campos/PA, Nazária/PI, Paraíso das Águas/MS e Pinto Bandeira/RS) não têm desenho próprio na malha usada: a área delas aparece dentro da cidade de origem. Elas são achadas pela busca e têm painel, mas não são pintadas à parte.
+**Malha das cidades (18/11/2026).** Até 17/11, o desenho do mapa tinha 5.566 cidades. Faltavam as 4 criadas em 2013 (Mojuí dos Campos/PA, Nazária/PI, Paraíso das Águas/MS e Pinto Bandeira/RS), e a malha antiga também deixava pedaços sem cidade, como um trecho de Senador José Porfírio/PA. Essas áreas apareciam **em branco** no mapa. O desenho agora sai da malha de qualidade mínima da API de malhas do IBGE (v3), com as 5.570 cidades e sem sobras entre vizinhas. Ela fica em `Downloads/BDR_Votacao/dados/ibge/malha_*_minima.json` e em `data/br/geo_mun.js` e `geo_uf.js`, e o desenho pronto é gerado por `node scripts/geo_proj.js` (1,9 MB, 145 mil pontos, menor que o anterior). Um teste confere as 5.570.
+
+Portanto, o que aparece sem cor no mapa tem sempre um destes motivos: hachura (sem resultado oficial: eleição anulada ou em julgamento), pontilhado (ainda não era município naquele ano, ou não elege prefeito nem vereador). Não há mais áreas em branco.
 
 ## As três réguas no mapa
 

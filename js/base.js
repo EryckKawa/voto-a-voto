@@ -23,7 +23,7 @@
         const s = document.createElement("script");
         let fim = false;
         const relogio = n < 2 ? setTimeout(() => { if (!fim && !window.__D[chave]) tentar(n + 1); }, 12000) : null;
-        s.src = "data/" + chave + ".js?v=20261118-final26" + (n ? "&t=" + n : "");
+        s.src = "data/" + chave + ".js?v=20261118-malha" + (n ? "&t=" + n : "");
         s.onload = () => { fim = true; clearTimeout(relogio); if (window.__D[chave]) ok(window.__D[chave]); else falha(new Error("Arquivo sem dados: " + chave)); };
         s.onerror = () => { fim = true; clearTimeout(relogio); s.remove(); if (window.__D[chave]) return; if (n < 2) setTimeout(() => tentar(n + 1), 600 * (n + 1)); else { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); } };
         document.head.appendChild(s);
