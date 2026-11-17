@@ -1,6 +1,8 @@
 """Ficha de cada político (Q10: o histórico eleitoral de cada um), para todos os candidatos de 1994 a 2026.
 
-Uso: python ficha_politico.py [eleicoes_brasil.duckdb]
+Uso: python ficha_politico.py [eleicoes_brasil.duckdb] [--pessoas ID,ID,...]
+Com --pessoas, regrava só os arquivos de ficha (f/) dessas pessoas, sem apagar nem refazer o resto
+(por exemplo, depois da etapa limpeza do banco: --pessoas com as pessoas de receita_descartada).
 Lê o banco nacional (banco_brasil.py) e grava, em data/br/pol/ (só .js, já no formato que o site carrega):
   f/{id_pessoa % 2048}  ficha: dados da pessoa e cada candidatura (cargo, lugar, partido e nota do partido naquela eleição,
                         votos, resultado, dinheiro da campanha, patrimônio e onde gastou)
@@ -15,7 +17,9 @@ import duckdb, numpy as np, pandas as pd
 from itertools import groupby
 
 AQUI = os.path.dirname(os.path.abspath(__file__))
-BANCO = sys.argv[1] if len(sys.argv) > 1 else os.environ.get('BANCO', '/tmp/claude-0/br/db/eleicoes_brasil.duckdb')
+ARGS = [a for a in sys.argv[1:] if not a.startswith('--')]
+SO = {int(x) for x in sys.argv[sys.argv.index('--pessoas') + 1].split(',')} if '--pessoas' in sys.argv else None
+BANCO = ARGS[0] if ARGS and not (SO and ARGS[0] == sys.argv[sys.argv.index('--pessoas') + 1]) else os.environ.get('BANCO', '/tmp/claude-0/br/db/eleicoes_brasil.duckdb')
 D = os.path.join(AQUI, '..', 'data', 'br')
 OUT = os.path.join(D, 'pol')
 con = duckdb.connect(BANCO, read_only=True)
@@ -38,8 +42,9 @@ def grava(chave, obj):
         f.write('(window.__D=window.__D||{})[' + json.dumps('br/' + chave) + ']=' + dados + ';\n')
 
 
-for pasta in ('f', 'idx', 'pal', 'cam'):
+for pasta in (() if SO else ('f', 'idx', 'pal', 'cam')):
     shutil.rmtree(os.path.join(OUT, pasta), ignore_errors=True)
+BALDES = {i % 2048 for i in SO} if SO else None   # com --pessoas, só os arquivos de ficha dessas pessoas
 SIT = lambda s, e: 'E' if e else '2' if s and '2º TURNO' in s.upper() else 'S' if s and 'SUPLENTE' in s.upper() else 'N' if s and ('NÃO ELEITO' in s.upper() or 'NAO ELEITO' in s.upper()) else '-'
 
 # ------------------------------------------------------------------ candidaturas
@@ -60,7 +65,7 @@ LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleica
 LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
 LEFT JOIN vt ON vt.id_candidatura = c.id_candidatura LEFT JOIN rc ON rc.id_candidatura = c.id_candidatura
 LEFT JOIN dp ON dp.id_candidatura = c.id_candidatura LEFT JOIN bm ON bm.id_candidatura = c.id_candidatura
-ORDER BY c.id_pessoa, e.nr_ano_eleicao, c.cd_cargo""").df()
+ORDER BY c.id_pessoa, e.nr_ano_eleicao, c.cd_cargo, c.id_candidatura""").df()   # id_candidatura desempata: a ordem não muda entre rodadas
 C = C.astype(object).where(C.notna(), None)   # o DuckDB devolve pd.NA nos vazios; aqui viram None
 log(len(C), 'candidaturas')
 
@@ -69,7 +74,7 @@ DESP = {}
 for idc, tipo, pc in con.execute("""
     WITH d AS (SELECT id_candidatura, nr_tipo, SUM(vr_despesa) v FROM vw_despesa_tipo GROUP BY 1, 2 HAVING SUM(vr_despesa) > 0)
     SELECT id_candidatura, nr_tipo, ROUND(100 * v / SUM(v) OVER (PARTITION BY id_candidatura)) FROM d
-    QUALIFY ROW_NUMBER() OVER (PARTITION BY id_candidatura ORDER BY v DESC) <= 4""").fetchall():
+    QUALIFY ROW_NUMBER() OVER (PARTITION BY id_candidatura ORDER BY v DESC, nr_tipo) <= 4 ORDER BY id_candidatura, v DESC, nr_tipo""").fetchall():
     DESP.setdefault(idc, []).append([int(tipo), int(pc)])
 
 P = con.execute("""SELECT id_pessoa, nm_pessoa, YEAR(dt_nascimento), ds_genero, ds_cor_raca, nr_titulo_eleitoral LIKE 'SQ%' FROM pessoa""").fetchall()
@@ -104,8 +109,11 @@ for idp, g in groupby(C.itertuples(index=False), key=lambda r: r.id_pessoa):
     sob = norm(pe[1]).split(' ')[-1]
     if (vit or votos >= 10000) and len(sob) >= 4: chaves.add(sob)
     busca += [(k, e) for k in chaves if k]
-for k, v in fichas.items(): grava(f'pol/f/{k}', v)
+for k, v in fichas.items():
+    if BALDES is None or k in BALDES: grava(f'pol/f/{k}', v)
 QT_PESSOAS = sum(map(len, fichas.values()))
+if SO:
+    log(len(BALDES), 'arquivos de ficha regravados para', len(SO), 'pessoas'); sys.exit(0)
 log(QT_PESSOAS, 'pessoas,', len(fichas), 'arquivos de ficha')
 
 # índice: cada pedaço guarda os nomes que começam por um prefixo; o prefixo cresce até o pedaço ter no máximo LIM nomes
