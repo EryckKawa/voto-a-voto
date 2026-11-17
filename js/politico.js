@@ -52,16 +52,22 @@
     const faixas = [[-1, -0.5, "ESQUERDA"], [-0.5, -0.25, "CENTRO-ESQUERDA"], [-0.25, 0.25, "CENTRO"], [0.25, 0.5, "CENTRO-DIREITA"], [0.5, 1, "DIREITA"]];
     // partidos iguais na mesma nota viram um ponto só, com os anos juntos
     const grupos = new Map(); pts.forEach((c) => { const k = c[3] + "|" + c[4]; if (!grupos.has(k)) grupos.set(k, { sg: c[3], n: c[4], anos: [] }); grupos.get(k).anos.push(c[0]); });
-    const gs = [...grupos.values()].sort((a, b) => a.n - b.n);
+    const pontos = [...grupos.values()].sort((a, b) => a.n - b.n);
+    // notas do mesmo partido a menos de 0,12 uma da outra ganham um rótulo só (os pontos continuam separados)
+    const gs = [];
+    pontos.forEach((p) => { const g = gs.find((q) => q.sg === p.sg && Math.abs(q.nMax - p.n) <= 0.12);
+      if (g) { g.nMax = p.n; g.anos.push(...p.anos); g.pts.push(p); } else gs.push({ sg: p.sg, nMin: p.n, nMax: p.n, anos: [...p.anos], pts: [p] }); });
+    gs.forEach((g) => { g.n = (g.nMin + g.nMax) / 2; g.anos.sort(); });
+    gs.sort((a, b) => a.n - b.n);
     let ult = -1e9, linha = 0;
-    gs.forEach((g) => { linha = x(g.n) - ult < 64 ? (linha + 1) % 3 : 0; g.y = 58 + linha * 20; ult = x(g.n); });
+    gs.forEach((g) => { linha = x(g.n) - ult < 110 ? (linha + 1) % 3 : 0; g.y = 62 + linha * 22; ult = x(g.n); });
     const desc = gs.map((g) => `${g.sg} ${g.anos.join(", ")}: ${nota(g.n)}`).join("; ") + (cam && cam.nota != null ? `; pelo próprio voto na Câmara: ${nota(cam.nota)}` : "");
     return `<svg class="pol-regua" viewBox="0 0 ${W} ${H}" role="img" aria-label="Lado político, de −1 (esquerda) a +1 (direita): ${V.esc(desc)}">
       ${faixas.map(([a, b, f]) => `<rect x="${x(a)}" y="30" width="${x(b) - x(a)}" height="12" fill="${V.ESPC[f]}" opacity=".85"/>`).join("")}
       ${[-1, -0.5, 0, 0.5, 1].map((t) => `<text x="${x(t)}" y="22" text-anchor="middle" class="pol-regua__eixo">${nota(t)}</text>`).join("")}
       <text x="${x(-1)}" y="${H - 6}" class="pol-regua__eixo">esquerda</text><text x="${x(1)}" y="${H - 6}" text-anchor="end" class="pol-regua__eixo">direita</text>
-      ${gs.map((g) => `<g><title>${V.esc(g.sg)} em ${g.anos.join(", ")}: nota ${nota(g.n)}</title><line x1="${x(g.n)}" x2="${x(g.n)}" y1="42" y2="${g.y - 8}" stroke="#8b929c"/>
-        <circle cx="${x(g.n)}" cy="36" r="7" fill="#fff" stroke="${corNota(g.n)}" stroke-width="3"/>
+      ${gs.map((g) => `<g><title>${V.esc(g.sg)} em ${g.anos.join(", ")}: nota ${g.pts.map((p) => nota(p.n)).join(", ")}</title><line x1="${x(g.n)}" x2="${x(g.n)}" y1="42" y2="${g.y - 8}" stroke="#8b929c"/>
+        ${g.pts.map((p) => `<circle cx="${x(p.n)}" cy="36" r="7" fill="#fff" stroke="${corNota(p.n)}" stroke-width="3"/>`).join("")}
         <text x="${x(g.n)}" y="${g.y + 4}" text-anchor="middle" class="pol-regua__sg">${V.esc(V.nomePartido(g.sg))} <tspan class="pol-regua__anos">${g.anos.length > 2 ? g.anos[0] + "–" + g.anos[g.anos.length - 1] : g.anos.join(", ")}</tspan></text></g>`).join("")}
       ${cam && cam.nota != null ? `<g><title>Posição pelo próprio voto na Câmara: ${nota(cam.nota)}</title><path d="M${x(cam.nota)} 26 l8 10 l-8 10 l-8 -10 z" fill="#16181d" stroke="#fff" stroke-width="1.5"/></g>` : ""}
     </svg>`;
@@ -85,7 +91,7 @@
     const c = cs[Math.min(sel, cs.length - 1)], soma = c[15].reduce((s, [, p]) => s + p, 0);
     const partes = [...c[15], ...(soma < 100 ? [[11, 100 - soma]] : [])];
     return `<section class="cartao pol-cartao" aria-labelledby="pol-gasto-tit"><h2 class="cartao__titulo" id="pol-gasto-tit">Onde gastou a campanha</h2>
-      <p class="cartao__sub">As maiores despesas que declarou ao TSE, pela categoria que ele mesmo escolheu na prestação de contas. Do material impresso aos comícios, é propaganda.</p>
+      <p class="cartao__sub">As maiores despesas declaradas ao TSE, pela categoria que o próprio candidato escolheu.</p>
       ${cs.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Eleição">${cs.map((x, i) => `<button class="chip" type="button" data-gasto="${i}" aria-pressed="${x === c}">${CARGO[x[1]]} ${x[0]}</button>`).join("")}</div>` : `<p><b>${CARGO[c[1]]} ${c[0]}</b></p>`}
       <div class="pol-pilha" role="img" aria-label="${V.esc(partes.map(([t, p]) => `${DESP[t]}: ${p}%`).join(", "))}">${partes.map(([t, p]) => `<i style="flex-basis:${p}%;background:${COR_DESP[t]}" title="${V.esc(DESP[t])}: ${p}%"></i>`).join("")}</div>
       <ul class="legenda">${partes.map(([t, p]) => `<li><i style="background:${COR_DESP[t]}"></i>${DESP[t]} <b>${p}%</b></li>`).join("")}</ul>
@@ -107,7 +113,7 @@
     const pal = c ? ((await V.dados(ARQ_PAL(id)))[c[14]] || []) : f.palavras;
     const origem = c ? 'Fonte: TSE, plano de governo individual (PDF convertido em texto). Planos escaneados sem texto ficam de fora.' : `Fonte: ${V.esc(f.casa)}. ${V.int(f.n)} ${f.texto === "ementas" ? "ementas de projetos de autoria/coautoria" : f.texto === "resumos oficiais" ? "resumos oficiais de discursos" : "transcrições de discursos"}, de ${f.inicio.split("-").reverse().join("/")} a ${f.fim.split("-").reverse().join("/")}. <a href="${V.esc(f.url)}" target="_blank" rel="noopener noreferrer">Consultar fonte oficial</a>.`;
     return `<section class="cartao pol-cartao" aria-labelledby="pol-plano-tit">${titulo}
-      <p class="cartao__sub">As 40 palavras mais frequentes nos textos desta pessoa, sem palavras comuns e expressões de protocolo. Quanto maior, mais vezes aparece. Cada fonte tem sua própria contagem.</p>
+      <p class="cartao__sub">As 40 palavras que esta pessoa mais usou. Quanto maior, mais vezes aparece.</p>
       ${opcoes.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Fonte da nuvem">${opcoes.map((x, i) => `<button class="chip" type="button" data-plano="${i}" aria-pressed="${x === escolhido}">${V.esc(x.titulo)}</button>`).join("")}</div>` : `<p><b>${V.esc(escolhido.titulo)}</b></p>`}
       ${V.graf.nuvem(pal.map(([w, q]) => ({ w, q })), { rot: `Palavras desta pessoa: ${escolhido.titulo}`, cor: corNota(c ? c[4] : cands[cands.length - 1][4]) })}
       <p class="pq-nota pol-fonte">${origem}</p>${falha ? '<p class="aviso">A coleta parlamentar está incompleta; os textos disponíveis estão identificados acima.</p>' : ""}</section>`;
@@ -180,7 +186,7 @@
     const ini = `<span class="iniciais" style="background:${corNota(ultima[4])};color:${V.textoSobre(corNota(ultima[4]))}">${V.esc(V.iniciais(nome))}</span>`;
     const vit = cands.filter((c) => c[9] === "E").length, anos = [...new Set(cands.map((c) => c[0]))];
     const fotos = await (FOTOS || (FOTOS = V.dados("br/pol/fotos").then((ids) => new Set(ids)).catch(() => new Set())));
-    const foto = cf ? V.fotoOu(cf[0], cf[18], ini) : fotos.has(+id) ? `<img alt="" src="img/pol/${id % 100}/${id}.jpg" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="${V.esc(ini)}">` : ini;
+    const foto = cf ? V.fotoOu(cf[0], cf[18], ini) : fotos.has(+id) ? `<img alt="" src="img/pol/${id % 100}/${id}.webp" onerror="this.replaceWith(document.createRange().createContextualFragment(this.dataset.f))" data-f="${V.esc(ini)}">` : ini;
     const maior = cands.reduce((m, c) => ((c[7] || 0) > (m[7] || 0) ? c : m), cands[0]);
     // partidos na ordem em que passou por eles
     const trajeto = []; cands.forEach((c) => { const u = trajeto[trajeto.length - 1]; if (!u || u.sg !== c[3]) trajeto.push({ sg: c[3], de: c[0], ate: c[0] }); else u.ate = c[0]; });
@@ -202,13 +208,13 @@
       </header>
       ${semTitulo ? '<p class="aviso">O arquivo do TSE não trouxe o título de eleitor desta candidatura (acontece em 1996 e em registros incompletos). Sem ele, não dá para ligar com certeza as candidaturas desta pessoa em outros anos, que podem estar em outra ficha.</p>' : ""}
       <section class="cartao pol-cartao" aria-labelledby="pol-lado-tit"><h2 class="cartao__titulo" id="pol-lado-tit">Lado político</h2>
-        <p class="cartao__sub">A nota do partido em cada eleição em que concorreu, de −1 (esquerda) a +1 (direita), pela régua do site, que junta três estudos acadêmicos e o voto das bancadas na Câmara.${cam && cam.nota != null ? " O losango preto é a posição dele pelo próprio voto como deputado federal." : ""}</p>
+        <p class="cartao__sub">A nota do partido em cada eleição, de −1 (esquerda) a +1 (direita).${cam && cam.nota != null ? " O losango preto é a posição dele pelo próprio voto como deputado federal." : ""}</p>
         ${regua(cands, cam)}
         <p class="pol-trajeto"><b>Partidos:</b> ${trajeto.map((t) => `${partido(t.sg, (cands.find((c) => c[3] === t.sg && c[0] === t.ate) || [])[4])} <small>${t.de === t.ate ? t.de : t.de + "–" + t.ate}</small>`).join(" → ")}</p>
-        <p class="pq-nota">A nota é do partido, não da pessoa: diz o lado da legenda pela qual concorreu, na época. <a href="#/partidos">Como a nota de cada partido é feita</a>.</p></section>
+        <p class="pq-nota">A nota é do partido, não da pessoa. <a href="#/partidos">Como a nota é feita</a>.</p></section>
       <div id="pol-plano">${await plano(id, cands, selPlano)}</div>
       <section class="cartao pol-cartao" aria-labelledby="pol-hist-tit"><h2 class="cartao__titulo" id="pol-hist-tit">Histórico eleitoral</h2>
-        <p class="cartao__sub">Todas as candidaturas de 1994 a 2026, da mais recente para a mais antiga. Votos nominais; dinheiro e bens declarados ao TSE (prestação de contas desde 2010, bens desde 2006), em valores da época.</p>
+        <p class="cartao__sub">Da mais recente para a mais antiga. Dinheiro desde 2010 e bens desde 2006, como declarados ao TSE, em valores da época.</p>
         ${historico(cands, urnas, BR)}</section>
       <div id="pol-gasto">${gastos(cands, selGasto)}</div>
       ${cam ? `<section class="cartao pol-cartao pol-cam" aria-labelledby="pol-cam-tit"><h2 class="cartao__titulo" id="pol-cam-tit">Como votou na Câmara</h2>

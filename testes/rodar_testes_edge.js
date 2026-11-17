@@ -34,6 +34,7 @@ async function rodada(nome, tela) {
     while (Date.now() - t0 < 600000) {
       await espera(2000);
       const r = await C("Runtime.evaluate", { expression: "window.__testes && window.__testes.fim ? JSON.stringify(window.__testes.res) : ''", returnByValue: true });
+      if (process.env.VAV_DEBUG) { const d = await C("Runtime.evaluate", { expression: "location.href + ' | ' + ((document.getElementById('testes-painel') || {}).innerText || '').slice(0, 80)", returnByValue: true }); console.error(nome, Math.round((Date.now() - t0) / 1000) + "s", JSON.stringify(d.result).slice(0, 220)); }
       if (r.result && r.result.result && r.result.result.value) { res = JSON.parse(r.result.result.value); break; }
     }
     ws.close();

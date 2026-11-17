@@ -97,7 +97,7 @@
       const t = (a, cg) => tot.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const m = (a, cg) => med.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
       const CG_MED = [[2022, "PRESIDENTE"], [2022, "GOVERNADOR"], [2022, "SENADOR"], [2022, "DEPUTADO FEDERAL"], [2022, "DEPUTADO ESTADUAL"], [2024, "PREFEITO"], [2024, "VEREADOR"]];
-      const vistaMedia = (campo, rot, nt) => ({ rot, graf: () => barras(CG_MED.map(([a, cg]) => m(a, cg)).filter((r) => r[campo] != null).map((r) => ({ rot: `${CARGO[r.ds_cargo] || r.ds_cargo} ${r.nr_ano_eleicao}`, sub: `${V.int(r.qt_candidatos)} candidatos · ${V.int(r.qt_eleitos)} eleitos`, v: r[campo], vTxt: V.brl(r[campo]) })),
+      const vistaMedia = (campo, rot, nt) => ({ rot, graf: () => barras(CG_MED.map(([a, cg]) => m(a, cg)).filter((r) => r[campo] != null).map((r) => ({ rot: `${CARGO[r.ds_cargo] || r.ds_cargo} ${r.nr_ano_eleicao}`, sub: `${V.int(r.qt_candidatos)} candidatos · ${V.int(r.qt_eleitos)} ${r.qt_eleitos === 1 ? "eleito" : "eleitos"}`, v: r[campo], vTxt: V.brl(r[campo]) })),
         { cor: COR.terra, cols: ["Cargo", "Candidatos e eleitos", rot] }), nota: nt });
       const vista = (a, cg) => ({ rot: `Por partido · ${CARGO[cg]} ${a}`, graf: () => {
         // os 12 partidos com mais cadeiras, do mais caro para o mais barato
@@ -346,6 +346,7 @@
         nota: "Gasto médio de campanha por candidato, pela escolaridade que ele declarou ao TSE." });
       tema({ id: "t1", n: 1, grupo: "Dinheiro", titulo: "Custos de campanha e eleição", antigas: ["q1"],
         enunciado: ["Quanto custa, em média, uma cadeira eletiva?", "Analisar o gasto de campanha dos candidatos.", "Avaliar a relação entre o gasto de campanha e o resultado eleitoral (eleito ou não eleito).", "Calcular o coeficiente entre gasto de campanha e número de votos e elaborar um ranking, inclusive considerando o viés ideológico.", "Relacionar escolaridade e custo médio da eleição."],
+        curta: `Deputado federal: ${reais(f22.vr_custo_por_cadeira)} por cadeira em 2022. Vereador: ${reais(v24.vr_custo_por_cadeira)} em 2024.`,
         num: reais(f22.vr_custo_por_cadeira), numRot: "por cadeira de deputado federal em 2022",
         resposta: `Uma cadeira de deputado federal custou ${reais(f22.vr_custo_por_cadeira)} em 2022, ${vezes(f22.vr_custo_por_cadeira, f18.vr_custo_por_cadeira)} o custo de 2018. Uma de vereador, ${reais(v24.vr_custo_por_cadeira)} em 2024`,
         pontos: [
@@ -354,7 +355,7 @@
           `<b>Coeficiente gasto × votos:</b> a correlação, candidato a candidato, foi de ${corr(bT.r_gasto_votos)} para deputado federal em 2022 (1 seria relação perfeita). E quem perde paga mais caro por voto: o eleito típico gastou ${centavos(bT.vr_por_voto_eleito_mediano)} por voto; o não eleito, ${centavos(bT.vr_por_voto_nao_eleito_mediano)}.`,
           `<b>Ranking por partido:</b> o voto mais caro para deputado federal foi o do ${V.nomePartido(caro.sg_partido)} (${centavos(caro.vr_gasto_por_voto)}); o mais barato, o do ${V.nomePartido(barato.sg_partido)} (${centavos(barato.vr_gasto_por_voto)}). Por campo político: esquerda ${centavos(bE.vr_gasto_por_voto)}, centro ${centavos(bC.vr_gasto_por_voto)}, direita ${centavos(bD.vr_gasto_por_voto)} por voto.`,
           `<b>Escolaridade e custo:</b> o candidato a deputado federal com curso superior gastou em média ${reais(eSup.vr_gasto_medio)}; o com ensino médio, ${reais(eMed.vr_gasto_medio)}. O de curso superior também se elegeu mais: ${pct(eSup.pc_taxa_sucesso)} contra ${pct(eMed.pc_taxa_sucesso)}.`],
-        vistas: [Q.q1.vistas[0], Q.q1.vistas[1], Q.q2.vistaCamp(2022, "DEPUTADO FEDERAL"), vistaPartido(2022, "DEPUTADO FEDERAL"), vistaPartido(2024, "VEREADOR"), vistaCampo, vistaEsc("DEPUTADO FEDERAL", 2022), Q.q1.vistas[2], Q.q1.vistas[4]],
+        vistas: [Q.q1.vistas[0], Q.q2.vistaCamp(2022, "DEPUTADO FEDERAL"), vistaPartido(2022, "DEPUTADO FEDERAL"), vistaCampo, vistaEsc("DEPUTADO FEDERAL", 2022), Q.q1.vistas[1]],
         cuidado: ["Valores da época, sem correção pela inflação, e só o que os candidatos declararam ao TSE.", "Dinheiro e voto andam juntos nos dois sentidos: quem já tem chance de ganhar atrai mais doação e mais fundo do partido. É associação, não prova de que o gasto elege.", "A prestação de contas de 2026 ainda está chegando ao TSE."],
         como: "Despesas contratadas e receitas declaradas pelos candidatos na prestação de contas final (TSE), somadas por candidatura. Votos: votação nominal de cada candidato no 1º turno, somada nas 5.570 cidades. O custo por cadeira divide o gasto pelo número de eleitos; o gasto por voto divide o gasto pelos votos; a correlação usa o logaritmo do gasto e dos votos de cada candidato. O campo político é o do partido naquela eleição.",
         tabelas: ["vw_candidatura_resumo", "candidatura", "despesa", "receita", "votacao_candidato", "grau_instrucao", "situacao_totalizacao", "vw_partido_ano"], consultas: ["q1", "q1b", "q1c", "q2", "t1a", "t1b", "t1c"], fonte: "TSE, prestação de contas e votação" });
@@ -367,6 +368,7 @@
       const pv = Q.q2.bens(2024, "PREFEITO"), p0 = pv[0] || {}, p6 = pv[pv.length - 1] || {};
       tema({ id: "t2", n: 2, grupo: "Dinheiro", titulo: "Taxa de sucesso e patrimônio", antigas: ["q2"],
         enunciado: ["Qual é a taxa de sucesso eleitoral por faixa de patrimônio declarado?"],
+        curta: `Com mais de R$ 5 milhões em bens, ${pct(b6.pc_taxa_sucesso, 0)} se elegeram deputado federal; sem bens, ${pct(b0.pc_taxa_sucesso)}.`,
         num: `${pct(b6.pc_taxa_sucesso, 0)} × ${pct(b0.pc_taxa_sucesso)}`, numRot: "dos candidatos a deputado federal com mais de R$ 5 milhões × sem nenhum bem se elegeram (2022)",
         resposta: `Quanto mais patrimônio, maior a chance: dos candidatos a deputado federal de 2022 com mais de R$ 5 milhões em bens, ${pct(b6.pc_taxa_sucesso, 0)} se elegeram; dos que não declararam bem nenhum, ${pct(b0.pc_taxa_sucesso)}`,
         pontos: [
@@ -386,6 +388,7 @@
       const pp = Q.q3.ach(2022, "1", "1 pobre"), pr = Q.q3.ach(2022, "1", "3 rico"), pg = Q.q3.ach(2024, "3", "3 rico"), ppq = Q.q3.ach(2024, "1", "1 pobre");
       tema({ id: "t3", n: 3, grupo: "Território", titulo: "Índices municipais e comportamento eleitoral", antigas: ["q3"],
         enunciado: ["Como os índices do município se relacionam com o voto de cada candidato? Há relação com o viés ideológico?"],
+        curta: `Para presidente, a esquerda venceu em ${pct(i1.pc_mun_esquerda, 0)} das cidades de IDHM baixo e em ${pct(i5.pc_mun_esquerda, 0)} das de IDHM muito alto.`,
         num: `${pct(i1.pc_mun_esquerda, 0)} × ${pct(i5.pc_mun_esquerda, 0)}`, numRot: "das cidades de IDHM baixo × muito alto deram o 1º lugar à esquerda para presidente (2022)",
         resposta: `Sim, e muito para presidente: em 2022, a esquerda ficou em 1º em ${pct(i1.pc_mun_esquerda, 0)} das cidades de IDHM baixo e em ${pct(i5.pc_mun_esquerda, 0)} das de IDHM muito alto`,
         pontos: [
@@ -414,6 +417,7 @@
         nota: "Parte dos candidatos de cada nível de escolaridade que se elegeu. Patrimônio típico: a mediana dos bens declarados." });
       tema({ id: "t4", n: 4, grupo: "Perfil", titulo: "Escolaridade, capacidade eleitoral e patrimônio", antigas: ["q4"],
         enunciado: ["Existe relação entre escolaridade e capacidade de ser eleito?", "Comparar a escolaridade média do eleitorado com a escolaridade dos candidatos.", "Avaliar a relação entre escolaridade do eleitorado, escolaridade dos candidatos e patrimônio declarado."],
+        curta: `${pct(el24.pc_superior, 0)} dos eleitores têm curso superior; entre os vereadores eleitos, ${pct(ve.pc_superior, 0)}.`,
         num: `${pct(el24.pc_superior, 0)} × ${pct(ve.pc_superior, 0)}`, numRot: "dos eleitores × dos vereadores eleitos têm curso superior (2024)",
         resposta: `Sim: o eleito é bem mais estudado que o eleitor. Em 2024, ${pct(el24.pc_superior, 0)} dos eleitores tinham curso superior; entre os vereadores eleitos, ${pct(ve.pc_superior, 0)}; entre os deputados federais eleitos em 2022, ${pct(df.pc_superior, 0)}`,
         pontos: [
@@ -422,7 +426,7 @@
           `<b>O eleitor escolhe quem estudou mais que ele:</b> entre os candidatos a vereador de 2024, ${pct(vc.pc_superior, 0)} tinham diploma; entre os eleitos, ${pct(ve.pc_superior, 0)}.`,
           `<b>Escolaridade anda com patrimônio:</b> o candidato a deputado federal com diploma declarou, tipicamente, ${reais(e("DEPUTADO FEDERAL", 8).vr_patrimonio_mediano)} em bens; o com ensino médio, ${reais(e("DEPUTADO FEDERAL", 6).vr_patrimonio_mediano)}.`,
           `<b>Cidade mais estudada elege mais diplomados:</b> nas cidades com o IDHM Educação mais alto, ${pct(v5.pc_eleitos_superior, 0)} dos vereadores eleitos tinham diploma; nas com o mais baixo, ${pct(v1.pc_eleitos_superior, 0)}.`],
-        vistas: [vistaEleit(2024), vistaEleit(2022), vistaSuc("DEPUTADO FEDERAL", 2022), vistaSuc("VEREADOR", 2024), vistaSuc("PREFEITO", 2024), ...Q.q4.vistas],
+        vistas: [vistaEleit(2024), vistaSuc("DEPUTADO FEDERAL", 2022), vistaSuc("VEREADOR", 2024), vistaSuc("PREFEITO", 2024), Q.q4.vistas[0], Q.q4.vistas[2]],
         cuidado: ["A escolaridade é a que cada um declarou ao TSE (o eleitor, no cadastro; o candidato, no registro).", "Mediana do patrimônio: metade declarou mais, metade menos. Quem não declarou bens conta como zero."],
         como: "Grau de instrução declarado pelos candidatos no registro da candidatura e escolaridade do eleitorado apto no perfil do eleitorado (TSE), mais o IDHM Educação das cidades (Atlas, Censo 2010). Taxa de sucesso: eleitos ÷ candidatos.",
         tabelas: ["candidatura", "grau_instrucao", "eleitorado_perfil", "vw_eleitorado_municipio", "vw_patrimonio_candidato", "indicador_atlas", "situacao_totalizacao"], consultas: ["t4a", "t1c", "q4b", "q4c", "q4"], fonte: "TSE e Atlas do Desenvolvimento Humano" });
@@ -449,6 +453,7 @@
         "Cidades em que o mesmo sobrenome mais vezes ganhou a prefeitura, com pessoas diferentes, de 2000 a 2024.");
       tema({ id: "t5", n: 5, grupo: "Território", titulo: "Sobrenome, cidade e concentração eleitoral",
         enunciado: ["Existe relação entre sobrenome e cidade de origem/atuação e a concentração de votos, caracterizando um possível “curral eleitoral”?"],
+        curta: `Em ${pct(br.pc_com_familia, 0)} das cidades, o mesmo sobrenome já foi prefeito com pessoas diferentes.`,
         num: pct(br.pc_com_familia, 0), numRot: "das cidades já tiveram dois ou mais prefeitos com o mesmo sobrenome (2000 a 2024)",
         resposta: `Há sinais fortes: em ${pct(br.pc_com_familia, 0)} das cidades, duas ou mais pessoas com o mesmo sobrenome já foram eleitas prefeito desde 2000. E o deputado estadual que tem o sobrenome de um ex-prefeito da cidade onde mais recebe votos se elegeu ${vezesN(deS.pc_sucesso, deN.pc_sucesso)} mais (${pct(deS.pc_sucesso, 0)} contra ${pct(deN.pc_sucesso, 0)}, em 2022)`,
         pontos: [
@@ -474,14 +479,15 @@
       const vistaSerie = { rot: "Eleição a eleição", legenda: LEG, graf: () => barras(S.map((r) => ({ rot: `${r.nr_ano_eleicao} · ${r.cd_cargo === 1 ? "presidente" : "prefeito"}`, v: r.pc_ninguem, vTxt: pct(r.pc_ninguem),
           partes: [{ v: r.pc_abstencao, cor: COR.escuro, tit: `Abstenção: ${pct(r.pc_abstencao)}` }, { v: r.pc_branco, cor: COR.terra, tit: `Branco: ${pct(r.pc_branco)}` }, { v: r.pc_nulo, cor: COR.cinza, tit: `Nulo: ${pct(r.pc_nulo)}` }] })), { max: 40, cols: ["Eleição", "", ""], nomesPartes: ["Abstenção", "Branco", "Nulo"], fmtParte: (v) => pct(v) }),
         nota: "Parte do eleitorado apto que não escolheu ninguém no 1º turno: faltou, votou em branco ou anulou. Presidente nas eleições gerais, prefeito nas municipais." };
-      const vistaRank = (a) => vistaTabela(`Ranking das cidades (${a})`, ["Cidade", "Eleitores", "Ninguém", "Faltou", "Branco e nulo", "1º colocado"],
-        R.filter((r) => r.nr_ano_eleicao === a).map((r) => [`${r.ds_lista === "mais" ? "▲" : "▼"} ${V.esc(r.nm_municipio)} (${r.sg_uf})`, V.int(r.qt_aptos), pct(r.pc_ninguem), pct(r.pc_abstencao), pct(r.pc_branco_nulo), pct(r.pc_1o_colocado)]),
-        `As 10 cidades com mais "Ninguém" (▲) e as 5 com menos (▼), para ${a === 2024 ? "prefeito" : "presidente"} em ${a}, 1º turno. "1º colocado": parte do eleitorado que votou no mais votado.`);
+      const vistaRank = (a) => vistaTabela(`Ranking das cidades (${a})`, ["Cidade", "Lista", "Eleitores", "Ninguém", "Faltou", "Branco e nulo", "1º colocado"],
+        R.filter((r) => r.nr_ano_eleicao === a).map((r) => [`${V.esc(r.nm_municipio)} (${r.sg_uf})`, r.ds_lista === "mais" ? "10 com mais" : "5 com menos", V.int(r.qt_aptos), pct(r.pc_ninguem), pct(r.pc_abstencao), pct(r.pc_branco_nulo), pct(r.pc_1o_colocado)]),
+        `${a === 2024 ? "Prefeito" : "Presidente"} em ${a}, 1º turno. "1º colocado": parte do eleitorado que votou no mais votado.`);
       const vistaQ = (a) => ({ rot: `Ninguém e resultado (${a})`, legenda: leg([[COR.escuro, "Cidades com um só candidato"], [COR.terra, "O Ninguém passou o 1º colocado"]]),
         graf: () => pares(Qn.filter((r) => r.nr_ano_eleicao === a).map((r) => ({ rot: `${pct(r.pc_ninguem_min, 0)} a ${pct(r.pc_ninguem_max, 0)} de Ninguém`, sub: `${V.int(r.qt_municipios)} cidades · o 1º teve ${pct(r.pc_eleitores_do_1o, 0)} do eleitorado`, v: [r.pc_candidato_unico, r.pc_ninguem_passou_o_1o] })), { nomes: ["um só candidato", "Ninguém passou o 1º"], cores: [COR.escuro, COR.terra], fmt: (v) => pct(v, 0), cols: ["Grupo de cidades", "Cidades e 1º colocado"] }),
         nota: "Cidades em cinco grupos do mesmo tamanho pela parte do eleitorado que não escolheu ninguém para prefeito." });
       tema({ id: "t6", n: 6, grupo: "Voto", titulo: "Votos brancos, nulos e abstenção",
         enunciado: ["Analisar a soma de votos brancos e nulos em conjunto com a abstenção e sua relação com o resultado eleitoral.", "Construir uma listagem/ranking dos municípios ou eleições com maior concentração desses indicadores."],
+        curta: `${milhoes(s24.qt_ninguem)} de eleitores (${pct(s24.pc_ninguem)}) não escolheram ninguém para prefeito em 2024.`,
         num: pct(s24.pc_ninguem), numRot: `do eleitorado não escolheu ninguém para prefeito em 2024 (${milhoes(s24.qt_ninguem)})`,
         resposta: `Em 2024, ${milhoes(s24.qt_ninguem)} de eleitores (${pct(s24.pc_ninguem)}) não escolheram ninguém para prefeito. Onde esse "Ninguém" é maior, muitas vezes não havia escolha: ${pct(q5.pc_candidato_unico, 0)} dessas cidades tinham um só candidato`,
         pontos: [
@@ -510,6 +516,7 @@
         "Votos próprios para 1 cadeira: o candidato teve, sozinho, pelo menos o quociente eleitoral (votos válidos ÷ cadeiras do estado ou da cidade). Os demais dependeram dos votos do partido: os de legenda e os dos colegas de lista.");
       tema({ id: "t7", n: 7, grupo: "Voto", titulo: "Votos por legenda", antigas: ["q5"],
         enunciado: ["Quantos votos são obtidos por legenda e quantos candidatos são eleitos por esse meio?"],
+        curta: `O voto só no partido caiu para ${pct(fN.pc_legenda)} e valeu cerca de ${V.int(aFN.qt_cadeiras_da_legenda)} das 513 cadeiras de deputado federal.`,
         num: V.int(aFN.qt_cadeiras_da_legenda), numRot: `das 513 cadeiras de deputado federal vieram do voto de legenda em ${aFN.nr_ano_eleicao}`,
         resposta: `Cada vez menos: em ${fN.nr_ano_eleicao}, ${pct(fN.pc_legenda)} dos votos para deputado federal foram só no número do partido (${V.int(aFN.qt_legenda)} votos), o que valeu cerca de ${V.int(aFN.qt_cadeiras_da_legenda)} das 513 cadeiras. Em ${aF0.nr_ano_eleicao}, eram ${V.int(aF0.qt_cadeiras_da_legenda)}`,
         pontos: [
@@ -535,10 +542,11 @@
       const vistaVotos = { rot: "Votos para se eleger", legenda: leg([[COR.terra, "Votos do eleito típico"], [COR.cinza, "Votos válidos por cadeira"]]),
         graf: () => pares(F.map((x) => ({ rot: cap1(x.ds_faixa), sub: `${N1.format(x.qt_candidatos_por_cadeira)} candidatos por vaga`, v: [x.qt_votos_eleito_mediano, x.qt_votos_por_cadeira] })), { nomes: ["eleito típico", "por cadeira"], cores: [COR.terra, COR.cinza], fmt: (v) => V.int(v), cols: ["Tamanho da cidade", "Candidatos por vaga"] }),
         nota: "Eleito típico: a mediana dos votos dos vereadores eleitos da cidade. Por cadeira: votos válidos para vereador ÷ cadeiras." };
-      const vistaExt = vistaTabela("Os extremos", ["Cidade", "Vereadores", "Eleitores", "Eleitores por vereador"], [...mais, ...menos].map((x) => [`${x.ds_tipo.startsWith("mais") ? "▲" : "▼"} ${V.esc(x.nm_municipio)} (${x.sg_uf})`, V.int(x.qt_cadeiras), V.int(x.qt_aptos), V.int(x.qt_eleitores_por_cadeira)]),
-        "As 5 cidades em que cada vereador representa mais eleitores (▲) e as 5 em que representa menos (▼), eleição de 2024.");
+      const vistaExt = vistaTabela("Os extremos", ["Cidade", "Lista", "Vereadores", "Eleitores", "Eleitores por vereador"], [...mais, ...menos].map((x) => [`${V.esc(x.nm_municipio)} (${x.sg_uf})`, x.ds_tipo.startsWith("mais") ? "Mais" : "Menos", V.int(x.qt_cadeiras), V.int(x.qt_aptos), V.int(x.qt_eleitores_por_cadeira)]),
+        "As 5 cidades em que cada vereador representa mais eleitores e as 5 em que representa menos, eleição de 2024.");
       tema({ id: "t8", n: 8, grupo: "Voto", titulo: "Quantidade de vereadores e número de votos",
         enunciado: ["Qual é a relação entre a quantidade de vereadores eleitos e o número de votos obtidos?"],
+        curta: `Em ${m1.nm_municipio}, cada vereador representa ${V.int(m1.qt_eleitores_por_cadeira)} eleitores; em ${n1.nm_municipio}, ${V.int(n1.qt_eleitores_por_cadeira)}.`,
         num: `${V.int(m1.qt_eleitores_por_cadeira)} × ${V.int(n1.qt_eleitores_por_cadeira)}`, numRot: `eleitores por vereador em ${m1.nm_municipio || ""} × em ${n1.nm_municipio || ""} (2024)`,
         resposta: `Cidade maior tem mais vereadores, mas bem menos que o tamanho dela: em ${m1.nm_municipio} (${m1.sg_uf}), cada um dos ${m1.qt_cadeiras} vereadores representa ${V.int(m1.qt_eleitores_por_cadeira)} eleitores; em ${n1.nm_municipio} (${n1.sg_uf}), cada um dos ${n1.qt_cadeiras} representa ${V.int(n1.qt_eleitores_por_cadeira)}`,
         pontos: [
@@ -568,6 +576,7 @@
         "Cada plano comparado com o plano seguinte da mesma pessoa (2018 a 2026): parte das 80 palavras mais usadas que aparece nos dois.");
       tema({ id: "t9", n: 9, grupo: "Partidos", titulo: "Propostas dos candidatos ao longo do tempo", antigas: ["q6"],
         enunciado: ["Como as propostas apresentadas por cada candidato evoluem ao longo da linha do tempo?"],
+        curta: `Inteligência artificial: de ${pct(g18.pc_inteligencia_artificial, 0)} para ${pct(g26.pc_inteligencia_artificial, 0)} dos planos de governador e presidente, de 2018 a 2026.`,
         num: `${pct(g18.pc_inteligencia_artificial, 0)} → ${pct(g26.pc_inteligencia_artificial, 0)}`, numRot: "dos planos de governador e presidente falam de inteligência artificial (2018 → 2026)",
         resposta: `As propostas seguem o assunto do momento: a pandemia estava em ${pct(g22.pc_pandemia, 0)} dos planos de governador e presidente em 2022 e caiu para ${pct(g26.pc_pandemia, 0)} em 2026; a inteligência artificial foi de ${pct(g18.pc_inteligencia_artificial, 0)} (2018) para ${pct(g26.pc_inteligencia_artificial, 0)} (2026)`,
         pontos: [
@@ -575,7 +584,7 @@
           `<b>Cada candidato reescreve o plano:</b> quando a mesma pessoa se candidata de novo, só ${pct(st.pc_semelhanca_media, 0)} das palavras principais se repetem, em média. Mesmo no mesmo cargo, ${pct(sm.pc_quase_igual, 0)} dos planos são quase iguais ao anterior.`,
           `<b>Esquerda e direita falam de coisas diferentes:</b> ${pct(Q.q6.e.pc_racial, 0)} dos planos da esquerda para presidente falam de racismo ou igualdade racial; na direita, ${pct(Q.q6.d.pc_racial, 0)}.`,
           `<b>Saúde, educação e emprego estão em quase todos</b> (emprego aparece em mais de 90% dos planos de prefeito), por isso não aparecem como diferença.`],
-        vistas: [vistaG([g18, g22, g26], "Assuntos · governador e presidente", "governador e presidente"), vistaG([p20, p24], "Assuntos · prefeito", "prefeito"), vistaSim, ...Q.q6.vistas],
+        vistas: [vistaG([g18, g22, g26], "Assuntos · governador e presidente", "governador e presidente"), vistaG([p20, p24], "Assuntos · prefeito", "prefeito"), vistaSim, ...Q.q6.vistas.filter((v) => !/Típicas|Nuvem · Governador/.test(v.rot))],
         cuidado: ["A busca é por palavras: citar um assunto não diz se o plano é a favor ou contra.", "Plano escaneado como imagem não tem texto e fica de fora.", "Os planos só são publicados pelo TSE a partir de 2018 (presidente e governador) e 2020 (prefeito)."],
         como: "Texto dos planos de governo entregues ao TSE (PDF convertido em texto), de presidente e governador (2018, 2022 e 2026) e de prefeito (2020 e 2024). Cada assunto é uma lista de palavras, buscada sem acento e sem maiúscula. A comparação do mesmo candidato usa as 80 palavras mais usadas de cada plano e o título de eleitor para ligar a pessoa.",
         tabelas: ["proposta_governo", "proposta_palavra", "candidatura", "pessoa", "partido", "vw_partido_ano"], consultas: ["t9a", "t9b", "q6", "q6b", "q6c", "q6d", "q6e"], fonte: "TSE, propostas de governo" });
@@ -602,6 +611,7 @@
         nota: "Deputados federais eleitos que não eram deputados federais na legislatura anterior (novatos) e os que voltaram, com a idade média na posse." };
       tema({ id: "t10", n: 10, grupo: "Perfil", titulo: "Idade e alternância de poder", antigas: ["q7"],
         enunciado: ["Existe relação entre a idade dos candidatos e a alternância de poder ao longo do tempo?"],
+        curta: `Prefeito de até 39 anos se reelegeu em ${pct(r1.pc_reeleitos, 0)} das tentativas; com 70 ou mais, em ${pct(r5.pc_reeleitos, 0)}.`,
         num: `${pct(r1.pc_reeleitos, 0)} × ${pct(r5.pc_reeleitos, 0)}`, numRot: "dos prefeitos com até 39 × com 70 anos ou mais que tentaram se reeleger conseguiram",
         resposta: `Sim: quanto mais velho o prefeito, menor a chance de continuar. De 2004 a 2024, ${pct(r1.pc_reeleitos, 0)} dos prefeitos com até 39 anos que tentaram a reeleição conseguiram; com 70 anos ou mais, ${pct(r5.pc_reeleitos, 0)}`,
         pontos: [
@@ -609,7 +619,7 @@
           `<b>A alternância diminuiu:</b> em 2016, ${pct(a16.pc_troca_de_partido, 0)} das prefeituras trocaram de partido; em 2024, ${pct(a24.pc_troca_de_partido, 0)}, e ${pct(a24.pc_mesmo_prefeito, 0)} reelegeram o mesmo prefeito.`,
           `<b>Na Câmara dos Deputados, o novato é mais jovem:</b> em 2022, ${pct(d22.pc_novatos, 0)} dos deputados federais eram novatos, com ${anos1(d22.vr_idade_novatos)} em média; os reeleitos tinham ${anos1(d22.vr_idade_reeleitos)}.`,
           `<b>Mas jovem não vota em jovem:</b> nas cidades com o eleitorado mais jovem, ${pct(jy.pc_eleitorado_ate_29, 0)} dos eleitores têm até 29 anos, e só ${pct(jy.pc_eleitos_ate_29)} dos vereadores eleitos em 2024.`],
-        vistas: [vistaRe, vistaAlt, vistaIdadeAlt, vistaCam, ...Q.q7.vistas],
+        vistas: [vistaRe, vistaAlt, vistaIdadeAlt, vistaCam, Q.q7.vistas[0]],
         cuidado: ["A pessoa é seguida pelo título de eleitor; 1996 fica de fora por não ter o título.", "Partido pela linhagem: PFL, DEM e União contam como o mesmo, e PR e PL também, para mudança de nome não parecer troca.", "É associação: o prefeito mais velho pode, por exemplo, estar no segundo mandato e não poder concorrer a um terceiro."],
         como: "Prefeitos e deputados federais eleitos (TSE), ligados entre uma eleição e a seguinte pelo título de eleitor, com a idade declarada na data da posse. Partido do prefeito pela linhagem do partido (página Partidos). Eleitorado por idade: perfil do eleitorado do TSE.",
         tabelas: ["candidatura", "pessoa", "situacao_totalizacao", "vw_partido_ano", "eleitorado_perfil", "vw_eleitorado_municipio"], consultas: ["t10a", "t10b", "t10c", "q7c", "q7d", "q7"], fonte: "TSE" });
@@ -632,6 +642,7 @@
         nota: "Cidades em cinco grupos do mesmo tamanho pelo número de benefícios do Bolsa Família por eleitor (dezembro do ano da eleição). Campanhas de prefeito e vereador." });
       tema({ id: "t11", n: 11, grupo: "Dinheiro", titulo: "Doações de campanha e Bolsa Família",
         enunciado: ["Como as doações de campanha de pessoas jurídicas (PJ) se comportam ao longo da linha do tempo em relação ao Bolsa Família?"],
+        curta: `As empresas pagavam ${pct(b14.pc_doacao_empresas, 0)} das campanhas em 2014 e ${pct(b18.pc_doacao_empresas)} em 2018; o Bolsa Família continuou.`,
         num: `${pct(b14.pc_doacao_empresas, 0)} → ${pct(b18.pc_doacao_empresas)}`, numRot: "das campanhas pagas por empresas (2014 → 2018), enquanto o Bolsa Família seguiu com 14 milhões de benefícios",
         resposta: `As duas linhas seguem caminhos separados: o Bolsa Família cresceu de ${milhoes(b04.qt_beneficios)} de benefícios (2004) para ${milhoes(b14.qt_beneficios)} (2014) enquanto as empresas pagavam de ${pct(Math.min(b10.pc_doacao_empresas, b14.pc_doacao_empresas, y(2012).pc_doacao_empresas), 0)} a ${pct(b10.pc_doacao_empresas, 0)} das campanhas. Depois da proibição de 2015, a doação de empresas caiu a ${pct(b18.pc_doacao_empresas)}, e o programa continuou`,
         pontos: [
@@ -652,6 +663,7 @@
       const e14 = E.filter((r) => r.nr_ano_eleicao === 2014), mx = e14.reduce((a, b) => (b.pc_pj > (a.pc_pj || 0) ? b : a), {}), mn = e14.reduce((a, b) => (b.pc_pj < (a.pc_pj ?? 1e9) ? b : a), {});
       tema({ id: "t12", n: 12, grupo: "Dinheiro", titulo: "Doações de pessoas jurídicas e viés político", antigas: ["q8"],
         enunciado: ["Qual é a relação entre doações de pessoas jurídicas (PJ) e o viés político?"],
+        curta: `Para todos os lados: em 2014, de ${pct(mn.pc_pj, 0)} a ${pct(mx.pc_pj, 0)} das campanhas de cada campo político.`,
         num: pct(r14.pc_pj, 0), numRot: `das campanhas eram pagas por empresas em 2014; ${pct(r18.pc_pj)} em 2018`,
         resposta: `As empresas doavam para todos os lados: em 2014, pagavam de ${pct(mn.pc_pj, 0)} (${(V.ESPN[mn.ds_espectro] || "").toLowerCase()}) a ${pct(mx.pc_pj, 0)} (${(V.ESPN[mx.ds_espectro] || "").toLowerCase()}) das campanhas de cada campo político`,
         pontos: [
@@ -679,6 +691,7 @@
         nota: "Parte dos votos para presidente no 1º turno, por campo político do partido do candidato." });
       tema({ id: "t13", n: 13, grupo: "Território", titulo: "Viés político regional",
         enunciado: ["Qual é o viés político predominante em determinada região?", "Representar os resultados por meio de um mapa de calor."],
+        curta: `Presidente 2022: esquerda com ${pct(ne22.pc_esquerda, 0)} no Nordeste, direita com ${pct(co22.pc_direita, 0)} no Centro-Oeste.`,
         num: `${pct(ne22.pc_esquerda, 0)} × ${pct(co22.pc_direita, 0)}`, numRot: "esquerda no Nordeste × direita no Centro-Oeste, presidente 2022",
         resposta: `O Nordeste é o mais à esquerda: em 2022, ${pct(ne22.pc_esquerda, 0)} dos votos para presidente foram para a esquerda. O Centro-Oeste e o Sul são os mais à direita: ${pct(co22.pc_direita, 0)} e ${pct(su22.pc_direita, 0)} para a direita`,
         pontos: [
@@ -709,6 +722,7 @@
         nota: "Parte das cidades em que o 1º colocado para presidente (ou o prefeito eleito) era do mesmo campo político que na eleição anterior do mesmo cargo." };
       tema({ id: "t14", n: 14, grupo: "Território", titulo: "Manutenção do viés político ao longo do tempo", antigas: ["q9"],
         enunciado: ["Na linha do tempo, o município mantém o mesmo viés político?"],
+        curta: `Só ${pct(pf0.pc_municipios, 0)} das cidades elegeram prefeitos do mesmo lado em todas as eleições desde 1996.`,
         num: pct(pf0.pc_municipios, 0), numRot: "das cidades tiveram prefeitos do mesmo lado em todas as eleições, de 1996 a 2024",
         resposta: `Para prefeito, quase nunca: só ${pct(pf0.pc_municipios, 0)} das cidades elegeram prefeitos do mesmo campo político em todas as eleições desde 1996. Para presidente, as cidades ficaram mais fiéis: ${pct(p22.pc_mesmo_lado, 0)} repetiram o lado de 2018 em 2022`,
         pontos: [
@@ -733,6 +747,7 @@
         nota: "Candidatos pela parte da sua receita que veio dos fundos públicos (eleitoral e partidário). A barra é a parte que se elegeu." });
       tema({ id: "t15", n: 15, grupo: "Dinheiro", titulo: "Dependência de repasses públicos e financiamento", antigas: ["q10"],
         enunciado: ["Como se comportam os candidatos que dependem mais de repasses públicos em comparação com aqueles financiados por outras fontes?"],
+        curta: `Com 90% ou mais de dinheiro público, ${pct(d4.pc_taxa_sucesso)} se elegeram deputado federal; misturando, ${pct(d3.pc_taxa_sucesso, 0)}.`,
         num: `${pct(d4.pc_taxa_sucesso)} × ${pct(d3.pc_taxa_sucesso, 0)}`, numRot: "se elegeram entre os candidatos a deputado federal com 90% ou mais de dinheiro público × entre os que misturavam (2022)",
         resposta: `Quem depende só do fundo público perde mais: dos candidatos a deputado federal de 2022 com 90% ou mais de dinheiro público, ${pct(d4.pc_taxa_sucesso)} se elegeram; dos que misturavam dinheiro público e privado, ${pct(d3.pc_taxa_sucesso, 0)}`,
         pontos: [
@@ -740,7 +755,7 @@
           `<b>Dinheiro só público costuma ser pouco:</b> o candidato a deputado federal que viveu de 90% ou mais de fundo teve receita típica de ${reais(d4.vr_receita_mediana)} e ${V.int(d4.qt_votos_mediano)} votos; quem tinha menos da metade pública, ${reais(d2.vr_receita_mediana)} e ${V.int(d2.qt_votos_mediano)} votos.`,
           `<b>E o voto sai mais caro:</b> ${centavos(d4.vr_gasto_por_voto)} por voto para quem depende do fundo, contra ${centavos(d2.vr_gasto_por_voto)} para quem tem menos da metade pública.`,
           `<b>Só dinheiro privado também não basta:</b> ${pct(d1.pc_taxa_sucesso)} dos candidatos a deputado federal sem nenhum dinheiro público se elegeram. Para vereador, a diferença se repete: ${pct(v4.pc_taxa_sucesso)} (quase só fundo) contra ${pct(v2.pc_taxa_sucesso)} (menos da metade).`],
-        vistas: [vistaDep("DEPUTADO FEDERAL", 2022), vistaDep("VEREADOR", 2024), vistaDep("PREFEITO", 2024), ...Q.q10.vistas],
+        vistas: [vistaDep("DEPUTADO FEDERAL", 2022), vistaDep("VEREADOR", 2024), vistaDep("PREFEITO", 2024), Q.q10.vistas[0], ...Q.q10.vistas.slice(2, 3)],
         cuidado: ["O partido manda mais dinheiro para quem já tem chance, então a relação entre fundo e vitória vale nos dois sentidos.", "“Dinheiro público” é o Fundo Especial de Financiamento de Campanha e o Fundo Partidário, como declarados pelo candidato."],
         como: "Receitas declaradas pelos candidatos ao TSE, separadas em públicas (FEFC e Fundo Partidário) e privadas. Cada candidato entra numa faixa pela parte pública da sua receita; a taxa de sucesso é eleitos ÷ candidatos da faixa.",
         tabelas: ["vw_candidatura_resumo", "receita", "candidatura", "votacao_candidato", "situacao_totalizacao"], consultas: ["t15a", "q10", "q10b"], fonte: "TSE, prestação de contas" });
@@ -765,6 +780,7 @@
         nota: "Parte das candidaturas de cada partido que ficou inapta, eleições de 2020 e 2022 somadas. Partidos com 2 mil candidaturas ou mais, na cor do seu campo político." };
       tema({ id: "t16", n: 16, grupo: "Partidos", titulo: "Candidatos, partidos e processos",
         enunciado: ["Qual é o perfil dos processos em que cada candidato ou partido está envolvido?"],
+        curta: `${pct(a20.pc)} das candidaturas de 2020 foram barradas pela Justiça Eleitoral.`,
         num: pct(a20.pc), numRot: "das candidaturas de 2020 foram barradas pela Justiça Eleitoral (registro negado, cassado ou cancelado, ou renúncia)",
         resposta: `Os processos que aparecem nos dados abertos são os de registro de candidatura: em 2020, ${V.int(a20.qt_inaptas)} candidaturas (${pct(a20.pc)}) ficaram inaptas, e em 2022, ${pct(a22.pc)}. O tipo mais comum é o registro negado (indeferido)`,
         pontos: [
@@ -783,6 +799,7 @@
       const top = (Q.q11.ano(2024)[0]) || {}, imp = Q.q11.ano(2024).find((r) => /Impulsionamento/i.test(r.ds_origem_despesa)) || {}, imp18 = Q.q11.ano(2018).find((r) => /Impulsionamento/i.test(r.ds_origem_despesa)) || {};
       tema({ id: "e1", n: "+1", extra1: true, grupo: "A mais", titulo: "Onde vai o dinheiro da campanha?", antigas: ["q11"],
         enunciado: ["Pergunta a mais do grupo: onde o candidato investe em propaganda?"],
+        curta: `${pct(top.pc_ano, 0)} do gasto das campanhas de 2024 foi com material impresso.`,
         num: pct(top.pc_ano, 0), numRot: "do gasto das campanhas foi com material impresso (2024)",
         resposta: `Em papel: em 2024, ${pct(top.pc_ano, 0)} do dinheiro das campanhas foi para material impresso (${reais(top.vr_total)}), a maior despesa em todas as eleições desde 2018`,
         pontos: [`<b>A internet cresce devagar:</b> o impulsionamento nas redes foi de ${pct(imp18.pc_ano)} do gasto em 2018 para ${pct(imp.pc_ano)} em 2024.`,
@@ -793,6 +810,7 @@
       const g18 = Q.q12.R.find((r) => r.nr_ano === 2018) || {}, tot = Q.q12.B.reduce((s, r) => s + r.qt_pessoas, 0), um = (Q.q12.B.find((r) => r.qt_vitorias === 1) || {}).qt_pessoas || 0;
       tema({ id: "e2", n: "+2", grupo: "A mais", titulo: "Qual é o histórico de cada político?", antigas: ["q12"],
         enunciado: ["Pergunta a mais do grupo: o político e sua linha do tempo — sobrevivência na carreira."],
+        curta: `De quem já venceu uma eleição desde 1994, ${pct((100 * um) / tot, 0)} venceu uma só.`,
         num: pct(g18.pc_eleito_de_novo_4_anos, 0), numRot: "dos deputados, senadores e governadores de 2018 se elegeram de novo em 2022",
         resposta: `A carreira é curta para a maioria: de 1994 a 2026, ${V.int(tot)} pessoas venceram alguma eleição, e ${pct((100 * um) / tot, 0)} delas venceram uma só. Dos deputados, senadores e governadores eleitos em 2018, ${Math.round(g18.pc_eleito_de_novo_4_anos)} em cada 100 voltaram em 2022`,
         pontos: [`<b>A ficha de cada um dos 2,4 milhões de candidatos</b> está na página Políticos: cada eleição, partido, votos, dinheiro, bens e, para deputado federal, como votou na Câmara.`],
@@ -897,16 +915,15 @@
     return `<div class="pagina pq-pagina">
       <p class="pq-migalha"><a href="#/perguntas">Todos os 16 temas</a></p>
       <header class="pq-cab">
-        <p class="pq-grupo">${typeof b.n === "number" ? `Tema ${b.n} de 16` : "Pergunta a mais do grupo"} · ${b.grupo}</p>
         <h1 class="pq-titulo">${selo(b)} ${b.titulo}</h1>
-        <div class="pq-enunciado"><p class="pq-enunciado__rot">O enunciado pede:</p><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></div>
-        <p class="pq-resposta"><span class="pq-resposta__rot">Resposta</span>${b.resposta}.</p>
+        <details class="pq-enunciado"${V.largura() >= 700 ? " open" : ""}><summary>${typeof b.n === "number" ? "O que o enunciado pede" : "A pergunta do grupo"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
+        <p class="pq-resposta">${b.resposta}.</p>
       </header>
       <section class="pq-pontos" aria-labelledby="pq-pontos-tit"><h2 class="pq-painel__tit" id="pq-pontos-tit">O que os dados mostram</h2>
         <ul>${b.pontos.map((p) => `<li>${p}</li>`).join("")}</ul></section>
       <section class="pq-painel" id="pq-painel" aria-labelledby="pq-medida">
         <div class="pq-painel__cab">
-          <div><h2 class="pq-painel__tit" id="pq-medida">Veja nos gráficos</h2><p class="pq-painel__rec">Escolha o recorte</p></div>
+          <h2 class="pq-painel__tit" id="pq-medida">Veja nos gráficos</h2>
           <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
         </div>
         ${b.vistas.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Recorte">${b.vistas.map((v, k) => `<button class="chip" type="button" data-vista="${k}">${v.rot}</button>`).join("")}</div>` : ""}
@@ -934,14 +951,13 @@
 
   function paginaIndice(P, temas) {
     const T = P.tamanho || {}, mi = (v) => N1.format(v / 1e6).replace(/,0$/, "");
-    const GRUPOS = ["Dinheiro", "Perfil", "Território", "Voto", "Partidos"];
     const item = (b) => `<li><a href="#/perguntas/${b.id}">${selo(b)}
-        <strong class="pq-lista__q">${b.titulo}</strong><span class="pq-lista__num">${b.num}</span><span class="pq-lista__rot">${b.numRot}</span></a></li>`;
+        <strong class="pq-lista__q">${b.titulo}</strong><span class="pq-lista__rot">${b.curta}</span></a></li>`;
     const principais = temas.filter((b) => typeof b.n === "number"), extras = temas.filter((b) => typeof b.n !== "number");
     return `<div class="pagina pq-pagina">
       <header class="pq-cab">
         <h1 class="titulo-grande">As 16 perguntas do trabalho</h1>
-        <p class="pq-mais">Os 16 temas do enunciado da disciplina, respondidos com as eleições de 1994 a 2026 em todo o Brasil. Cada tema tem a resposta em uma frase, os números que a sustentam, os gráficos e de onde vêm os dados.</p>
+        <p class="pq-mais">Os 16 temas do enunciado, respondidos com as eleições de 1994 a 2026 no Brasil inteiro.</p>
         <ul class="pq-banco">
           <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
           <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
@@ -952,7 +968,7 @@
       <ol class="pq-lista">${principais.map(item).join("")}</ol>
       <h2 class="secao__titulo" style="margin-top:8px">Duas perguntas a mais do grupo</h2>
       <ol class="pq-lista">${extras.map(item).join("")}</ol>
-      <p class="pq__rodape">Banco <code>${V.esc(P.banco)}</code> (DuckDB), montado por <code>scripts/banco_brasil.py</code> no mesmo modelo relacional do trabalho. Consultas em <code>scripts/consultas_brasil.sql</code>, rodadas em ${P.gerado.split("-").reverse().join("/")}. Os temas estão agrupados em ${GRUPOS.join(", ").toLowerCase()}.</p>
+      <p class="pq__rodape">Consultas em <code>scripts/consultas_brasil.sql</code>, rodadas em ${P.gerado.split("-").reverse().join("/")} no banco nacional (DuckDB).</p>
     </div>`;
   }
 

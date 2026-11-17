@@ -271,7 +271,7 @@
         <ol class="ranking ranking--cand">${sc.map(([sq, v]) => { const k = RES.c[sq], n = notas[k[1]] ? notas[k[1]][0] : null; return `<li><span class="ranking__sg">${V.esc(V.titulo(k[0]))} <small>${V.esc(V.nomePartido(k[1]))}</small></span><span class="ranking__barra"><i style="width:${(100 * v) / mx}%;background:${V.corNota(n)}"></i></span><b>${V.pct((100 * v) / tot)}</b><small>${fmtNota(n)}</small></li>`; }).join("")}</ol>`;
     }
     const ps = [...r.partidos.values()].sort((a, b) => b.n - a.n).slice(0, 12), mx = ps.length ? ps[0].n : 1;
-    return `<h2 class="lado__titulo">${cargo === "PREF" ? "Quem mais elegeu prefeitos" : PROP[cargo] ? `Partido mais votado para ${NOME_CG[cargo]}, em número de cidades` : `Partido do candidato a ${NOME_CG[cargo]} mais votado, em número de cidades`}</h2><p class="lado__sub">Cada barra tem a cor da nota do partido ${NOME_REGUA[REGUA]}. <span class="so-mouse">Passe o mouse num partido para ver as cidades dele no mapa.</span></p>
+    return `<h2 class="lado__titulo">${cargo === "PREF" ? "Quem mais elegeu prefeitos" : PROP[cargo] ? `Partido mais votado para ${NOME_CG[cargo]}, em número de cidades` : `Partido do candidato a ${NOME_CG[cargo]} mais votado, em número de cidades`}</h2><p class="lado__sub">A cor é a nota do partido. <span class="so-mouse">Passe o mouse para ver as cidades dele.</span></p>
       <ol class="ranking">${ps.map((p) => `<li data-sg="${V.esc(p.sg)}"><span class="ranking__sg">${V.esc(V.nomePartido(p.sg))}</span><span class="ranking__barra"><i style="width:${(100 * p.n) / mx}%;background:${V.corNota(p.nota)}"></i></span><b>${V.int(p.n)}</b><small>${fmtNota(p.nota)}</small></li>`).join("")}</ol>`;
   }
   function porEstado(venc, ufSel, cargo) {
@@ -279,7 +279,7 @@
     return `<h2 class="lado__titulo lado__titulo--2">Estado por estado</h2><p class="lado__sub">Do mais à direita ao mais à esquerda. Clique para aproximar.</p>
       <ol class="estados-lista">${linhas.map(({ s, q }) => `<li${s === ufSel ? ' aria-current="true"' : ""}><a href="${lk(s)}" data-uf="${s}"><span class="estados-lista__uf">${s}${GRUPO.includes(s) ? '<i title="Estado do grupo"></i>' : ""}</span>
         <span class="estados-lista__barra">${ORD.map((f) => `<i style="flex-basis:${(100 * q[f]) / (q.total || 1)}%;background:${FX[f].cor}"></i>`).join("")}</span><span class="estados-lista__n">${V.pct((100 * q.direita) / (q.total || 1), 0)}</span></a></li>`).join("")}</ol>
-      <p class="estados-lista__leg"><i class="g"></i>estado do grupo · número = parte ${cargo === "PREF" ? "das prefeituras" : "das cidades"} com a direita</p>`;
+      <p class="estados-lista__leg">Número: parte ${cargo === "PREF" ? "das prefeituras" : "das cidades"} com a direita · <i class="g"></i> estado do Grupo 6</p>`;
   }
   /* a régua dos partidos do ano: uma linha por partido, do mais à esquerda ao mais à direita, todas na mesma escala */
   function regua(ano, cargo, RES) {
@@ -569,7 +569,7 @@
   };
   const CAMADAS = { venc: "Quem venceu", abst: "Quem faltou", bn: "Branco e nulo", vira: "Virada 2018–22" };
   function controlesHtml(cargo, ano) {
-    document.getElementById("camadas").innerHTML = `<span class="camadas__rot">O que o mapa mostra</span><div class="camadas" role="group" aria-label="O que o mapa mostra">${Object.entries(CAMADAS).map(([k, n]) => `<a class="camadas__op" ${k === H.cam ? 'aria-current="true"' : ""} href="${lk(H.uf, H.ib, null, k)}">${n}</a>`).join("")}</div>`;
+    document.getElementById("camadas").innerHTML = `<div class="camadas" role="group" aria-label="O que o mapa mostra">${Object.entries(CAMADAS).map(([k, n]) => `<a class="camadas__op" ${k === H.cam ? 'aria-current="true"' : ""} href="${lk(H.uf, H.ib, null, k)}">${n}</a>`).join("")}</div>`;
     return `<div class="controles__linha" role="group" aria-label="Cargo">${Object.entries(ELEICOES).map(([k, e]) => `<a class="chip" role="button" aria-pressed="${k === cargo}" ${e.prontos.length ? `href="${lk(H.uf, null, [k, e.prontos[e.prontos.length - 1]])}"` : 'aria-disabled="true"'}>${e.nome}</a>`).join("")}</div>
       <div class="tempo rolagem-x" role="group" aria-label="Ano">${ELEICOES[cargo].prontos.length > 2 ? `<button type="button" class="tempo__play" id="tocar" aria-label="Passar por todas as eleições de ${ELEICOES[cargo].nome.toLowerCase()}">${tocando ? "■ Parar" : "▶ Passar os anos"}</button>` : ""}${ELEICOES[cargo].anos.map((a) => ELEICOES[cargo].prontos.includes(a) ? `<a class="tempo__ano" ${a === ano ? 'aria-current="true"' : ""} href="${lk(H.uf, H.ib, [cargo, a])}">${a}</a>` : `<span class="tempo__ano" aria-disabled="true">${a}</span>`).join("")}</div>
       ${ano === 2026 ? '<p class="controles__nota">2026: resultado do 1º turno (4 de outubro). O 2º turno é em 25 de outubro.</p>' : ""}`;

@@ -18,7 +18,7 @@
       ordem: (a, b) => a.sg_partido.localeCompare(b.sg_partido),
       cols: [
         { n: "id_partido", rot: "Código", tipo: "int", auto: true },
-        { n: "nr_partido", rot: "Número", tipo: "int", obrig: true, min: 10, max: 99, unico: true, ajuda: "Dois dígitos, de 10 a 99 (o número na urna)." },
+        { n: "nr_partido", rot: "Número", tipo: "int", obrig: true, min: 10, max: 99, unico: true, ajuda: "De 10 a 99." },
         { n: "sg_partido", rot: "Sigla", tipo: "txt", obrig: true, max: 20, unico: true, maiusc: true },
         { n: "nm_partido", rot: "Nome", tipo: "txt", obrig: true, max: 120, maiusc: true }] },
     pessoa: { rot: "Pessoas", um: "pessoa", pk: ["id_pessoa"], auto: "id_pessoa", mostra: (r) => V.titulo(r.nm_pessoa),
@@ -28,7 +28,7 @@
         { n: "nm_pessoa", rot: "Nome civil", tipo: "txt", obrig: true, max: 120, maiusc: true },
         { n: "dt_nascimento", rot: "Nascimento", tipo: "data", obrig: true, entre: ["1900-01-01", "2008-12-31"], ajuda: "Precisa ter pelo menos 16 anos." },
         { n: "ds_genero", rot: "Gênero", tipo: "opcao", obrig: true, opcoes: GENEROS },
-        { n: "nr_titulo_ficticio", rot: "Título de eleitor", tipo: "txt", obrig: true, padrao: /^\d{12}$/, unico: true, ajuda: "12 dígitos. Na amostra o título é fictício: o verdadeiro não sai do banco." }] },
+        { n: "nr_titulo_ficticio", rot: "Título de eleitor", tipo: "txt", obrig: true, padrao: /^\d{12}$/, unico: true, ajuda: "12 dígitos (fictício na amostra)." }] },
     candidatura: { rot: "Candidaturas", um: "candidatura", pk: ["id_candidatura"], auto: "id_candidatura", mostra: (r) => `${V.titulo(r.nm_urna)} · ${r.nr_candidato}`,
       ordem: (a, b) => b.id_eleicao - a.id_eleicao || a.cd_cargo - b.cd_cargo || a.nm_urna.localeCompare(b.nm_urna),
       unicos: [[["id_eleicao", "cd_municipio_tse", "nr_candidato"], "Já existe um candidato com esse número nessa eleição e cidade."],
@@ -40,7 +40,7 @@
         { n: "cd_cargo", rot: "Cargo", tipo: "fk", ref: "cargo", obrig: true },
         { n: "id_partido", rot: "Partido", tipo: "fk", ref: "partido", obrig: true },
         { n: "cd_municipio_tse", rot: "Município", tipo: "fk", ref: "municipio", obrig: true },
-        { n: "nr_candidato", rot: "Número", tipo: "int", obrig: true, min: 10, max: 99999, ajuda: "Prefeito: o número do partido (2 dígitos). Vereador: 5 dígitos, começando pelo número do partido." },
+        { n: "nr_candidato", rot: "Número", tipo: "int", obrig: true, min: 10, max: 99999, ajuda: "Prefeito: o do partido. Vereador: 5 dígitos, começando pelo do partido." },
         { n: "nm_urna", rot: "Nome na urna", tipo: "txt", obrig: true, max: 60, maiusc: true },
         { n: "nr_idade_posse", rot: "Idade na posse", tipo: "int", min: 18, max: 110 },
         { n: "cd_grau_instrucao", rot: "Escolaridade", tipo: "fk", ref: "grau_instrucao" },
@@ -209,11 +209,11 @@
       </section>
       <section class="form-ficha" aria-labelledby="form-ficha-tit">
         <div class="form-nav" role="group" aria-label="Navegar nos registros">
-          <button type="button" data-ir="0" aria-label="Primeiro registro"${i <= 0 || ESTADO.novo ? " disabled" : ""}>|◀</button>
-          <button type="button" data-ir="${i - 1}" aria-label="Registro anterior"${i <= 0 || ESTADO.novo ? " disabled" : ""}>◀</button>
+          <button type="button" data-dir="pri" data-ir="0" aria-label="Primeiro registro"${i <= 0 || ESTADO.novo ? " disabled" : ""}></button>
+          <button type="button" data-dir="ant" data-ir="${i - 1}" aria-label="Registro anterior"${i <= 0 || ESTADO.novo ? " disabled" : ""}></button>
           <span>${ESTADO.novo ? "Novo registro" : ls.length ? `${V.int(i + 1)} de ${V.int(ls.length)}` : "Nenhum registro"}</span>
-          <button type="button" data-ir="${i + 1}" aria-label="Próximo registro"${i >= ls.length - 1 || ESTADO.novo ? " disabled" : ""}>▶</button>
-          <button type="button" data-ir="${ls.length - 1}" aria-label="Último registro"${i >= ls.length - 1 || ESTADO.novo ? " disabled" : ""}>▶|</button>
+          <button type="button" data-dir="prox" data-ir="${i + 1}" aria-label="Próximo registro"${i >= ls.length - 1 || ESTADO.novo ? " disabled" : ""}></button>
+          <button type="button" data-dir="ult" data-ir="${ls.length - 1}" aria-label="Último registro"${i >= ls.length - 1 || ESTADO.novo ? " disabled" : ""}></button>
         </div>
         <h2 class="pq-painel__tit" id="form-ficha-tit">${ESTADO.novo ? `Novo registro em ${t}` : r ? esc(E.mostra(r, DB)) : "Escolha um registro"}</h2>
         <form id="form-ficha" novalidate>
@@ -294,7 +294,7 @@
 
   function painelRegistro() {
     return `<section class="form-registro"><h2 class="pq-painel__tit">Alterações feitas neste navegador</h2>
-      <p>Cada linha é um comando que os formulários executaram sobre a amostra. Elas ficam só neste navegador e voltam quando você abre a página de novo.</p>
+      <p>Os comandos que os formulários executaram, do mais recente ao mais antigo.</p>
       ${OPS.length ? `<ol>${OPS.slice().reverse().map((o) => `<li><b>${{ ins: "Inclusão", upd: "Alteração", del: "Exclusão" }[o.op]} em ${o.t}</b> · ${new Date(o.quando).toLocaleString("pt-BR")}<pre><code>${esc(sql(o))}</code></pre></li>`).join("")}</ol>` : "<p><i>Nenhuma alteração ainda.</i></p>"}
       <p><button type="button" class="btn btn--perigo" id="form-restaurar"${OPS.length ? "" : " disabled"}>Restaurar os dados originais</button></p></section>`;
   }
@@ -360,8 +360,8 @@
       <header class="pq-cab nao-imprime">
         <p class="manchete__onde"><a href="#/explorar">Explorar</a> · Formulários e relatórios</p>
         <h1 class="titulo-grande">Formulários e relatórios</h1>
-        <p class="pq-mais">O protótipo do sistema sobre o modelo relacional do trabalho. Ele usa uma amostra real do banco: as eleições municipais de 2020 e 2024 em ${esc(BASE.cidade.nome)} (${BASE.cidade.uf}), com ${V.int(DB.candidatura.length)} candidaturas, ${V.int(DB.pessoa.length)} pessoas e ${V.int(DB.partido.length)} partidos. Os formulários incluem, alteram e excluem registros com as mesmas regras do banco: chave primária, UNIQUE, chave estrangeira e CHECK. Os relatórios saem prontos para imprimir.</p>
-        <p class="form-aviso"><b id="form-ops"></b>. O que você muda fica só neste navegador; o banco nacional não é alterado.</p>
+        <p class="pq-mais">Inclua, altere e exclua registros com as regras do banco (chave primária, UNIQUE, chave estrangeira e CHECK) e imprima os relatórios. Amostra real: eleições municipais de 2020 e 2024 em ${esc(BASE.cidade.nome)} (${BASE.cidade.uf}), ${V.int(DB.candidatura.length)} candidaturas.</p>
+        <p class="form-aviso"><b id="form-ops"></b>. As mudanças ficam só neste navegador.</p>
       </header>
       <div class="pq-vistas form-abas nao-imprime" role="group" aria-label="Formulário">${ABAS.map(([k, t]) => `<button type="button" class="chip" data-aba="${k}" aria-pressed="false">${t}</button>`).join("")}</div>
       <div id="form-corpo"></div>

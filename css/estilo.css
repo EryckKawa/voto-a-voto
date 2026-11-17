@@ -1111,3 +1111,41 @@ body.com-tour .rodape { padding-bottom: 130px; }
   .relatorio tr { break-inside: avoid; }
 }
 @media (max-width: 720px) { .pq-vistas .chip { white-space: normal; text-align: left; line-height: 1.25; max-width: 100%; } .pq-painel .achado__leg span { white-space: normal; } }
+
+/* ---------- polimento de UI (17/11/2026): nenhum texto de leitura abaixo de 14 px, sem bordas grossas laterais ---------- */
+.selo, .partido { font-size: 14px; }
+.barras__rot small, .pares__rot small, .pares__lin small, .ranking small, .governa__cid small, .capitulos em, .estados-lista__leg,
+.form-itens button small, .form-campo small, .pol-hist__num small, .testes__tabela th, .testes__tabela td small, .relatorio footer p,
+.dica__acao, .relatorio__marca, .urna-tela__cab, .urna__cab { font-size: 14px; }
+.grafico .rot, .regua__ext, .regua--lista .regua__ext, .pol-regua__eixo, .serie__eixo { font-size: 14px; }
+.regua__tick, .hist__spark text { font-size: 13px; }
+.calor table { font-size: 14px; } .calor thead th { font-size: 14px; }
+.relatorio__marca { text-transform: none; letter-spacing: 0; }
+@media (max-width: 600px) { .regua--lista .regua__ext { font-size: 13px; } }
+@media (max-width: 860px) { .placar__fatia span { font-size: 13px; } }
+/* eleito no histórico: um fundo claro, sem a faixa verde na lateral (o selo "Eleito" já diz) */
+.pol-hist--eleito { box-shadow: none; padding-left: 10px !important; padding-right: 10px; background: #f2f8f4; border-radius: 8px; }
+/* enunciado: recolhível, sem caixa com borda lateral */
+.pq-enunciado { background: none; border: 0; border-radius: 0; padding: 0; max-width: 75ch; }
+.pq-enunciado > summary { cursor: pointer; font-weight: 700; color: var(--tinta-2); font-size: 16px; padding: 4px 0; width: fit-content; }
+.pq-enunciado ul { margin: 6px 0 0; padding-left: 22px; color: var(--tinta-2); font-size: 16px; display: grid; gap: 4px; }
+.pq-resposta { font-size: clamp(21px, 2.2vw, 26px); line-height: 1.3; max-width: 52ch; padding: 4px 0 0; }
+.pq-selo--extra { font-size: .5em; }
+/* índice das perguntas: título e a resposta curta, sem o número solto */
+.pq-lista a { grid-template-columns: 56px minmax(0, 1fr); grid-template-areas: "selo q" "selo rot"; }
+.pq-lista__rot { font-size: 16px; color: var(--tinta-2); line-height: 1.4; }
+@media (max-width: 720px) {
+  .pq-lista a { grid-template-columns: 40px minmax(0, 1fr); grid-template-areas: "selo q" "selo rot"; }
+  /* recortes numa linha que rola para o lado, em vez de uma pilha */
+  .pq-vistas { flex-wrap: nowrap; overflow-x: auto; margin: 0 -14px; padding: 2px 14px 6px; scrollbar-width: thin; }
+  .pq-vistas .chip { white-space: nowrap; flex: none; }
+}
+/* navegação dos formulários: setas desenhadas em CSS */
+.form-nav button { position: relative; color: transparent; overflow: hidden; }
+.form-nav button::before { content: ""; position: absolute; inset: 0; margin: auto; width: 8px; height: 8px; border: solid var(--tinta); border-width: 0 0 2.5px 2.5px; transform: translateX(2px) rotate(45deg); }
+.form-nav button[data-dir="prox"]::before, .form-nav button[data-dir="ult"]::before { transform: translateX(-2px) rotate(-135deg); }
+.form-nav button[data-dir="pri"]::after, .form-nav button[data-dir="ult"]::after { content: ""; position: absolute; top: 0; bottom: 0; margin: auto; width: 2.5px; height: 12px; background: var(--tinta); }
+.form-nav button[data-dir="pri"]::after { left: 12px; } .form-nav button[data-dir="ult"]::after { right: 12px; }
+.regua-escolha__rot { font-size: 15px; color: var(--tinta-2); }
+.ninguem__cap { margin-bottom: 6px; }
+.estados-lista__leg { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
