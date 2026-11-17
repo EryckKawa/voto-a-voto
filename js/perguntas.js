@@ -986,13 +986,7 @@
 
   /* o CSV é a tabela do recorte aberto, com o texto que a página mostra (separador ";", como o Excel em português espera) */
   function baixarCSV() {
-    const t = ATUAL && ATUAL.tab; if (!t) return;
-    const limpa = (v) => { const d = document.createElement("div"); d.innerHTML = String(v == null ? "" : v); return d.textContent.replace(/\u00a0/g, " ").trim(); };
-    const cel = (v) => { const x = limpa(v); return /[";\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
-    const csv = "\ufeff" + [t.cols, ...t.linhas].map((l) => l.map(cel).join(";")).join("\r\n");
-    const nome = `voto-a-voto_${ATUAL.b.id}_${V.norm(ATUAL.b.vistas[ATUAL.vi].rot || "dados").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.csv`;
-    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = nome;
-    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+    if (ATUAL && ATUAL.tab) V.baixarCSV(ATUAL.tab, ATUAL.b.id + " " + (ATUAL.b.vistas[ATUAL.vi].rot || "dados"));
   }
 
   document.getElementById("conteudo").addEventListener("change", (e) => { if (e.target.id === "pq-ir" && e.target.value) location.hash = "#/perguntas/" + e.target.value; });

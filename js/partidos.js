@@ -31,7 +31,7 @@
       .map(([k, sgs]) => ({ k, sg: [...new Set(sgs.map(V.nomePartido))].join("/"), s: D.partidos[k].serie[ano] })).sort((a, b) => a.s.c - b.s.c);
   }
   function graficoAno(L, ano) {
-    const est = V.largura() < 600, W = est ? 360 : 880, lab = est ? 112 : 130, dir = est ? 8 : 180, lin = est ? 30 : 28, top = 30;
+    const est = V.largura() < 600, W = est ? 360 : 880, lab = est ? 112 : 130, dir = est ? 8 : 92, lin = est ? 30 : 28, top = 30;
     const H = top + L.length * lin + 26, x = d3.scaleLinear().domain(DOM).range([lab, W - dir]);
     const fs = est ? 11 : 14;
     const rows = L.map((r, i) => {
@@ -42,7 +42,7 @@
         ${s.max - s.min > 0.005 ? `<line x1="${x(s.min)}" x2="${x(s.max)}" y1="${y}" y2="${y}" stroke="#9aa0aa" stroke-width="2"/>` : ""}
         ${F.filter((f) => s.f[f]).map((f) => marca(f, x(s.f[f].v), y, est ? 3.5 : 4.5, s.f[f].antiga ? 'opacity=".35"' : 'opacity=".8"')).join("")}
         <circle cx="${x(s.c)}" cy="${y}" r="${est ? 6.5 : 7.5}" fill="${cor(s.c)}" stroke="#16181d" stroke-width="1.5"${s.incerta ? ' stroke-dasharray="3 2"' : ""}/>
-        ${est ? "" : `<text x="${W - dir + 12}" y="${y + 5}" font-size="13" fill="${s.incerta ? "#9c5d16" : "#5f6672"}">${faixa(s.c)}${s.incerta ? " (incerto)" : ""}</text>`}</g>`;
+        ${est || !s.incerta ? "" : `<text x="${W - dir + 12}" y="${y + 5}" font-size="14" font-weight="700" fill="#9c5d16">incerto</text>`}</g>`;
     }).join("");
     return `<svg class="pt-svg" viewBox="0 0 ${W} ${H}" role="img" aria-label="Posição de ${L.length} partidos em ${ano} segundo três estudos e o voto na Câmara">
       <rect x="${x(-0.25)}" y="${top - 6}" width="${x(0.25) - x(-0.25)}" height="${L.length * lin + 6}" fill="#f1ede3"/>
@@ -119,7 +119,9 @@
     document.getElementById("pt-ano-sub").textContent = `${L.length} partidos que disputaram a eleição e foram medidos por pelo menos uma das quatro fontes. ${inc.length ? `As medidas discordam sobre o lado de ${inc.join(", ").replace(/, ([^,]*)$/, " e $1")}.` : "As medidas concordam sobre o lado de todos."}`;
     document.getElementById("pt-ano-graf").innerHTML = modo === "tab" ? tabelaAno(L, ano) : graficoAno(L, ano);
     document.getElementById("pt-ano-leg").hidden = modo === "tab";
-    document.querySelectorAll("[data-ano]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.ano === ano)));
+    const i = EST.anos.indexOf(ano), fx = document.getElementById("pt-ano-faixa");
+    if (fx) { fx.value = i; fx.setAttribute("aria-valuetext", ano); document.getElementById("pt-ano-num").textContent = ano;
+      document.querySelector('[data-passo="-1"]').disabled = i <= 0; document.querySelector('[data-passo="1"]').disabled = i >= EST.anos.length - 1; }
     document.querySelectorAll("#pt-ano [data-modo]").forEach((b) => b.setAttribute("aria-pressed", String(b.dataset.modo === modo)));
   }
   function pintarPar() {
@@ -138,6 +140,8 @@
 
   document.getElementById("conteudo").addEventListener("click", (e) => {
     if (!EST || !e.target.closest(".pt-pagina")) return;
+    const ps = e.target.closest("[data-passo]");
+    if (ps) { const j = EST.anos.indexOf(EST.ano) + +ps.dataset.passo; if (EST.anos[j]) { EST.ano = EST.anos[j]; pintarAno(); } return; }
     const a = e.target.closest("[data-ano]"), md = e.target.closest("#pt-ano [data-modo]"), p = e.target.closest("[data-partido]"), pr = e.target.closest("[data-par]");
     if (pr) { EST.par = +pr.dataset.par; pintarPar(); return; }
     if (a) { EST.ano = a.dataset.ano; pintarAno(); }
@@ -146,6 +150,9 @@
   });
   document.getElementById("conteudo").addEventListener("change", (e) => {
     if (EST && e.target.id === "pt-outro" && e.target.value) { EST.k = e.target.value; pintarTraj(); }
+  });
+  document.getElementById("conteudo").addEventListener("input", (e) => {
+    if (EST && e.target.id === "pt-ano-faixa") { EST.ano = EST.anos[+e.target.value]; pintarAno(); }
   });
 
   V.rota(/^\/partidos\/?$/, async function (main) {
@@ -164,7 +171,8 @@
     const rmin = Math.min(...pares.map((x) => x.p.r)), rmax = Math.max(...pares.map((x) => x.p.r));
     const anos = Object.keys(D.presentes).sort();
     let modo = "graf"; try { modo = localStorage.getItem("vav-pq-modo") === "tab" ? "tab" : "graf"; } catch (e) {}
-    EST = { D, ano: anos.includes("2022") ? "2022" : anos[anos.length - 1], k: "PSDB", modo, par: 3, pares };
+    EST = { D, anos, ano: anos.includes("2022") ? "2022" : anos[anos.length - 1], k: "PSDB", modo, par: 3, pares };
+    const nUlt = Object.keys(D.presentes[ultAno] || {}).filter((k) => D.partidos[k] && D.partidos[k].serie[ultAno]).length;
     const outros = Object.entries(D.partidos).filter(([k]) => !PRINC.includes(k) && Object.keys(D.partidos[k].serie).length > 1).sort((a, b) => a[1].nome.localeCompare(b[1].nome));
     const fonte = (f) => D.fontes[f];
     const r2 = (r) => String(r.toFixed(2)).replace(".", ",");
@@ -173,6 +181,11 @@
       <header class="pq-cab">
         <h1 class="titulo-grande">Onde fica cada partido</h1>
         <p class="pq-resposta">Três estudos feitos por gente diferente põem o partido do mesmo lado em ${pct(igual, n)} das vezes. O voto na Câmara concorda com eles, menos no centrão${afast.length ? `: ${nomesL(afast)} votam mais ao centro do que os estudos dizem, porque acompanham o governo da vez` : ""}.</p>
+        <ul class="kpis pt-kpis">
+          <li><b>${pct(igual, n)}</b><span>das vezes, os três estudos põem o partido do mesmo lado</span></li>
+          <li><b>${r2(rmin)} a ${r2(rmax)}</b><span>de correlação entre as quatro medidas (1 seria concordância total)</span></li>
+          <li><b>${nUlt}</b><span>partidos com nota em ${ultAno}</span></li>
+        </ul>
         <p class="pq-mais">Deputados federais (Zucco e Power, 2024), 519 cientistas políticos brasileiros (Bolognesi, Ribeiro e Codato, 2023) e especialistas internacionais (V-Party, 2022) deram notas aos partidos. A quarta medida é o que as bancadas mandaram votar na Câmara de 2019 a 2026, a única que já pega o PL de Bolsonaro e o União Brasil. Tudo fica na mesma escala, de −1 (esquerda) a +1 (direita). A nota de cada partido em cada eleição pesa mais a medida feita mais perto dela, e é a régua que pinta o mapa.</p>
       </header>
 
@@ -181,7 +194,8 @@
           <div><h2 class="pq-painel__tit" id="pt-ano-tit"></h2><p class="pq-painel__rec" id="pt-ano-sub"></p></div>
           <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
         </div>
-        <div class="tempo rolagem-x pt-anos" role="group" aria-label="Eleição">${anos.map((a) => `<button type="button" class="tempo__ano" data-ano="${a}">${a}</button>`).join("")}</div>
+        <div class="pt-ano-passo"><button type="button" class="btn pt-seta" data-passo="-1" aria-label="Eleição anterior"></button><output id="pt-ano-num" class="pt-ano-num" for="pt-ano-faixa"></output><button type="button" class="btn pt-seta pt-seta--prox" data-passo="1" aria-label="Próxima eleição"></button>
+          <label class="pt-ano-faixa"><span class="visualmente-oculto">Ano da eleição</span><input type="range" id="pt-ano-faixa" min="0" max="${anos.length - 1}" step="1" value="0"><span class="pt-ano-faixa__pontas" aria-hidden="true"><span>${anos[0]}</span><span>${anos[anos.length - 1]}</span></span></label></div>
         <div id="pt-ano-leg">${legenda()}</div>
         <div class="pq-graf" id="pt-ano-graf"></div>
         <p class="pq-nota">A bolinha colorida é a nota do partido (tracejada quando as medidas discordam do lado); a linha cinza vai da medida que põe o partido mais à esquerda à que põe mais à direita. Marca clara: medida feita longe desta eleição, que pesa menos. Faixa bege: o centro, de −0,25 a +0,25.</p>

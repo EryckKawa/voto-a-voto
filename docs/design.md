@@ -95,6 +95,13 @@ O plano completo (fundamentos, componentes, página por página e fases) foi fei
 - **Mapa:** camadas, cargo e ano numa barra de filtros acima do mapa (no celular, antes do mapa; o ano escolhido aparece no meio da fila); ranking com cabeçalho (Partido · Cidades · Nota); a régua dos partidos recolhida, com link para a página Partidos.
 - **Políticos:** a busca abre com 18 sugestões com foto em três trilhas (os mais votados de 2022, prefeitos eleitos nas capitais em 2024, quem mais venceu desde 1994), feitas por `scripts/sugestoes_politicos.py`; os resultados da busca mostram a foto quando o site tem.
 
-### O que fica para depois de 19/11 (fases 4 a 6)
-Ninguém (busca da cidade no topo, sumário de capítulos), O que o voto revela no mesmo painel dos temas, Partidos (ano em controle deslizante, rótulos só para os incertos), fichas com a situação do registro ("Registro negado", "Cassado"), Explorar com miniaturas reais, e a limpeza final dos blocos de conserto do CSS.
+### Fase 4 (18/11): as páginas de leitura longa
+- **Ninguém:** números-chave no cabeçalho (42,6 milhões; 2,8 vezes o PL; 205 cidades); "E na sua cidade?" logo depois da urna (no celular, antes dela); sumário em duas colunas com seis capítulos; uma barra presa abaixo do menu diz o capítulo que se está lendo; 6 capitais à vista e as outras recolhidas; "Para continuar" no fim.
+- **O que o voto revela:** índice numerado com o assunto de cada achado; cada cartão com "Baixar dados (CSV)" (a tabela sai do mesmo dado do gráfico) e a fonte numa linha; "Para continuar" no fim.
+- **Partidos:** números-chave no cabeçalho; o ano num controle deslizante com setas e o ano grande, no lugar de 17 botões; à direita do gráfico, só o aviso "incerto" (a faixa já está no alto do gráfico e na cor); dispersão e tabela lado a lado a partir de 1.100 px.
+- **Comum:** `V.baixarCSV` em `js/base.js` serve os temas e o Revela; o componente `.proximos` fecha as páginas; `V.dados` pede o arquivo de novo se ele não chegar em 12 s (um pedido pendurado travava a página inicial de vez em quando nos testes).
+- As páginas não ficaram mais curtas: os números-chave e os próximos passos somam altura. O ganho é a ordem de leitura, não o tamanho.
+
+### O que fica para depois de 19/11 (fases 5 e 6)
+Fichas com a situação do registro ("Registro negado", "Cassado"), Explorar com miniaturas reais, títulos de recorte reescritos como achados, a limpeza final dos blocos de conserto do CSS e o ensaio da apresentação.
 

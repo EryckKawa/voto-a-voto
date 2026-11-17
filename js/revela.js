@@ -6,8 +6,16 @@
   const pct = (v, d) => V.pct(v, d);
   const REGS = ["Nordeste", "Norte", "Centro-Oeste", "Sudeste", "Sul"];
 
+  /* enquanto a página monta, cada gráfico guarda a tabela com os mesmos números (é o CSV do cartão) */
+  let TABS = null;
+  const semTag = (h) => String(h == null ? "" : h).replace(/<[^>]*>/g, " ").replace(/\s+/g, " ").trim();
+
   /* barras horizontais em HTML: rótulo, barra, valor */
   function barras(linhas, opts) {
+    if (TABS) {
+      const nomes = linhas[0] && linhas[0].partes ? linhas[0].partes.map((p, i) => semTag(p.tit).split(":")[0] || "Parte " + (i + 1)) : [];
+      TABS.push({ cols: ["Grupo", ...(nomes.length ? nomes : ["Valor"])], linhas: linhas.map((l) => [semTag(l.rot) + (l.sub ? " (" + semTag(l.sub) + ")" : ""), ...(nomes.length ? l.partes.map((p) => pct(p.v)) : [l.vTxt ? semTag(l.vTxt) : pct(l.v)])]) });
+    }
     const mx = opts.max || Math.max(...linhas.map((l) => l.v));
     return `<ol class="barras">${linhas.map((l) => `<li><span class="barras__rot">${l.rot}${l.sub ? `<small>${l.sub}</small>` : ""}</span>
       <span class="barras__trilho">${l.partes ? l.partes.map((p) => `<i style="flex-basis:${(100 * p.v) / mx}%;background:${p.cor}" title="${V.esc(p.tit)}"></i>`).join("") : `<i style="flex-basis:${(100 * l.v) / mx}%;background:${opts.cor}"></i>`}</span>
@@ -19,6 +27,7 @@
      fmtEixo (rótulo do eixo), e meio: a linha de referência mais escura (o zero). Um valor null é um ano sem dado: a linha
      liga os pontos que existem. */
   function linhas({ anos, series, max = 100, min = 0, vazios = [], rot, fmt = (v) => pct(v, 0), fmtPonto = (v) => pct(v), fmtEixo = (t) => Math.round(t) + "%", meio = null, marcas = [0, 0.25, 0.5, 0.75, 1], faixas = [] }) {
+    if (TABS) TABS.push({ cols: ["Ano", ...series.map((s) => s.nome)], linhas: anos.map((a, i) => [a, ...series.map((s) => (s.v[i] == null ? "" : fmtPonto(s.v[i])))]) });
     const estreito = V.largura() < 600, W = estreito ? 360 : 760, H = estreito ? 250 : 300;
     const m = { t: 16, r: estreito ? 108 : 140, b: 30, l: estreito ? 34 : 44 }, fs = estreito ? 11 : 13;
     const x = d3.scalePoint().domain(anos).range([m.l, W - m.r]), y = d3.scaleLinear().domain([min, max]).range([H - m.b, m.t]);
@@ -51,19 +60,20 @@
   }
   V.graf = { barras, linhas, leg, nuvem };   // usados também na página dos 16 temas e na ficha do político
 
-  const bloco = (b) => `<article class="achado" id="${b.id}">
+  const bloco = (b, i) => `<article class="achado" id="${b.id}">
       <h2 class="achado__titulo">${b.tit}</h2>
       <p class="achado__tema">${b.tema}</p>
       <p class="achado__sub">${b.sub}</p>
       ${b.legenda || ""}
       ${b.grafico}
       <details class="achado__como"><summary>Como chegamos nesse número</summary><p>${b.como}</p></details>
-      <p class="achado__pe"><a href="${b.link}">${b.linkTxt}</a><span>Fonte: ${b.fonte}</span></p>
+      <div class="achado__pe"><p>Fonte: ${b.fonte}. <a href="${b.link}">${b.linkTxt}</a></p><button type="button" class="btn pq-csv" data-csv="${i}">Baixar dados (CSV)</button></div>
     </article>`;
 
   V.rota(/^\/revela$/, async function (main) {
     V.marcarNav("revela");
     const A = await V.dados("br/achados");
+    TABS = [];
     const Q = A.quintos.limites_mil_reais;
     const QNOME = ["20% mais pobres", "2º grupo", "3º grupo", "4º grupo", "20% mais ricas"];
 
@@ -158,14 +168,22 @@
         link: "#/mapa/v/bn", linkTxt: "Ver no mapa de branco e nulo", fonte: "TSE" },
     ];
 
+    const tabs = TABS; TABS = null;
     document.title = "O que o voto revela · Voto a voto";
     main.innerHTML = `<div class="pagina revela">
       <header class="revela__topo"><h1 class="titulo-grande">O que o voto revela</h1>
         <p class="lead">Oito achados de trinta anos de eleições, de 1994 a 2026, nas 5.570 cidades. Cada título já é a resposta; o gráfico mostra de onde ela vem.</p>
-        <nav class="revela__indice" aria-label="Achados">${blocos.map((b) => `<a href="#/revela" data-alvo="${b.id}">${b.indice}</a>`).join("")}</nav></header>
+      </header>
+      <nav aria-label="Os oito achados"><ol class="capitulos revela__indice">${blocos.map((b, i) => `<li><a href="#/revela" data-alvo="${b.id}"><span class="capitulos__n">${i + 1}</span><span><b>${b.indice}</b><small>${b.tema}</small></span></a></li>`).join("")}</ol></nav>
       ${blocos.map(bloco).join("")}
-      <p class="revela__fim"><a href="#/perguntas">Ver as 16 perguntas do trabalho, cada uma com a resposta e os gráficos</a></p>
+      <section aria-labelledby="rev-prox" class="revela__fim"><h2 class="secao__titulo" id="rev-prox">Para continuar</h2>
+        <ul class="proximos">
+          <li><a href="#/perguntas"><b>As 16 perguntas do trabalho</b><span>Cada tema do enunciado com a resposta, os gráficos e a fonte</span></a></li>
+          <li><a href="#/mapa"><b>O mapa</b><span>Quem venceu em cada cidade, em qualquer cargo e ano desde 1994</span></a></li>
+          <li><a href="#/explorar"><b>Explorar</b><span>Mapa em 3D, máquina do tempo e a multidão do Ninguém</span></a></li>
+        </ul></section>
     </div>`;
+    main.querySelectorAll("[data-csv]").forEach((bt) => bt.addEventListener("click", () => { const b = blocos[+bt.dataset.csv]; V.baixarCSV(tabs[+bt.dataset.csv], "revela " + b.id); }));
     main.querySelectorAll("[data-alvo]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); document.getElementById(a.dataset.alvo).scrollIntoView({ behavior: "smooth", block: "start" }); }));
   });
 })();

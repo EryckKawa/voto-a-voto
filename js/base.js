@@ -17,11 +17,15 @@
     if (pend[chave]) return pend[chave];
     // rede instável (Wi-Fi de sala, celular): tenta de novo duas vezes antes de desistir
     pend[chave] = new Promise((ok, falha) => {
+      // um pedido que fica pendurado (servidor ocupado, Wi-Fi ruim) não pode travar a página: depois de 12 s, pede de novo;
+      // vale o primeiro que chegar
       const tentar = (n) => {
         const s = document.createElement("script");
+        let fim = false;
+        const relogio = n < 2 ? setTimeout(() => { if (!fim && !window.__D[chave]) tentar(n + 1); }, 12000) : null;
         s.src = "data/" + chave + ".js?v=20261116-temas" + (n ? "&t=" + n : "");
-        s.onload = () => (window.__D[chave] ? ok(window.__D[chave]) : falha(new Error("Arquivo sem dados: " + chave)));
-        s.onerror = () => { s.remove(); if (n < 2) setTimeout(() => tentar(n + 1), 600 * (n + 1)); else { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); } };
+        s.onload = () => { fim = true; clearTimeout(relogio); if (window.__D[chave]) ok(window.__D[chave]); else falha(new Error("Arquivo sem dados: " + chave)); };
+        s.onerror = () => { fim = true; clearTimeout(relogio); s.remove(); if (window.__D[chave]) return; if (n < 2) setTimeout(() => tentar(n + 1), 600 * (n + 1)); else { delete pend[chave]; falha(new Error("Não foi possível carregar " + chave)); } };
         document.head.appendChild(s);
       };
       tentar(0);
@@ -167,6 +171,15 @@
     V.CIDADES = cid.map((r) => ({ tse: r[0], ibge: r[1], nome: r[2], uf: r[3], capital: !!r[4], pop: r[5], pib: r[6] }));
     V.porIbge = new Map(V.CIDADES.map((c) => [c.ibge, c]));
     V.porTse = new Map(V.CIDADES.map((c) => [String(c.tse), c]));
+  };
+  V.baixarCSV = (t, nome) => {
+    if (!t || !t.cols) return;
+    const limpa = (v) => { const d = document.createElement("div"); d.innerHTML = String(v == null ? "" : v); return d.textContent.replace(/\u00a0/g, " ").trim(); };
+    const cel = (v) => { const x = limpa(v); return /[";\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+    const csv = "\ufeff" + [t.cols, ...t.linhas].map((l) => l.map(cel).join(";")).join("\r\n");
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" }));
+    a.download = "voto-a-voto_" + V.norm(nome || "dados").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "") + ".csv";
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
   };
   V.norm = (s) => String(s || "").normalize("NFD").replace(/[̀-ͯ]/g, "").toLowerCase();
 })();

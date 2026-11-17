@@ -62,7 +62,6 @@
       ["Quantos anos ele tem", "", "#cap-4", true],
       ["Preguiça ou protesto?", "", "#cap-5", true],
       ["Quem governa, com o voto de quem?", "", "#cap-6", true],
-      ["E na sua cidade?", "Digite o nome e veja quem ganhou: o eleito ou o Ninguém", "#cap-cidade", true],
     ];
     // cap. 2: o tamanho do Ninguém (sobre os eleitores) por tamanho da cidade
     const pN = (x) => (100 * (x[1] + x[2] + x[3])) / x[0];
@@ -95,7 +94,12 @@
     main.innerHTML = `<div class="pagina ninguem">
       <header class="ninguem__topo">
         <h1 class="ninguem__titulo">O candidato mais votado do Brasil se chama Ninguém</h1>
-        <p class="ninguem__lead">É quem não foi votar, anulou ou votou em branco. Em 2024, foram <b>${mi(ning)}</b> de pessoas no 1º turno: quase o triplo do partido mais votado, o ${V.esc(top[0])}, com ${mi(top[1])}.</p>
+        <p class="ninguem__lead">É quem não foi votar, anulou ou votou em branco. Em 2024, no 1º turno para prefeito, ele teve quase o triplo de votos do partido mais votado.</p>
+        <ul class="kpis ninguem__kpis">
+          <li><b>${mi(ning)}</b><span>de eleitores não escolheram ninguém para prefeito em 2024</span></li>
+          <li><b>${(ning / top[1]).toFixed(1).replace(".", ",")} vezes</b><span>os votos do partido mais votado, o ${V.esc(top[0])} (${mi(top[1])})</span></li>
+          <li><b>${V.int(cidadesNinguem)}</b><span>cidades onde Ninguém teve mais votos que o candidato mais votado</span></li>
+        </ul>
       </header>
       <section class="urna-hero" aria-label="Urna: experimente digitar">
         <div class="urna-corpo">
@@ -106,21 +110,29 @@
             <div class="urna-teclado__acoes"><button class="tecla-acao tecla-acao--branco" data-a="branco">BRANCO</button><button class="tecla-acao tecla-acao--corrige" data-a="corrige">CORRIGE</button><button class="tecla-acao tecla-acao--confirma" data-a="confirma">CONFIRMA</button></div>
           </div>
         </div>
-        <p class="urna-dica">Experimente: digite o número de um partido (22, 13, 55…), aperte BRANCO ou digite um número que não existe. CONFIRMA leva para a próxima parte.</p>
+        <p class="urna-dica">Experimente: digite 22, 13 ou 55, aperte BRANCO ou um número que não existe.</p>
+      </section>
+
+      <section class="ninguem__secao ninguem__cidade" id="cap-cidade">
+        <h2 class="ninguem__h2">E na sua cidade: quem ganhou, o eleito ou o Ninguém?</h2>
+        <div class="busca busca-grande"><label class="visualmente-oculto" for="busca-n">Sua cidade</label><input id="busca-n" type="search" role="combobox" aria-autocomplete="list" aria-controls="busca-n-lista" aria-expanded="false" autocomplete="off" placeholder="Digite o nome da sua cidade (ex.: Teresina, Campinas)"><ul id="busca-n-lista" class="busca__lista" role="listbox" hidden></ul></div>
+        <div id="sua-cidade"></div>
       </section>
 
       <section class="ninguem__secao" id="capitais">
         <h2 class="ninguem__h2">Em 2024, Ninguém venceu em ${venceu.length} capitais</h2>
         <p class="ninguem__sub">No 1º turno, ele teve mais votos que o candidato a prefeito mais votado em ${venceu.map((x) => x.c.nome).join(", ").replace(/, ([^,]*)$/, " e $1")}. No país todo, foram ${V.int(cidadesNinguem)} cidades.</p>
-        <ol class="duelos duelos--grade">${lista(venceu)}</ol>
-        <details class="duelos__mais"><summary>Ver as outras ${caps.length - venceu.length} capitais</summary><ol class="duelos duelos--grade">${lista(caps.filter((x) => x.n <= x.v))}</ol></details>
+        <ol class="duelos duelos--grade">${lista(venceu.slice(0, 6))}</ol>
+        <details class="duelos__mais"><summary>Ver as outras ${caps.length - Math.min(6, venceu.length)} capitais</summary><ol class="duelos duelos--grade">${lista([...venceu.slice(6), ...caps.filter((x) => x.n <= x.v)])}</ol></details>
         <p class="fonte">1º turno de 2024. O mais votado do 1º turno nem sempre foi o eleito: em Belo Horizonte, por exemplo, Fuad Noman venceu no 2º turno. Brasília não elege prefeito. Fonte: TSE.</p>
       </section>
 
 <section class="ninguem__secao" id="indice">
-        <h2 class="ninguem__h2">Quem é esse Ninguém? Sete capítulos para descobrir</h2>
+        <h2 class="ninguem__h2">Quem é esse Ninguém? Seis capítulos para descobrir</h2>
         <ol class="capitulos">${capitulos.map(([t, d, h, pronto], i) => `<li${pronto ? "" : ' class="capitulos--breve"'}>${pronto ? `<a href="#/" data-alvo="${h.slice(1)}">` : "<span>"}<span class="capitulos__n">${i + 1}</span><span><b>${t}</b><small>${d}</small></span>${pronto ? "</a>" : `<em>em breve</em></span>`}</li>`).join("")}</ol>
       </section>
+
+      <nav class="cap-atual" id="cap-atual" aria-label="Capítulo que você está lendo" hidden><a href="#/" data-alvo="indice">Capítulos</a><span id="cap-atual-txt"></span></nav>
 
       <section class="ninguem__secao" id="cap-1">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>1</b></span><span class="visualmente-oculto">Capítulo 1 · Quem é o Ninguém</span></p>
@@ -188,13 +200,16 @@
         <p class="fonte">Votos do eleito no turno que decidiu a eleição, sobre os eleitores aptos da cidade nesse turno. Fonte: TSE.</p>
       </section>
 
-      <section class="ninguem__secao" id="cap-cidade">
-        <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>7</b></span><span class="visualmente-oculto">Capítulo 7 · E na sua cidade?</span></p>
-        <h2 class="ninguem__h2">Quem ganhou na sua cidade: o eleito ou o Ninguém?</h2>
-        <div class="busca busca-grande"><label class="visualmente-oculto" for="busca-n">Sua cidade</label><input id="busca-n" type="search" role="combobox" aria-autocomplete="list" aria-controls="busca-n-lista" aria-expanded="false" autocomplete="off" placeholder="Digite o nome da sua cidade"><ul id="busca-n-lista" class="busca__lista" role="listbox" hidden></ul></div>
-        <p class="urna-dica">Experimente: Teresina, Campinas, Juazeiro do Norte, a cidade onde você vota.</p>
-        <div id="sua-cidade"></div>
+      <section class="ninguem__secao" aria-labelledby="ning-prox">
+        <h2 class="ninguem__h2" id="ning-prox">Para continuar</h2>
+        <ul class="proximos">
+          <li><a href="#/mapa/v/abst"><b>O mapa de quem faltou</b><span>Cidade por cidade, em qualquer eleição desde 1994</span></a></li>
+          <li><a href="#/perguntas/t6"><b>Tema 6: brancos, nulos e abstenção</b><span>A resposta do trabalho, com os números e a fonte</span></a></li>
+          <li><a href="#/multidao"><b>A multidão do Ninguém</b><span>Um ponto para cada mil eleitores, enchendo estádios</span></a></li>
+        </ul>
       </section>
+
+
 
 
     </div>`;
@@ -206,6 +221,21 @@
       if (sm && !sm.textContent && sec) sm.textContent = sec.querySelector(".ninguem__h2").textContent;
       a.addEventListener("click", (e) => { e.preventDefault(); rolar(sec); });
     });
+
+    // ---------- barra do capítulo atual: aparece só enquanto se lê os capítulos ----------
+    { const barra = document.getElementById("cap-atual"), txtB = document.getElementById("cap-atual-txt"), secs = capitulos.map(([t, , h]) => [t, document.getElementById(h.slice(1))]).filter(([, el]) => el);
+      if ("IntersectionObserver" in window && secs.length) {
+        const vis = new Map();
+        const io = new IntersectionObserver((es) => {
+          es.forEach((e) => vis.set(e.target, e.isIntersecting));
+          const i = secs.findIndex(([, el]) => vis.get(el));
+          const topo = document.querySelector(".topo");
+          barra.style.top = (topo && getComputedStyle(topo).position === "sticky" ? topo.offsetHeight : 0) + "px";
+          barra.hidden = i < 0;
+          if (i >= 0) txtB.innerHTML = `<b>Capítulo ${i + 1} de ${secs.length}</b> · ${V.esc(secs[i][0])}`;
+        }, { rootMargin: "-45% 0px -45% 0px" });
+        secs.forEach(([, el]) => io.observe(el));
+      } }
 
     // ---------- mapa do capítulo 2 ----------
     {
