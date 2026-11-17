@@ -685,7 +685,7 @@
       const uD = ufs22[0] || {}, uE = ufs22[ufs22.length - 1] || {};
       const vistaCalor = { rot: "Mapa de calor · presidente", legenda: `<p class="achado__leg"><span><i style="background:${V.ESPC.ESQUERDA}"></i>E: esquerda na frente</span><span><i style="background:${V.ESPC.CENTRO}"></i>C: centro</span><span><i style="background:${V.ESPC.DIREITA}"></i>D: direita</span><span>o número é a parte dos votos do campo que ficou na frente</span></p>`,
         graf: () => ({ html: calorHTML(R), tab: { cols: ["Estado", ...[...new Set(R.map((r) => r.nr_ano_eleicao))].sort().map(String)], linhas: [...new Set(R.map((r) => r.sg_uf || r.nm_regiao))].map((k) => [k, ...[...new Set(R.map((r) => r.nr_ano_eleicao))].sort().map((a) => { const r = R.find((x) => x.nr_ano_eleicao === a && (x.sg_uf || x.nm_regiao) === k); return r ? `E ${pct(r.pc_esquerda, 0)} · D ${pct(r.pc_direita, 0)}` : "—"; })]) } }),
-        nota: "Cada quadrado é um estado numa eleição: a cor mostra o campo político que teve mais votos para presidente no 1º turno (esquerda, centro ou direita) e fica mais forte quanto maior a parte dele. Esquerda e direita somam o centro-esquerda e o centro-direita. Em 1994 e 1998 o PSDB de Fernando Henrique conta como centro." };
+        nota: "Quem teve mais votos para presidente no 1º turno, estado por estado. Quanto mais forte a cor, maior a vantagem. Em 1994 e 1998, o PSDB conta como centro." };
       const vistaReg = (a) => ({ rot: `Regiões ${a}`, legenda: leg([[COR.esq, "Esquerda"], [COR.cen, "Centro"], [COR.dir, "Direita"]]),
         graf: () => barras(["Norte", "Nordeste", "Centro-Oeste", "Sudeste", "Sul"].map((g) => { const r = reg(a, g); return { rot: g, v: 100, vTxt: `D ${pct(r.pc_direita, 0)}`, partes: [{ v: r.pc_esquerda, cor: COR.esq, tit: `Esquerda: ${pct(r.pc_esquerda, 0)}` }, { v: r.pc_centro, cor: COR.cen, tit: `Centro: ${pct(r.pc_centro, 0)}` }, { v: r.pc_direita, cor: COR.dir, tit: `Direita: ${pct(r.pc_direita, 0)}` }] }; }), { max: 100, cols: ["Região"], nomesPartes: ["Esquerda", "Centro", "Direita"] }),
         nota: "Parte dos votos para presidente no 1º turno, por campo político do partido do candidato." });
@@ -891,7 +891,11 @@
     document.getElementById("pq-leg").innerHTML = v.legenda || "";
     document.getElementById("pq-leg").hidden = modo === "tab";
     document.getElementById("pq-graf").innerHTML = modo === "tab" ? tabelaHTML(g.tab, v.rot) : g.html;
-    document.getElementById("pq-nota").innerHTML = `${v.nota ? v.nota + " " : ""}<span class="pq-fonte">Fonte: ${b.fonte}.</span>`;
+    document.getElementById("pq-graf-tit").textContent = v.rot || b.titulo;
+    document.getElementById("pq-nota").innerHTML = v.nota || "";
+    document.getElementById("pq-nota").hidden = !v.nota;
+    document.getElementById("pq-fonte").innerHTML = `Fonte: ${b.fonte}.`;
+    ATUAL.tab = g.tab;
     document.querySelectorAll("#pq-painel [data-vista]").forEach((x) => x.setAttribute("aria-pressed", String(+x.dataset.vista === vi)));
     document.querySelectorAll("#pq-painel [data-modo]").forEach((x) => x.setAttribute("aria-pressed", String(x.dataset.modo === modo)));
   }
@@ -923,13 +927,14 @@
         <ul>${b.pontos.map((p) => `<li>${p}</li>`).join("")}</ul></section>
       <section class="pq-painel" id="pq-painel" aria-labelledby="pq-medida">
         <div class="pq-painel__cab">
-          <h2 class="pq-painel__tit" id="pq-medida">Veja nos gráficos</h2>
+          <h2 class="pq-painel__tit" id="pq-medida">Os números em gráfico</h2>
           <div class="pq-modo" role="group" aria-label="Mostrar como"><button type="button" data-modo="graf">Gráfico</button><button type="button" data-modo="tab">Tabela</button></div>
         </div>
         ${b.vistas.length > 1 ? `<div class="pq-vistas" role="group" aria-label="Recorte">${b.vistas.map((v, k) => `<button class="chip" type="button" data-vista="${k}">${v.rot}</button>`).join("")}</div>` : ""}
+        <div class="pq-graf__cab"><h3 class="pq-graf__tit" id="pq-graf-tit"></h3><p class="pq-graf__desc" id="pq-nota"></p></div>
         <div id="pq-leg"></div>
         <div class="pq-graf" id="pq-graf"></div>
-        <p class="pq-nota" id="pq-nota"></p>
+        <div class="pq-painel__pe"><p class="pq-fonte" id="pq-fonte"></p><button type="button" class="btn pq-csv" data-csv>Baixar dados (CSV)</button></div>
       </section>
       ${b.extra || ""}
       <section class="pq-cuidado" aria-labelledby="pq-cuid-tit"><h2 class="pq-painel__tit" id="pq-cuid-tit">Cuidado ao ler</h2>
@@ -972,10 +977,22 @@
     </div>`;
   }
 
+  /* o CSV é a tabela do recorte aberto, com o texto que a página mostra (separador ";", como o Excel em português espera) */
+  function baixarCSV() {
+    const t = ATUAL && ATUAL.tab; if (!t) return;
+    const limpa = (v) => { const d = document.createElement("div"); d.innerHTML = String(v == null ? "" : v); return d.textContent.replace(/\u00a0/g, " ").trim(); };
+    const cel = (v) => { const x = limpa(v); return /[";\n]/.test(x) ? `"${x.replace(/"/g, '""')}"` : x; };
+    const csv = "\ufeff" + [t.cols, ...t.linhas].map((l) => l.map(cel).join(";")).join("\r\n");
+    const nome = `voto-a-voto_${ATUAL.b.id}_${V.norm(ATUAL.b.vistas[ATUAL.vi].rot || "dados").replace(/[^a-z0-9]+/g, "-").replace(/^-|-$/g, "")}.csv`;
+    const a = document.createElement("a"); a.href = URL.createObjectURL(new Blob([csv], { type: "text/csv;charset=utf-8" })); a.download = nome;
+    document.body.appendChild(a); a.click(); setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 500);
+  }
+
   /* um só ouvinte de cliques para as páginas dos temas */
   document.getElementById("conteudo").addEventListener("click", (e) => {
     if (!ATUAL || !e.target.closest("#pq-painel")) return;
     const vt = e.target.closest("[data-vista]"), md = e.target.closest("[data-modo]");
+    if (e.target.closest("[data-csv]")) { baixarCSV(); return; }
     if (vt) { ATUAL.vi = +vt.dataset.vista; pintarPainel(); }
     else if (md) { ATUAL.modo = md.dataset.modo; try { localStorage.setItem("vav-pq-modo", ATUAL.modo); } catch (er) {} pintarPainel(); }
   });

@@ -1149,3 +1149,37 @@ body.com-tour .rodape { padding-bottom: 130px; }
 .regua-escolha__rot { font-size: 15px; color: var(--tinta-2); }
 .ninguem__cap { margin-bottom: 6px; }
 .estados-lista__leg { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; }
+
+/* ---------- revamp (17/11/2026), regras em docs/design.md ---------- */
+/* escala: corpo 18 px (GOV.UK usa 19 px; nunca abaixo de 16), linhas de até ~68 caracteres, títulos de bloco iguais em todo o site */
+body { font-size: 18px; line-height: 1.6; }
+@media (max-width: 760px) { body { font-size: 17px; } }
+.pq-mais, .lead { font-size: 19px; line-height: 1.55; max-width: 62ch; }
+.cartao__sub, .lado__sub { font-size: 16px; color: var(--tinta-2); max-width: 68ch; }
+.pq-painel__tit, .pq-pontos .pq-painel__tit, .pq-cuidado .pq-painel__tit, .pq-detalhe .pq-painel__tit { font: 700 21px/1.25 var(--fonte); }
+.pq-pontos li { font-size: 18px; max-width: 72ch; }
+.pq-pontos li b { font-weight: 700; }
+.pq-cuidado li { font-size: 17px; }
+.pq-origem > summary, .pq-mais-num > summary { font-size: 18px; }
+.pq-origem > p { font-size: 17px; max-width: 70ch; }
+/* bloco de gráfico: título e descrição em cima (Datawrapper); fonte e baixar os dados embaixo (Our World in Data) */
+.pq-graf__cab { display: grid; gap: 2px; padding-top: 6px; border-top: 1px solid var(--linha); margin-top: 4px; }
+.pq-graf__tit { font: 700 24px/1.15 var(--num); }
+.pq-graf__desc { font-size: 16px; color: var(--tinta-2); max-width: 75ch; }
+.pq-painel__pe { display: flex; justify-content: space-between; align-items: center; gap: 10px 16px; flex-wrap: wrap; border-top: 1px solid var(--linha); padding-top: 10px; }
+.pq-painel__pe .pq-fonte { font-size: 15px; color: var(--tinta-3); white-space: normal; margin: 0; }
+.pq-csv { font-size: 15px; min-height: 40px; }
+.pq-csv::before { content: ""; width: 12px; height: 12px; background: linear-gradient(var(--tinta), var(--tinta)) 5px 0 / 2px 8px no-repeat, linear-gradient(var(--tinta), var(--tinta)) 0 10px / 12px 2px no-repeat; display: inline-block; }
+@media (max-width: 720px) { .pq-graf__tit { font-size: 21px; } .pq-csv { width: 100%; justify-content: center; min-height: 44px; } }
+.calor table { width: 100%; }
+.calor tbody th[scope="row"], .calor thead th:first-child { position: sticky; left: 0; background: var(--papel); z-index: 1; }
+/* menu no celular: as 7 seções à vista, em duas linhas (menu escondido para o lado é menu que ninguém usa) */
+@media (max-width: 720px) {
+  .nav { display: grid; grid-template-columns: repeat(4, minmax(0, auto)); justify-content: start; overflow: visible; margin: 0 -6px; gap: 0 2px; }
+  .nav a { min-height: 44px; display: flex; align-items: center; padding: 6px 9px; font-size: 15.5px; white-space: nowrap; }
+}
+@media (max-width: 370px) { .nav a { padding: 6px 6px; font-size: 14.5px; } }
+/* histórico: todas as linhas com o mesmo recuo; a de eleito só ganha o fundo */
+.pol-hist li { padding-left: 10px !important; padding-right: 10px; border-radius: 8px; }
+.pq-painel .barras li { grid-template-columns: minmax(150px, 260px) minmax(0, 1fr) 104px; }
+@media (max-width: 720px) { .pq-painel .barras li { grid-template-columns: minmax(0, 1fr) 92px; } }

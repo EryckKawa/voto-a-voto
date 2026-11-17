@@ -27,9 +27,18 @@ Fora do repositório (pasta `Trabalho_Votacao`):
 - **11. Bolsa Família:** séries `FAM_PBF` e `VAL_PBF` do IpeaData (MDS), por município. A doação de empresas só existe na prestação de contas de 2010 a 2014; a comparação é a linha do tempo nacional e as cidades pelo alcance do programa (benefícios ÷ eleitores).
 - **16. Processos:** os dados abertos do TSE só têm os processos de registro de candidatura (indeferido, cassado, inelegível, renúncia). De 2014 a 2022 o TSE publica só apto/inapto; em 2024 e 2026 o campo veio vazio (`#NE`). Processos criminais não estão em base aberta: está dito no "Cuidado ao ler".
 
+## Polimento de interface e fotos (17/11/2026)
+
+- Nenhum texto de leitura abaixo de 14 px; sem rótulos pequenos acima dos títulos nem bordas grossas laterais; índice das perguntas com frase curta; enunciado recolhível; até 6 recortes por tema; recortes que rolam para o lado no celular; tabelas sem ▲▼; setas dos formulários em CSS; gráfico "Lado político" sem rótulos sobrepostos. O bloco de CSS está no fim de `css/estilo.css` ("polimento de UI").
+- Fotos: 91.004 fotos em 161×214 (WebP) no lugar das miniaturas 90×120 (JPEG). O código usa `.webp` em `js/base.js` e `js/politico.js`.
+
+## Revamp com referências (17/11/2026)
+
+Regras e referências em `docs/design.md` (Nielsen Norman Group, Datawrapper, Our World in Data, GOV.UK, U.S. Web Design System, Microsoft Learn). Mudanças: corpo de texto em 18 px e linhas de até ~68 caracteres; cada gráfico dos temas com título e descrição em cima e, embaixo, a fonte e "Baixar dados (CSV)"; ficha do político com o histórico eleitoral primeiro; menu do celular com as 7 seções à vista; mapa de calor com a coluna dos estados fixa ao rolar.
+
 ## Pendências conhecidas
 
-- As fichas dos políticos (`data/br/pol`) foram exportadas antes da limpeza: os 12 vereadores do Amazonas de 2020 ainda mostram R$ 207 milhões de receita na ficha. Para corrigir, rodar `scripts/ficha_politico.py` de novo (demora).
+- (Resolvido em 17/11) As fichas das 26 pessoas de `receita_descartada` foram regravadas com `ficha_politico.py --pessoas`; o script agora desempata a ordem, e a saída é a mesma a cada rodada.
 - Última rodada (17/11): 174 de 174 testes passaram, no computador e no celular. Numa rodada anterior, o teste de acessibilidade dos formulários falhou uma vez (`page-has-heading-one`) e não se repetiu; se voltar, a página está em `js/formularios.js`.
 - O enunciado foi lido de `questoes_analise_dados_eleitorais.docx` (08/09). Se o professor tiver fechado outra lista, conferir a numeração.
 - A entrega no SIGAA (PDF do relatório, link do site e do repositório) é manual.

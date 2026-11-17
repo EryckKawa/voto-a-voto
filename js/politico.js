@@ -207,12 +207,6 @@
           <p class="pol-carta-btn"><button type="button" class="btn" id="pol-carta">Ver como carta</button></p></div>
       </header>
       ${semTitulo ? '<p class="aviso">O arquivo do TSE não trouxe o título de eleitor desta candidatura (acontece em 1996 e em registros incompletos). Sem ele, não dá para ligar com certeza as candidaturas desta pessoa em outros anos, que podem estar em outra ficha.</p>' : ""}
-      <section class="cartao pol-cartao" aria-labelledby="pol-lado-tit"><h2 class="cartao__titulo" id="pol-lado-tit">Lado político</h2>
-        <p class="cartao__sub">A nota do partido em cada eleição, de −1 (esquerda) a +1 (direita).${cam && cam.nota != null ? " O losango preto é a posição dele pelo próprio voto como deputado federal." : ""}</p>
-        ${regua(cands, cam)}
-        <p class="pol-trajeto"><b>Partidos:</b> ${trajeto.map((t) => `${partido(t.sg, (cands.find((c) => c[3] === t.sg && c[0] === t.ate) || [])[4])} <small>${t.de === t.ate ? t.de : t.de + "–" + t.ate}</small>`).join(" → ")}</p>
-        <p class="pq-nota">A nota é do partido, não da pessoa. <a href="#/partidos">Como a nota é feita</a>.</p></section>
-      <div id="pol-plano">${await plano(id, cands, selPlano)}</div>
       <section class="cartao pol-cartao" aria-labelledby="pol-hist-tit"><h2 class="cartao__titulo" id="pol-hist-tit">Histórico eleitoral</h2>
         <p class="cartao__sub">Da mais recente para a mais antiga. Dinheiro desde 2010 e bens desde 2006, como declarados ao TSE, em valores da época.</p>
         ${historico(cands, urnas, BR)}</section>
@@ -220,6 +214,12 @@
       ${cam ? `<section class="cartao pol-cartao pol-cam" aria-labelledby="pol-cam-tit"><h2 class="cartao__titulo" id="pol-cam-tit">Como votou na Câmara</h2>
         <p class="cartao__sub">O voto dele em cada votação nominal de mérito do Plenário, com a orientação do governo e o resultado.</p>
         <div id="pol-cam">${await camara(cam, filtro, nVotos)}</div></section>` : eleitoDep ? '<p class="aviso">Os votos na Câmara começam em 2019 e são ligados ao TSE pelo nome civil e pela data de nascimento; para esta pessoa a ligação não foi encontrada.</p>' : ""}
+      <section class="cartao pol-cartao" aria-labelledby="pol-lado-tit"><h2 class="cartao__titulo" id="pol-lado-tit">Lado político</h2>
+        <p class="cartao__sub">A nota do partido em cada eleição, de −1 (esquerda) a +1 (direita).${cam && cam.nota != null ? " O losango preto é a posição dele pelo próprio voto como deputado federal." : ""}</p>
+        ${regua(cands, cam)}
+        <p class="pol-trajeto"><b>Partidos:</b> ${trajeto.map((t) => `${partido(t.sg, (cands.find((c) => c[3] === t.sg && c[0] === t.ate) || [])[4])} <small>${t.de === t.ate ? t.de : t.de + "–" + t.ate}</small>`).join(" → ")}</p>
+        <p class="pq-nota">A nota é do partido, não da pessoa. <a href="#/partidos">Como a nota é feita</a>.</p></section>
+      <div id="pol-plano">${await plano(id, cands, selPlano)}</div>
       <details class="pq-origem"><summary>De onde vêm esses números</summary>
         <p>Candidaturas, votos, situação final, receitas, despesas e bens: TSE, Portal de Dados Abertos, no banco nacional do trabalho (tabelas <code>pessoa</code>, <code>candidatura</code>, <code>votacao_candidato</code>, <code>receita</code>, <code>despesa</code>, <code>bem_candidato</code>, <code>proposta_palavra</code> e as views <code>vw_partido_ano</code> e <code>vw_despesa_tipo</code>). A mesma pessoa é seguida entre eleições pelo título de eleitor, que não aparece no site. A consulta q12d, em <a href="#/perguntas/q12">Histórico eleitoral</a>, é a desta ficha.${cam ? " Votos na Câmara: tabelas <code>votacao_camara</code>, <code>voto_deputado</code>, <code>orientacao_bancada</code> e <code>deputado_camara</code>." : ""}</p></details>
     </div>`;
