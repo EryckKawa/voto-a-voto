@@ -58,7 +58,7 @@
     return `<p class="nuvem" role="img" aria-label="${V.esc(rot)}: ${ord.map((it) => `${it.w} (${V.int(it.q)})`).join(", ")}">${meio.map((it) =>
       `<span style="font-size:${tam(it.q).toFixed(1)}px;color:${it.cor || cor}" title="${V.esc(it.tit || `${it.w}: ${V.int(it.q)} vezes`)}">${V.esc(it.w)}</span>`).join(" ")}</p>`;
   }
-  V.graf = { barras, linhas, leg, nuvem };   // usados também na página dos 16 temas e na ficha do político
+  V.graf = { barras, linhas, leg, nuvem };   // usados também nas perguntas do trabalho e na ficha do político
 
   const bloco = (b, i) => `<article class="achado" id="${b.id}">
       <h2 class="achado__titulo">${b.tit}</h2>
@@ -179,7 +179,7 @@
       ${blocos.map(bloco).join("")}
       <section aria-labelledby="rev-prox" class="revela__fim"><h2 class="secao__titulo" id="rev-prox">Para continuar</h2>
         <ul class="proximos">
-          <li><a href="#/perguntas"><b>As 16 perguntas do trabalho</b><span>Cada tema do enunciado com a resposta, os gráficos e a fonte</span></a></li>
+          <li><a href="#/perguntas"><b>Perguntas do trabalho</b><span>Cada tema do enunciado com a resposta, os gráficos e a fonte</span></a></li>
           <li><a href="#/mapa"><b>O mapa</b><span>Quem venceu em cada cidade, em qualquer cargo e ano desde 1994</span></a></li>
           <li><a href="#/explorar"><b>Explorar</b><span>Mapa em 3D, máquina do tempo e a multidão do Ninguém</span></a></li>
         </ul></section>

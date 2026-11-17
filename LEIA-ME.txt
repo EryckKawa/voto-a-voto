@@ -27,8 +27,8 @@ Páginas
   #/mapa      Mapa das 5.570 cidades, 1994 a 2026, pintado pelo lado político
               de quem venceu, com três réguas (todas as medidas, Harvard, voto)
   #/revela    O que o voto revela: achados de 30 anos de eleições
-  #/perguntas Os 16 temas do enunciado, cada um com a resposta, os números,
-              os gráficos e os cuidados para ler
+  #/perguntas As perguntas do trabalho: cada tema do enunciado respondido
+              pergunta por pergunta, com uma frase direta e o gráfico
   #/formularios Formulários (incluir, alterar, excluir) e relatórios para imprimir
   #/partidos  Onde fica cada partido em cada eleição, segundo três estudos
               acadêmicos e o voto na Câmara

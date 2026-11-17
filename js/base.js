@@ -159,7 +159,7 @@
     feita = minha;
     // endereço que não existe: diz isso e oferece as seções do site
     main.innerHTML = '<div class="pagina"><h1 class="titulo-grande">Página não encontrada</h1><p class="lead">Este endereço não existe no site. Escolha uma seção:</p>' +
-      '<ul class="proximos">' + [["#/", "Ninguém", "O candidato mais votado do Brasil"], ["#/mapa", "Mapa", "Quem venceu em cada cidade, de 1994 a 2026"], ["#/perguntas", "As 16 perguntas", "Cada tema do trabalho respondido"], ["#/politicos", "Políticos", "A ficha de cada candidato"]]
+      '<ul class="proximos">' + [["#/", "Ninguém", "O candidato mais votado do Brasil"], ["#/mapa", "Mapa", "Quem venceu em cada cidade, de 1994 a 2026"], ["#/perguntas", "Perguntas do trabalho", "Cada tema do trabalho respondido"], ["#/politicos", "Políticos", "A ficha de cada candidato"]]
         .map(([h, t, d]) => '<li><a href="' + h + '"><b>' + t + '</b><span>' + d + '</span></a></li>').join("") + '</ul></div>';
     dispatchEvent(new CustomEvent("vav:pronto", { detail: h }));
   }

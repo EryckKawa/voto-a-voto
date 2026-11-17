@@ -66,7 +66,7 @@
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
-  teste("Velocidade", "16 perguntas abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 18, 1500, 400));
+  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 18, 1500, 400));
   teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
   teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
   teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
@@ -151,7 +151,7 @@
     const certa = ordem.join(",") === "Presidente,Governador,Senador,Deputado federal,Deputado estadual,Prefeito,Vereador";
     return R(n === 7 && anos >= 55 && certa, n + " cargos, " + anos + " eleições · " + ordem.join(", "), "7 cargos na ordem Presidente … Vereador, 55 ou mais eleições");
   });
-  teste("Funcionamento", "16 perguntas: recorte, Gráfico | Tabela, sem SQL na página", async () => {
+  teste("Funcionamento", "Perguntas: recorte, Gráfico | Tabela, sem SQL na página", async () => {
     await irPara("#/perguntas/t2"); await quadros(2);
     if (q("[data-modo='graf']")) q("[data-modo='graf']").click();
     const antes = txt("#pq-graf"); q("[data-vista='2']").click(); await quadros(1);
@@ -162,7 +162,7 @@
     const semSQL = !/SELECT\s[\s\S]*\sFROM\s/.test(txt("main")) && !q("main pre code");
     return R(trocou && linhasTab === 6 && semSQL, `recorte ${trocou ? "trocou" : "não trocou"} · tabela com ${linhasTab} linhas · ${semSQL ? "sem SQL" : "com SQL"}`, "troca o gráfico; tabela com 6 faixas de patrimônio; nenhum código SQL na página");
   });
-  teste("Funcionamento", "16 temas e 2 a mais: todos com resposta, pontos e cuidado", async () => {
+  teste("Funcionamento", "Todos os temas e as 2 perguntas a mais: com resposta, pontos e cuidado", async () => {
     const ruins = [];
     for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
       await irPara("#/perguntas/" + id); await quadros(1);
@@ -184,7 +184,7 @@
   });
 
   // ACESSIBILIDADE
-  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "16 perguntas"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "Perguntas do trabalho"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
   for (const [h, nome] of PAGS_A11Y) {
     teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
       await carregarAxe(); await irPara(h); await quadros(3);
@@ -326,7 +326,7 @@
     }
     return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : `${pags.length} páginas, nenhum vazio`, "sem “undefined”, “NaN” ou título vazio");
   });
-  teste("Preenchimento", "Tabelas dos 16 temas sem célula vazia", async () => {
+  teste("Preenchimento", "Tabelas dos temas sem célula vazia", async () => {
     const ruins = [];
     for (let i = 1; i <= 16; i++) {
       await irPara("#/perguntas/t" + i); await quadros(1);
@@ -414,13 +414,13 @@
     const some = q("#pol-sugestoes").hidden;
     return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
   });
-  teste("Funcionamento", "16 perguntas: índice pelos 5 assuntos e número-chave em cada tema", async () => {
+  teste("Funcionamento", "Perguntas: índice pelos 5 assuntos e número-chave em cada tema", async () => {
     await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 18, 8000).catch(() => {});
     const grupos = qq(".pq-assunto").length; let sem = [];
     for (const t of ["t1", "t2", "t6", "t13", "t16", "e2"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
     return R(grupos === 6 && !sem.length && !!q("#pq-ir"), `${grupos} grupos; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número e rótulo"}`, "5 assuntos + as 2 a mais; número com rótulo inteiro; seletor de tema");
   });
-  teste("Funcionamento", "16 perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
+  teste("Funcionamento", "Perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
     const ruins = []; let n = 0;
     for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2"]) {
       await irPara("#/perguntas/" + id); await ate(() => q(".pq-parte__a"), 8000).catch(() => {});

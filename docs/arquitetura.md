@@ -21,7 +21,7 @@ Se a rota falha, o roteador marca `main.dataset.erro` e mostra a mensagem de err
 | `js/ninguem.js` | `#/` | O candidato Ninguém |
 | `js/brasil.js` | `#/mapa`, `#/mapa/e/PREF2024`, `#/mapa/v/abst`, `#/mapa/br/SP`, `#/mapa/br/SP/c/3550308` | Mapa do Brasil, estado e cidade |
 | `js/revela.js` | `#/revela` | O que o voto revela |
-| `js/perguntas.js` | `#/perguntas`, `#/perguntas/t1` … `t16`, `e1`, `e2` (e os antigos `q1` … `q12`, que redirecionam) | Os 16 temas do enunciado e as 2 perguntas a mais |
+| `js/perguntas.js` | `#/perguntas`, `#/perguntas/t1` … `t16`, `e1`, `e2` (e os antigos `q1` … `q12`, que redirecionam) | As perguntas do trabalho: os temas do enunciado e as 2 perguntas a mais |
 | `js/formularios.js` | `#/formularios`, `#/formularios/candidatura` … `relatorios`, `registro` | Formulários (INSERT, UPDATE, DELETE com as restrições do modelo) e relatórios para imprimir, sobre a amostra de Teresina |
 | `js/partidos.js` | `#/partidos` | Posição dos partidos |
 | `js/politico.js` | `#/politicos`, `#/politico/123` | Busca de políticos e a ficha de cada um (todos os candidatos de 1994 a 2026) |

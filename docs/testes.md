@@ -28,7 +28,7 @@ Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o siste
 
 **Velocidade**
 
-- **Tempo para abrir cada página:** Ninguém, mapa, cidade, eleição antiga, O que o voto revela, 16 perguntas e Partidos.
+- **Tempo para abrir cada página:** Ninguém, mapa, cidade, eleição antiga, O que o voto revela, Perguntas do trabalho e Partidos.
 - **Navegador travado:** quanto tempo o navegador fica sem responder (tarefas longas).
 - **Mapa:** troca de ano, troca de régua, zoom (quadros por segundo) e memória usada.
 
@@ -41,7 +41,7 @@ Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o siste
 - **Histórico da cidade:** tem os sete cargos, na ordem do maior para o menor, e mais de 55 eleições.
 - **Fotos dos candidatos:** no painel de Fortaleza, prefeito 2024, a urna e cada candidato da lista têm a foto do TSE, e a da urna carrega.
 - **Cargos:** os botões vão de presidente a vereador; para deputado federal, a cidade mostra o partido mais votado.
-- **16 perguntas:** o botão de recorte troca o gráfico, a tabela tem as linhas certas e não há código SQL na página; os 18 temas têm resposta, pontos e cuidado.
+- **Perguntas:** o botão de recorte troca o gráfico, a tabela tem as linhas certas e não há código SQL na página; os 18 temas têm resposta, pontos e cuidado.
 - **Régua:** o PT não aparece como extremo.
 - **Fichas:** busca nacional, histórico, régua, votos de Arthur Lira e filtro de votações; vitórias de Lula em 2002, 2006 e 2022. A lista da Câmara respeita a ordem de data, e sua exportação é conferida para não expor CPF/CNPJ nas ementas.
 - **Nuvens:** palavras por cargo e por partido na Q6; nuvens individuais de projetos e discursos de Arthur Lira; resumos oficiais do Senado de Alessandro Vieira; planos de Lula; aviso para quem não tem texto disponível.
@@ -54,7 +54,7 @@ Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o siste
 - **Mapa, nas 61 eleições (7 cargos):** toda cidade tem vencedor ou um motivo (sem resultado oficial, ainda não era município, não elege prefeito).
 - **Mapa desenhado** (presidente 1994, prefeito 1996 e 2024, governador 2022, deputado federal 2022, vereador 1996): nenhuma cidade em branco, e a legenda fecha a conta.
 - **Textos:** 23 páginas sem "undefined", "NaN" ou título vazio.
-- **Tabelas dos 16 temas:** nenhuma célula vazia.
+- **Tabelas dos temas:** nenhuma célula vazia.
 - **Uma cidade de cada estado:** urna, lista de candidatos e os sete cargos no histórico, ou a explicação de por que não há resultado.
 - **Busca:** acha a cidade com ou sem acento, em maiúsculas ou com espaços; acha candidatos do Brasil inteiro (presidente, governador, prefeito) e abre a ficha do político; Enter abre o primeiro resultado; texto estranho (código HTML, SQL, 300 letras) não quebra a página nem vira código.
 

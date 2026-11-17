@@ -215,7 +215,7 @@
     document.title = `${V.titulo(nome)} · Voto a voto`;
     let selGasto = Math.max(0, cands.filter((c) => c[15] && c[15].length).length - 1), selPlano = 0, filtro = "", nVotos = 30;   // gastos: abre na eleição mais recente
     main.innerHTML = `<div class="pagina pol">
-      <p class="pq-migalha"><a href="#/perguntas/e2">Histórico eleitoral</a> · <a href="#/perguntas">As 16 perguntas</a></p>
+      <p class="pq-migalha"><a href="#/perguntas/e2">Histórico eleitoral</a> · <a href="#/perguntas">Perguntas do trabalho</a></p>
       <header class="pol-cab">
         <div class="pol-foto">${foto}</div>
         <div><h1 class="pol-nome">${V.esc(V.titulo(nome))}</h1>

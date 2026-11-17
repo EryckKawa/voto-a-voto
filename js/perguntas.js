@@ -1016,7 +1016,7 @@
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
     const partes = partesDe(b), usados = new Set(partes.flatMap((x) => x.p)), outros = b.pontos.map((_, j) => j).filter((j) => !usados.has(j));
     return `<div class="pagina pq-pagina">
-      <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todos os 16 temas</a></p>
+      <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a></p>
         <label class="pq-ir"><span>Ir para o tema</span><select id="pq-ir">${temas.map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${typeof t.n === "number" ? t.n + ". " : "A mais: "}${V.esc(t.titulo)}</option>`).join("")}</select></label></div>
       <header class="pq-cab">
         <h1 class="pq-titulo">${selo(b)} ${b.titulo}</h1>
@@ -1063,8 +1063,8 @@
     const ASSUNTOS = [["Dinheiro", "Quanto custa, quem paga e o que isso muda"], ["Perfil", "Quem são os candidatos e os eleitos"], ["Território", "O lugar e o voto"], ["Voto", "Como o eleitor vota (ou não vota)"], ["Partidos", "Propostas, partidos e Justiça Eleitoral"]];
     return `<div class="pagina pq-pagina">
       <header class="pq-cab">
-        <h1 class="titulo-grande">As 16 perguntas do trabalho</h1>
-        <p class="pq-mais">Os 16 temas do enunciado, respondidos com as eleições de 1994 a 2026 no Brasil inteiro, em ${P.consultas.length} consultas ao banco.</p>
+        <h1 class="titulo-grande">Perguntas do trabalho</h1>
+        <p class="pq-mais">Os temas do enunciado do trabalho, respondidos com as eleições de 1994 a 2026 no Brasil inteiro, em ${P.consultas.length} consultas ao banco.</p>
         <ul class="pq-banco">
           <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
           <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
@@ -1108,7 +1108,7 @@
     const { P, C, temas } = await carregar();
     const b = id && temas.find((x) => x.id === id);
     ATUAL = null;
-    if (!b) { document.title = "As 16 perguntas · Voto a voto"; main.innerHTML = paginaIndice(P, temas); return; }
+    if (!b) { document.title = "Perguntas do trabalho · Voto a voto"; main.innerHTML = paginaIndice(P, temas); return; }
     document.title = `${typeof b.n === "number" ? "Tema " + b.n : "Pergunta a mais"}. ${b.titulo} · Voto a voto`;
     main.innerHTML = paginaTema(b, temas, C);
     ATUAL = { b, modo: modoSalvo(), paineis: partesDe(b).map((pt) => (pt.v.length ? { vi: pt.v[0], tab: null } : null)) };
