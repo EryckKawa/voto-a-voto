@@ -16,6 +16,8 @@
   const vezes = (a, b) => { const r = a / b; return r >= 2 ? `${N1.format(r).replace(/,0$/, "")} vezes` : `${pct(100 * (r - 1), 0)} a mais`; };
   const vezesN = (a, b) => `${N1.format(a / b).replace(/,0$/, "")} vezes`;
   const cap1 = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+  const pontas = (rows, campo) => { const ok = rows.filter((r) => r[campo] != null); if (!ok.length) return null; const ord = [...ok].sort((a, b) => b[campo] - a[campo]); return [ord[0], ord[ord.length - 1]]; };
+  const min1 = (s) => String(s || "").toLowerCase();
   const milhoes = (v) => `${N1.format(v / 1e6).replace(/,0$/, "")} milhões`;
   /* nota de −1 (esquerda) a +1 (direita), com sinal: "+0,20", "−0,35" */
   const nota = (v, d = 2) => (v == null ? "—" : (v > 0.0005 ? "+" : v < -0.0005 ? "−" : "") + Math.abs(v).toFixed(d).replace(".", ","));
@@ -119,7 +121,8 @@
       const de = (a, cg) => R.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const bens = (a, cg) => B.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg);
       const med = (a, cg, res) => M.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_resultado === res) || {};
-      const vistaBens = (a, cg) => ({ rot: `${CARGO[cg]} ${a}`, graf: () => barras(bens(a, cg).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos`, v: r.pc_taxa_sucesso })), { cor: COR.terra, max: 100, cols: ["Bens declarados", "Candidatos", "Eleitos"] }),
+      const vistaBens = (a, cg) => ({ rot: `${CARGO[cg]} ${a}`,
+        tit: () => { const x = pontas(bens(a, cg), "pc_taxa_sucesso"); return x && `${CARGO[cg]} ${a}: se elegeram ${pct(x[0].pc_taxa_sucesso)} dos candidatos com ${min1(x[0].ds_faixa)} e ${pct(x[1].pc_taxa_sucesso)} dos com ${min1(x[1].ds_faixa)}`; }, graf: () => barras(bens(a, cg).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos`, v: r.pc_taxa_sucesso })), { cor: COR.terra, max: 100, cols: ["Bens declarados", "Candidatos", "Eleitos"] }),
         nota: "A barra vai até 100%: a parte dos candidatos de cada faixa de patrimônio que se elegeu." });
       const vistaCamp = (a, cg) => ({ rot: `Dinheiro de campanha · ${CARGO[cg]} ${a}`, graf: () => barras(de(a, cg).map((r) => ({ rot: QN[r.nr_quintil - 1], sub: `média de ${V.brl(r.vr_receita_media)}`, v: r.pc_taxa_sucesso })), { cor: COR.escuro, max: 100, cols: ["Grupo de candidatos", "Receita média", "Eleitos"] }),
         nota: "Os candidatos do cargo em cinco grupos do mesmo tamanho, pelo dinheiro que arrecadaram. A barra vai até 100%: a parte de cada grupo que se elegeu." });
@@ -335,14 +338,16 @@
       const bT = b("DEPUTADO FEDERAL", "todos"), bE = b("DEPUTADO FEDERAL", "esquerda"), bC = b("DEPUTADO FEDERAL", "centro"), bD = b("DEPUTADO FEDERAL", "direita");
       const e = (cg, o) => E.find((r) => r.ds_cargo === cg && r.nr_ordem === o) || {};
       const eSup = e("DEPUTADO FEDERAL", 8), eMed = e("DEPUTADO FEDERAL", 6);
-      const vistaPartido = (a, cg) => ({ rot: `Gasto por voto · ${CARGO[cg]} ${a}`, legenda: leg(ESP5.map((k) => [V.ESPC[k], V.ESPN[k]])), graf: () => barras(P.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg).map((r) => ({ rot: V.nomePartido(r.sg_partido), sub: `${milhoes(r.qt_votos)} de votos · ${V.int(r.qt_eleitos)} eleitos`, v: r.vr_gasto_por_voto, vTxt: centavos(r.vr_gasto_por_voto),
+      const vistaPartido = (a, cg) => ({ rot: `Gasto por voto · ${CARGO[cg]} ${a}`,
+        tit: () => { const x = pontas(P.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg), "vr_gasto_por_voto"); return x && `${CARGO[cg]} ${a}: o voto mais caro foi o do ${V.nomePartido(x[0].sg_partido)} (${centavos(x[0].vr_gasto_por_voto)}); o mais barato, o do ${V.nomePartido(x[1].sg_partido)} (${centavos(x[1].vr_gasto_por_voto)})`; }, legenda: leg(ESP5.map((k) => [V.ESPC[k], V.ESPN[k]])), graf: () => barras(P.filter((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg).map((r) => ({ rot: V.nomePartido(r.sg_partido), sub: `${milhoes(r.qt_votos)} de votos · ${V.int(r.qt_eleitos)} eleitos`, v: r.vr_gasto_por_voto, vTxt: centavos(r.vr_gasto_por_voto),
           partes: [{ v: r.vr_gasto_por_voto, cor: corEsp(r.ds_espectro), tit: `${V.ESPN[r.ds_espectro] || "sem nota"} (nota ${nota(r.vr_nota)})` }] })), { cols: ["Partido", "Votos e eleitos", "Gasto por voto"], nomesPartes: ["Gasto por voto"], fmtParte: centavos }),
         nota: "Tudo o que os candidatos do partido gastaram ÷ todos os votos que eles receberam no 1º turno. Do mais caro para o mais barato; cada barra na cor do campo político do partido. Partidos com 5 ou mais eleitos." });
       const CGS = [["GOVERNADOR", "Governador"], ["SENADOR", "Senador"], ["DEPUTADO FEDERAL", "Deputado federal"], ["DEPUTADO ESTADUAL", "Deputado estadual"]];
       const vistaCampo = { rot: "Gasto por voto · por campo (2022)", legenda: leg([[COR.esq, "Esquerda"], [COR.cen, "Centro"], [COR.dir, "Direita"]]),
         graf: () => pares(CGS.map(([cg, nm]) => ({ rot: nm, sub: `correlação gasto × votos: ${corr(b(cg, "todos").r_gasto_votos)}`, v: ["esquerda", "centro", "direita"].map((bl) => b(cg, bl).vr_gasto_por_voto) })), { nomes: ["esquerda", "centro", "direita"], cores: [COR.esq, COR.cen, COR.dir], fmt: centavos, cols: ["Cargo", "Correlação"] }),
         nota: "Gasto de todos os candidatos de cada campo ÷ os votos que receberam, eleição de 2022. A correlação (de 0 a 1) mostra quanto o gasto de cada candidato acompanha os votos dele." };
-      const vistaEsc = (cg, a) => ({ rot: `Escolaridade e gasto · ${CARGO[cg]} ${a}`, legenda: leg([[COR.terra, "Gasto médio por candidato"]]), graf: () => barras(E.filter((r) => r.ds_cargo === cg).map((r) => ({ rot: cap1(r.ds_grau_instrucao.toLowerCase()), sub: `${V.int(r.qt_candidatos)} candidatos · ${pct(r.pc_taxa_sucesso)} se elegeram`, v: r.vr_gasto_medio, vTxt: V.brl(r.vr_gasto_medio) })), { cor: COR.terra, cols: ["Escolaridade", "Candidatos e eleitos", "Gasto médio"] }),
+      const vistaEsc = (cg, a) => ({ rot: `Escolaridade e gasto · ${CARGO[cg]} ${a}`,
+        tit: () => { const x = pontas(E.filter((r) => r.ds_cargo === cg), "vr_gasto_medio"); return x && `${CARGO[cg]} ${a}: quem declarou ${min1(x[0].ds_grau_instrucao)} gastou em média ${V.brl(x[0].vr_gasto_medio)}; quem declarou ${min1(x[1].ds_grau_instrucao)}, ${V.brl(x[1].vr_gasto_medio)}`; }, legenda: leg([[COR.terra, "Gasto médio por candidato"]]), graf: () => barras(E.filter((r) => r.ds_cargo === cg).map((r) => ({ rot: cap1(r.ds_grau_instrucao.toLowerCase()), sub: `${V.int(r.qt_candidatos)} candidatos · ${pct(r.pc_taxa_sucesso)} se elegeram`, v: r.vr_gasto_medio, vTxt: V.brl(r.vr_gasto_medio) })), { cor: COR.terra, cols: ["Escolaridade", "Candidatos e eleitos", "Gasto médio"] }),
         nota: "Gasto médio de campanha por candidato, pela escolaridade que ele declarou ao TSE." });
       tema({ id: "t1", n: 1, grupo: "Dinheiro", titulo: "Custos de campanha e eleição", antigas: ["q1"],
         enunciado: ["Quanto custa, em média, uma cadeira eletiva?", "Analisar o gasto de campanha dos candidatos.", "Avaliar a relação entre o gasto de campanha e o resultado eleitoral (eleito ou não eleito).", "Calcular o coeficiente entre gasto de campanha e número de votos e elaborar um ranking, inclusive considerando o viés ideológico.", "Relacionar escolaridade e custo médio da eleição."],
@@ -537,7 +542,8 @@
       const r = (X.find((x) => x.ds_tipo === "correlação") || {}).r_eleitores_cadeiras;
       const mais = X.filter((x) => x.ds_tipo === "mais eleitores por cadeira"), menos = X.filter((x) => x.ds_tipo === "menos eleitores por cadeira");
       const m1 = mais[0] || {}, n1 = menos[0] || {};
-      const vistaFx = { rot: "Eleitores por vereador", graf: () => barras(F.map((x) => ({ rot: cap1(x.ds_faixa), sub: `${V.int(x.qt_municipios)} cidades · ${N1.format(x.qt_cadeiras_media)} vereadores em média`, v: x.qt_eleitores_por_cadeira, vTxt: V.int(x.qt_eleitores_por_cadeira) })), { cor: COR.escuro, cols: ["Tamanho da cidade", "Cidades e cadeiras", "Eleitores por cadeira"] }),
+      const vistaFx = { rot: "Eleitores por vereador",
+        tit: () => { const x = pontas(F, "qt_eleitores_por_cadeira"); return x && `Cada vereador representa de ${V.int(x[1].qt_eleitores_por_cadeira)} eleitores (${min1(x[1].ds_faixa)}) a ${V.int(x[0].qt_eleitores_por_cadeira)} (${min1(x[0].ds_faixa)})`; }, graf: () => barras(F.map((x) => ({ rot: cap1(x.ds_faixa), sub: `${V.int(x.qt_municipios)} cidades · ${N1.format(x.qt_cadeiras_media)} vereadores em média`, v: x.qt_eleitores_por_cadeira, vTxt: V.int(x.qt_eleitores_por_cadeira) })), { cor: COR.escuro, cols: ["Tamanho da cidade", "Cidades e cadeiras", "Eleitores por cadeira"] }),
         nota: "Eleitores aptos ÷ cadeiras de vereador, somando as cidades de cada faixa de população (Censo 2022). Eleição de 2024." };
       const vistaVotos = { rot: "Votos para se eleger", legenda: leg([[COR.terra, "Votos do eleito típico"], [COR.cinza, "Votos válidos por cadeira"]]),
         graf: () => pares(F.map((x) => ({ rot: cap1(x.ds_faixa), sub: `${N1.format(x.qt_candidatos_por_cadeira)} candidatos por vaga`, v: [x.qt_votos_eleito_mediano, x.qt_votos_por_cadeira] })), { nomes: ["eleito típico", "por cadeira"], cores: [COR.terra, COR.cinza], fmt: (v) => V.int(v), cols: ["Tamanho da cidade", "Candidatos por vaga"] }),
@@ -597,7 +603,8 @@
       const a24 = A.find((r) => r.nr_ano_eleicao === 2024) || {}, a16 = A.find((r) => r.nr_ano_eleicao === 2016) || {};
       const d22 = D.find((r) => r.nr_ano_eleicao === 2022) || {};
       const jy = (Q.q7.jq(2024) || []).slice(-1)[0] || {};
-      const vistaRe = { rot: "Prefeito tentando a reeleição", graf: () => barras(R.map((r) => ({ rot: cap1(r.ds_idade), sub: `${V.int(r.qt_tentaram)} tentaram`, v: r.pc_reeleitos })), { cor: COR.escuro, max: 100, cols: ["Idade", "Tentaram", "Reeleitos"] }),
+      const vistaRe = { rot: "Prefeito tentando a reeleição",
+        tit: () => { const x = pontas(R, "pc_reeleitos"); return x && `Se reelegeram ${pct(x[0].pc_reeleitos, 0)} dos prefeitos de ${min1(x[0].ds_idade)} e ${pct(x[1].pc_reeleitos, 0)} dos de ${min1(x[1].ds_idade)}`; }, graf: () => barras(R.map((r) => ({ rot: cap1(r.ds_idade), sub: `${V.int(r.qt_tentaram)} tentaram`, v: r.pc_reeleitos })), { cor: COR.escuro, max: 100, cols: ["Idade", "Tentaram", "Reeleitos"] }),
         nota: "Prefeitos eleitos que disputaram de novo a mesma prefeitura na eleição seguinte, de 2004 a 2024, pela idade na posse. A barra vai até 100%." };
       const LEGA = leg([[COR.escuro, "Mesmo prefeito"], [COR.azul, "Outro do mesmo partido"], [COR.terra, "Troca de partido"]]);
       const vistaAlt = { rot: "Alternância nas prefeituras", legenda: LEGA, graf: () => barras(A.map((r) => ({ rot: String(r.nr_ano_eleicao), sub: `${V.int(r.qt_municipios)} cidades`, v: 100, vTxt: pct(r.pc_troca_de_partido, 0),
@@ -743,7 +750,8 @@
       const f = (cg, n) => F.find((r) => r.ds_cargo === cg && r.nr_faixa === n) || {};
       const d4 = f("DEPUTADO FEDERAL", 4), d3 = f("DEPUTADO FEDERAL", 3), d2 = f("DEPUTADO FEDERAL", 2), d1 = f("DEPUTADO FEDERAL", 1);
       const v4 = f("VEREADOR", 4), v2 = f("VEREADOR", 2);
-      const vistaDep = (cg, a) => ({ rot: `Dependência do fundo · ${CARGO[cg]} ${a}`, graf: () => barras(F.filter((r) => r.ds_cargo === cg && r.nr_faixa > 0).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos · ${centavos(r.vr_gasto_por_voto)} por voto`, v: r.pc_taxa_sucesso })), { cor: COR.escuro, cols: ["Origem do dinheiro", "Candidatos e gasto por voto", "Eleitos"] }),
+      const vistaDep = (cg, a) => ({ rot: `Dependência do fundo · ${CARGO[cg]} ${a}`,
+        tit: () => { const x = pontas(F.filter((r) => r.ds_cargo === cg && r.nr_faixa > 0), "pc_taxa_sucesso"); return x && `${CARGO[cg]} ${a}: se elegeram ${pct(x[0].pc_taxa_sucesso)} de quem tinha ${min1(x[0].ds_faixa)} e ${pct(x[1].pc_taxa_sucesso)} de quem tinha ${min1(x[1].ds_faixa)}`; }, graf: () => barras(F.filter((r) => r.ds_cargo === cg && r.nr_faixa > 0).map((r) => ({ rot: cap1(r.ds_faixa), sub: `${V.int(r.qt_candidatos)} candidatos · ${centavos(r.vr_gasto_por_voto)} por voto`, v: r.pc_taxa_sucesso })), { cor: COR.escuro, cols: ["Origem do dinheiro", "Candidatos e gasto por voto", "Eleitos"] }),
         nota: "Candidatos pela parte da sua receita que veio dos fundos públicos (eleitoral e partidário). A barra é a parte que se elegeu." });
       tema({ id: "t15", n: 15, grupo: "Dinheiro", titulo: "Dependência de repasses públicos e financiamento", antigas: ["q10"],
         enunciado: ["Como se comportam os candidatos que dependem mais de repasses públicos em comparação com aqueles financiados por outras fontes?"],
@@ -891,7 +899,8 @@
     document.getElementById("pq-leg").innerHTML = v.legenda || "";
     document.getElementById("pq-leg").hidden = modo === "tab";
     document.getElementById("pq-graf").innerHTML = modo === "tab" ? tabelaHTML(g.tab, v.rot) : g.html;
-    document.getElementById("pq-graf-tit").textContent = v.rot || b.titulo;
+    let tit = ""; try { tit = v.tit ? v.tit() : ""; } catch (e) { console.error(e); }
+    document.getElementById("pq-graf-tit").textContent = tit || v.rot || b.titulo;
     document.getElementById("pq-nota").innerHTML = v.nota || "";
     document.getElementById("pq-nota").hidden = !v.nota;
     document.getElementById("pq-fonte").innerHTML = `Fonte: ${b.fonte}.`;

@@ -7,7 +7,11 @@
   const V = window.V;
   const CARGO = { 1: "Presidente", 2: "Vice-presidente", 3: "Governador", 4: "Vice-governador", 5: "Senador", 6: "Deputado federal", 7: "Deputado estadual", 8: "Deputado distrital",
     9: "1º suplente de senador", 10: "2º suplente de senador", 11: "Prefeito", 12: "Vice-prefeito", 13: "Vereador" };
-  const SIT = { E: ["Eleito", "selo--eleito"], 2: ["Foi ao 2º turno", "selo--2t"], S: ["Suplente", "selo--sup"], N: ["Não eleito", "selo--nao"], "-": ["Sem resultado", "selo--nao"] };
+  // resultado de cada candidatura; sem resultado na totalização, o motivo vem do registro (scripts/ficha_politico.py, REG)
+  const SIT = { E: ["Eleito", "selo--eleito"], 2: ["Foi ao 2º turno", "selo--2t"], S: ["Suplente", "selo--sup"], N: ["Não eleito", "selo--nao"],
+    I: ["Registro negado", "selo--barrado"], C: ["Cassado", "selo--barrado"], X: ["Registro cancelado", "selo--barrado"],
+    A: ["Candidatura inapta", "selo--barrado", "O TSE marcou a candidatura como inapta (registro negado, cassado, cancelado ou renúncia); de 2014 a 2022 ele não informa qual"],
+    R: ["Renunciou", "selo--nao"], F: ["Faleceu antes da eleição", "selo--nao"], "-": ["Sem resultado", "selo--nao"] };
   const DESP = [null, "Material impresso", "Internet e redes sociais", "Rádio, TV e vídeo", "Militância e cabos eleitorais", "Adesivos, placas e carro de som", "Comícios e eventos",
     "Jornais e revistas", "Pessoal e serviços", "Veículos, viagens e combustível", "Repasse a outros candidatos", "Outras despesas"];
   const COR_DESP = [null, "#16181d", "#0f5fb5", "#7a5aa6", "#d96a12", "#c99a52", "#2f7d5b", "#9c5d16", "#8b929c", "#b7bcc4", "#d6dae0", "#e9ebee"];
@@ -79,7 +83,7 @@
       const din = rec != null ? `<span><small>Receita</small>${V.brl(rec)}${rec > 0 ? ` <small>(${V.pct((100 * pub) / rec, 0)} público)</small>` : ""}</span><span><small>Gasto</small>${V.brl(desp)}</span>` : "";
       return `<li class="${sit === "E" ? "pol-hist--eleito" : ""}">
         <span class="pol-hist__ano">${ano}</span>
-        <span class="pol-hist__cargo"><b>${CARGO[cg] || "Cargo " + cg}</b> <span class="selo ${s[1]}">${s[0]}</span><small>${V.esc(V.lugarPol(lugar, BR))}${nr ? ` · nº ${nr}` : ""}${ui >= 0 && !semUrna(urnas[ui]) ? ` · na urna: ${V.esc(V.titulo(urnas[ui]))}` : ""}</small></span>
+        <span class="pol-hist__cargo"><b>${CARGO[cg] || "Cargo " + cg}</b> <span class="selo ${s[1]}"${s[2] ? ` title="${V.esc(s[2])}"` : ""}>${s[0]}</span><small>${V.esc(V.lugarPol(lugar, BR))}${nr ? ` · nº ${nr}` : ""}${ui >= 0 && !semUrna(urnas[ui]) ? ` · na urna: ${V.esc(V.titulo(urnas[ui]))}` : ""}</small></span>
         <span class="pol-hist__partido">${partido(sg, n)} <small>${n != null ? nota(n) : "sem nota"}</small></span>
         <span class="pol-hist__num"><span><small>Votos${v2 ? " (1º turno)" : ""}</small>${v1 != null ? V.int(v1) : "—"}</span>${v2 ? `<span><small>2º turno</small>${V.int(v2)}</span>` : ""}${din}${patr != null ? `<span><small>Bens declarados</small>${V.brl(patr)}</span>` : ""}</span>
       </li>`; }).join("")}</ol>`;

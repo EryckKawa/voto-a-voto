@@ -75,19 +75,29 @@
   V.rota(/^\/explorar$/, async function (main) {
     V.marcarNav("explorar");
     document.title = "Explorar · Voto a voto";
-    const CARTOES = [
-      ["#/3d", "Brasil em 3D", "Cada cidade vira uma coluna: a altura é o número de eleitores, a cor é o lado de quem venceu. Gire, aproxime e veja as colunas subirem.", "vis-card--3d"],
-      ["#/tempo", "Máquina do tempo", "As eleições de 1994 a 2026 passando como um filme, cidade por cidade.", "vis-card--tempo"],
-      ["#/multidao", "A multidão do Ninguém", "42,6 milhões de eleitores que não escolheram ninguém, um ponto para cada mil, enchendo estádios.", "vis-card--multidao"],
-      ["#/patrimonio", "Corrida do patrimônio", "Os eleitos com mais bens declarados, ultrapassando uns aos outros eleição a eleição.", "vis-card--patrimonio"],
-      ["#/formularios", "Formulários e relatórios", "O protótipo do sistema: cadastre, altere e exclua candidatos, partidos e votos com as regras do banco, e imprima os relatórios.", "vis-card--form"],
-      ["#/politico/1713641", "Carta do político", "Toda ficha de político vira uma carta colecionável, que dá para virar e baixar. Exemplo: Lula.", "vis-card--carta"],
+    // cada cartão mostra uma captura real da visualização (img/explorar, feitas por testes/miniaturas_explorar.js)
+    const VER = [
+      ["#/3d", "Brasil em 3D", "Cada cidade vira uma coluna: a altura é o número de eleitores, a cor é o lado de quem venceu.", "3d"],
+      ["#/tempo", "Máquina do tempo", "As eleições de 1994 a 2026 passando como um filme, cidade por cidade.", "tempo"],
+      ["#/multidao", "A multidão do Ninguém", "42,6 milhões de eleitores que não escolheram ninguém, um ponto para cada mil, enchendo estádios.", "multidao"],
+      ["#/patrimonio", "Corrida do patrimônio", "Os eleitos com mais bens declarados, ultrapassando uns aos outros eleição a eleição.", "patrimonio"],
     ];
+    const USAR = [
+      ["#/formularios", "Formulários e relatórios", "Cadastre, altere e exclua candidatos, partidos e votos com as regras do banco, e imprima os relatórios.", "formularios"],
+      ["#/politico/1713641", "Carta do político", "Toda ficha vira uma carta que dá para virar e baixar. Exemplo: Lula.", "carta"],
+    ];
+    const cartao = ([h, t, d, img]) => `<li><a class="vis-card" href="${h}"><img class="vis-card__arte" src="img/explorar/${img}.webp" alt="" loading="lazy" width="640" height="360"><span class="vis-card__tit">${t}</span><span class="vis-card__txt">${d}</span></a></li>`;
     main.innerHTML = `<div class="pagina vis">
       <header class="manchete"><h1 class="manchete__titulo">Explorar: os dados em movimento</h1>
         <p class="manchete__sub">Os mesmos dados do TSE das outras páginas, em formas para ver e mexer.</p>
-        <p><button type="button" class="btn btn--confirma vis-comecar" id="vis-comecar">▶ Começar a apresentação</button> <small class="vis-dica-tecla">Passe com as setas ← → ou com o passador de slides; Esc sai.</small></p></header>
-      <ul class="vis-cards">${CARTOES.map(([h, t, d, c]) => `<li><a class="vis-card ${c}" href="${h}"><span class="vis-card__arte" aria-hidden="true"></span><span class="vis-card__tit">${t}</span><span class="vis-card__txt">${d}</span></a></li>`).join("")}</ul>
+      </header>
+      <section class="vis-destaque" aria-labelledby="vis-ap-tit">
+        <div><h2 class="vis-destaque__tit" id="vis-ap-tit">A apresentação do trabalho</h2>
+          <p>O site inteiro em ${ROTEIRO.length} passos, do Ninguém às 16 perguntas, em tela cheia. Passe com as setas do teclado ou com o passador de slides; Esc sai.</p></div>
+        <button type="button" class="btn btn--confirma vis-comecar" id="vis-comecar">Começar a apresentação</button>
+      </section>
+      <section aria-labelledby="vis-ver"><h2 class="secao__titulo" id="vis-ver">Para ver</h2><ul class="vis-cards">${VER.map(cartao).join("")}</ul></section>
+      <section aria-labelledby="vis-usar"><h2 class="secao__titulo" id="vis-usar">Para usar</h2><ul class="vis-cards vis-cards--usar">${USAR.map(cartao).join("")}</ul></section>
     </div>`;
     document.getElementById("vis-comecar").addEventListener("click", () => V.comecarTour(0));
   });

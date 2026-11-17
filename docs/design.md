@@ -102,6 +102,14 @@ O plano completo (fundamentos, componentes, página por página e fases) foi fei
 - **Comum:** `V.baixarCSV` em `js/base.js` serve os temas e o Revela; o componente `.proximos` fecha as páginas; `V.dados` pede o arquivo de novo se ele não chegar em 12 s (um pedido pendurado travava a página inicial de vez em quando nos testes).
 - As páginas não ficaram mais curtas: os números-chave e os próximos passos somam altura. O ganho é a ordem de leitura, não o tamanho.
 
-### O que fica para depois de 19/11 (fases 5 e 6)
-Fichas com a situação do registro ("Registro negado", "Cassado"), Explorar com miniaturas reais, títulos de recorte reescritos como achados, a limpeza final dos blocos de conserto do CSS e o ensaio da apresentação.
+### Fase 5 (18/11): acabamento
+- **Fichas:** a candidatura sem resultado diz o motivo (Registro negado, Cassado, Registro cancelado, Candidatura inapta, Renunciou, Faleceu antes da eleição), com selo vermelho-escuro para as barradas. Exige as fichas exportadas de novo por `scripts/ficha_politico.py`.
+- **Explorar:** os cartões mostram capturas reais de cada visualização (`img/explorar/*.webp`, 640 × 360, feitas por `testes/miniaturas_explorar.js` e `scripts/miniaturas_explorar.py`) no lugar dos gradientes; a apresentação virou um cartão de destaque; os cartões se dividem em "Para ver" e "Para usar".
+- **Títulos de gráfico que dizem o achado** nos temas 1, 2, 8, 10 e 15 (por exemplo, "Deputado federal 2022: o voto mais caro foi o do …"); o botão do recorte continua com o rótulo curto.
+- **Menu:** "Perguntas" no lugar de "16 perguntas"; os nomes nunca quebram ao meio; de 721 a 1279 px a busca sobe para o lado da marca e o menu fica com a linha de baixo inteira (antes ele chegava a 7 linhas a 768 px); "O que o voto revela" por extenso e o lema só a partir de 1.700 px.
+- **Varredura de quebras** (`testes/auditar_quebras.js`, 16 páginas × 7 larguras): corrigidos o número da Ninguém em duas linhas, as camadas do Mapa no celular (agora 2 × 2), os cartões do Revela vazando a 360 px e o cabeçalho da tabela de Partidos.
+- **CSS:** 36 classes que nenhum JS escreve saíram (60 seletores e regras, entre eles os do SQL antigo e os gradientes do Explorar), conferidas por busca no código.
+
+### O que ainda fica (fase 6 e depois)
+Reduzir os 12 pontos de quebra a três e devolver os blocos de conserto do fim do CSS às regras de origem (sem mudança visual, por isso depois da entrega); o ensaio da apresentação no projetor.
 

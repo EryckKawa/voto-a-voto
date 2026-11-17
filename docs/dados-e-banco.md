@@ -118,7 +118,9 @@ O banco tem 2.397.854 registros em `pessoa`; 19 ficaram sem candidatura associad
 
 ### Limpeza das receitas (16/11/2026)
 
-O TSE publica alguns lançamentos com erro de digitação. O pior: em 2020, doze vereadores do Amazonas aparecem com uma receita de R$ 207.166.666,66 cada (R$ 2,5 bilhões, mais que todos os vereadores do país juntos), o que distorcia toda conta de dinheiro de 2020. A etapa `limpeza` descarta a receita que passa de 10 vezes o teto de gasto do candidato (quando o TSE informa o teto) ou, para vereador, de R$ 5 milhões: 26 lançamentos (3 de 2012, 11 de 2016 e os 12 de 2020), R$ 2,58 bilhões. O valor fica `NULL` em `receita` e o lançamento original vai para `receita_descartada`. As fichas dos políticos (`data/br/pol`) foram exportadas antes dessa limpeza; para atualizá-las, rode `ficha_politico.py` de novo.
+O TSE publica alguns lançamentos com erro de digitação. O pior: em 2020, doze vereadores do Amazonas aparecem com uma receita de R$ 207.166.666,66 cada (R$ 2,5 bilhões, mais que todos os vereadores do país juntos), o que distorcia toda conta de dinheiro de 2020. A etapa `limpeza` descarta a receita que passa de 10 vezes o teto de gasto do candidato (quando o TSE informa o teto) ou, para vereador, de R$ 5 milhões: 26 lançamentos (3 de 2012, 11 de 2016 e os 12 de 2020), R$ 2,58 bilhões. O valor fica `NULL` em `receita` e o lançamento original vai para `receita_descartada`. As fichas dos políticos (`data/br/pol`) foram exportadas de novo em 18/11, depois da limpeza.
+
+Na ficha, a candidatura que não tem resultado na totalização mostra o motivo, lido da tabela `situacao_registro`: registro negado, cassado, registro cancelado, renunciou ou faleceu. De 2014 a 2022 o TSE só diz "inapto", sem o motivo; a ficha mostra "Candidatura inapta" (Lula em 2018, por exemplo). Quem não tem nem resultado nem registro inapto continua "Sem resultado".
 
 ### Decisões do modelo
 

@@ -22,7 +22,7 @@ Os testes ficam no próprio site, em `js/testes.js`. Eles abrem as páginas sozi
 
 ## Rodada de 17/11/2026
 
-Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o sistema de design (18/11): 90 por tela, 180 nas duas; os três novos conferem as sugestões com foto na busca vazia de Políticos, o índice das 16 perguntas pelos cinco assuntos com o número-chave em cada tema, e os filtros do Mapa acima do mapa. Novos: as 18 páginas de temas com resposta, pontos e cuidado; o recorte e o Gráfico | Tabela sem código SQL na página; os endereços antigos (`#/perguntas/q1` … `q12`) levando ao tema certo; a nuvem de palavras no tema 9; e as regras de acessibilidade no mapa de calor (tema 13) e nos formulários. O aviso que pode aparecer é o do zoom do mapa abaixo de 40 quadros por segundo no Edge sem janela (sem placa de vídeo), que não é falha.
+Com os 16 temas e os formulários: 87 testes por tela, 174 nas duas. Com o sistema de design (18/11): 91 por tela, 182 nas duas (o último conferindo que a ficha do Lula diz "Candidatura inapta" em 2018); os três novos conferem as sugestões com foto na busca vazia de Políticos, o índice das 16 perguntas pelos cinco assuntos com o número-chave em cada tema, e os filtros do Mapa acima do mapa. Novos: as 18 páginas de temas com resposta, pontos e cuidado; o recorte e o Gráfico | Tabela sem código SQL na página; os endereços antigos (`#/perguntas/q1` … `q12`) levando ao tema certo; a nuvem de palavras no tema 9; e as regras de acessibilidade no mapa de calor (tema 13) e nos formulários. O aviso que pode aparecer é o do zoom do mapa abaixo de 40 quadros por segundo no Edge sem janela (sem placa de vídeo), que não é falha.
 
 ## O que é testado (81 testes por tela no navegador, antes de 16/11)
 
@@ -93,3 +93,8 @@ Os testes verificam essas larguras de tela; não substituem uso num celular fís
 A abertura direta por `file://` não foi verificada nesta rodada: a política do navegador de testes permite somente HTTP e HTTPS. As duas rodadas usaram o servidor local em `127.0.0.1:8765`.
 
 Para medir velocidade, mantenha a janela do navegador restaurada e visível. Uma janela minimizada interrompe os quadros de animação e distorce os testes que medem tempo e FPS.
+
+## Varredura de quebras de layout
+
+`node testes/auditar_quebras.js http://localhost:8766/ quebras.json` abre 16 páginas em 7 larguras (360 a 1920 px) e lista: página mais larga que a tela, elemento que vaza para fora da tela, rótulo curto (menu, botão, chip, selo, número) que quebra em duas linhas e texto cortado. Em 18/11 ela achou o menu quebrando entre 721 e 1100 px e entre 521 e 720 px, o "42,6 milhões" da Ninguém em duas linhas no celular, as camadas do Mapa quebrando no celular, os cartões do Revela vazando 3 px a 360 px e o cabeçalho "Mesmo lado" em Partidos; depois das correções, nenhum achado.
+

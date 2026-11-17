@@ -45,7 +45,20 @@ def grava(chave, obj):
 for pasta in (() if SO else ('f', 'idx', 'pal', 'cam')):
     shutil.rmtree(os.path.join(OUT, pasta), ignore_errors=True)
 BALDES = {i % 2048 for i in SO} if SO else None   # com --pessoas, só os arquivos de ficha dessas pessoas
-SIT = lambda s, e: 'E' if e else '2' if s and '2º TURNO' in s.upper() else 'S' if s and 'SUPLENTE' in s.upper() else 'N' if s and ('NÃO ELEITO' in s.upper() or 'NAO ELEITO' in s.upper()) else '-'
+SIT0 = lambda s, e: 'E' if e else '2' if s and '2º TURNO' in s.upper() else 'S' if s and 'SUPLENTE' in s.upper() else 'N' if s and ('NÃO ELEITO' in s.upper() or 'NAO ELEITO' in s.upper()) else '-'
+def REG(sit, det):
+    """Sem resultado na totalização: o motivo, pelo registro da candidatura (tabela situacao_registro).
+    I registro negado, C cassado, X cancelado, R renúncia ou desistência, F falecimento, A inapto (de 2014 a 2022 o TSE não diz o motivo)."""
+    t = ' '.join(x for x in (det, sit) if x and x != '#NE').upper()
+    if 'COM RECURSO' in t or 'SUB' in t and 'JUDICE' in t or 'PENDENTE' in t: return '-'
+    if 'CASSA' in t: return 'C'
+    if 'INDEFERIDO' in t or 'INELEG' in t or 'NÃO CONHECIMENTO' in t or 'IMPUGNA' in t: return 'I'
+    if 'CANCELA' in t: return 'X'
+    if 'RENÚNCIA' in t or 'DESIST' in t: return 'R'
+    if 'FALEC' in t: return 'F'
+    if (sit or '').upper() == 'INAPTO': return 'A'
+    return '-'
+SIT = lambda s, e, sr=None, sd=None: (lambda x: REG(sr, sd) if x == '-' else x)(SIT0(s, e))
 
 # ------------------------------------------------------------------ candidaturas
 log('lendo candidaturas...')
@@ -59,10 +72,12 @@ WITH vt AS (SELECT id_candidatura, SUM(qt_votos_nominais) FILTER (WHERE nr_turno
      bm AS (SELECT id_candidatura, SUM(vr_bem) b FROM bem_candidato GROUP BY 1)
 SELECT c.id_pessoa, c.id_candidatura, e.nr_ano_eleicao ano, c.cd_cargo, c.sg_ue, c.cd_municipio_tse, p.sg_partido, ROUND(pa.vr_nota, 2) nota,
        c.nr_candidato, c.nm_urna, vt.v1, vt.v2, st.ds_sit_tot_turno, COALESCE(st.fl_eleito, false) eleito, rc.r, rc.rp, dp.d, bm.b,
-       c.id_candidatura IN (SELECT id_candidatura FROM proposta_palavra) tem_plano, c.cd_grau_instrucao, c.nr_idade_posse, c.sq_candidato
+       c.id_candidatura IN (SELECT id_candidatura FROM proposta_palavra) tem_plano, c.cd_grau_instrucao, c.nr_idade_posse, c.sq_candidato,
+       sr.ds_situacao_candidatura sit_reg, sr.ds_detalhe_situacao sit_det
 FROM candidatura c JOIN eleicao e USING (id_eleicao) JOIN partido p USING (id_partido)
 LEFT JOIN vw_partido_ano pa ON pa.id_partido = c.id_partido AND pa.nr_ano_eleicao = e.nr_ano_eleicao
 LEFT JOIN situacao_totalizacao st ON st.id_situacao = c.id_situacao
+LEFT JOIN situacao_registro sr ON sr.id_candidatura = c.id_candidatura
 LEFT JOIN vt ON vt.id_candidatura = c.id_candidatura LEFT JOIN rc ON rc.id_candidatura = c.id_candidatura
 LEFT JOIN dp ON dp.id_candidatura = c.id_candidatura LEFT JOIN bm ON bm.id_candidatura = c.id_candidatura
 ORDER BY c.id_pessoa, e.nr_ano_eleicao, c.cd_cargo, c.id_candidatura""").df()   # id_candidatura desempata: a ordem não muda entre rodadas
@@ -91,7 +106,7 @@ for idp, g in groupby(C.itertuples(index=False), key=lambda r: r.id_pessoa):
         alc = int(r.cd_municipio_tse) if r.cd_municipio_tse is not None else r.sg_ue
         contas = r.ano in ANOS_CONTAS
         cands.append([int(r.ano), int(r.cd_cargo), alc, r.sg_partido, None if r.nota is None else float(r.nota), num(r.nr_candidato),
-                      urnas.index(r.nm_urna) if r.nm_urna else -1, num(r.v1), num(r.v2), SIT(r.ds_sit_tot_turno, r.eleito),
+                      urnas.index(r.nm_urna) if r.nm_urna else -1, num(r.v1), num(r.v2), SIT(r.ds_sit_tot_turno, r.eleito, r.sit_reg, r.sit_det),
                       num(r.r or 0) if contas else None, num(r.rp or 0) if contas else None, num(r.d or 0) if contas else None,
                       num(r.b or 0) if r.ano in ANOS_BENS else None, int(r.id_candidatura) if r.tem_plano else 0, DESP.get(r.id_candidatura, []),
                       num(r.cd_grau_instrucao), num(r.nr_idade_posse),

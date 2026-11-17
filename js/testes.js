@@ -98,7 +98,7 @@
   // FUNCIONAMENTO
   teste("Funcionamento", "Menu com as sete seções (sem Disputas apertadas)", async () => {
     const ls = qq(".nav a").map((a) => a.textContent.trim());
-    return R(ls.length === 7 && ls[3] === "16 perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · 16 perguntas · Partidos · Políticos · Explorar");
+    return R(ls.length === 7 && ls[3] === "Perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · Perguntas · Partidos · Políticos · Explorar");
   });
   teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
     location.hash = "#/apertadas";
@@ -455,6 +455,13 @@
     const anos = qq(".pol-hist li").filter((l) => /Presidente/.test(l.textContent) && /Eleito/.test(l.textContent)).map((l) => +l.querySelector(".pol-hist__ano").textContent);
     const ok = [2002, 2006, 2022].every((a) => anos.includes(a));
     return R(ok, "eleito presidente em " + anos.sort().join(", "), "inclui 2002, 2006 e 2022");
+  });
+  teste("Dados", "Ficha de Lula: 2018 diz que a candidatura foi barrada, e não “Sem resultado”", async () => {
+    const h = await fichaDe("lula", /LUIZ IN[AÁ]CIO/); if (!h) return R(false, "não achou", "acha a ficha");
+    await irPara(h); await ate(() => qq(".pol-hist li").length, 8000).catch(() => {});
+    const l18 = qq(".pol-hist li").find((l) => l.querySelector(".pol-hist__ano").textContent.trim() === "2018");
+    const s = l18 ? l18.querySelector(".selo").textContent.trim() : "sem a linha de 2018";
+    return R(s === "Candidatura inapta", "2018: " + s, "Candidatura inapta (o TSE marca a candidatura como inapta)");
   });
   teste("Funcionamento", "Tema 9: nuvem de palavras por cargo e por partido", async () => {
     await irPara("#/perguntas/t9");
