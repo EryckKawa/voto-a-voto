@@ -32,6 +32,11 @@
   const ESC = "(?:\\s(?:milhões|milhão|bilhões|bilhão|mil))?";
   const NUMS = [new RegExp("R\\$\\s?[\\d.]+(?:,\\d+)?" + ESC), /\d[\d.]*(?:,\d+)?\s(?:milhões|milhão|bilhões|bilhão|mil)/, /\d[\d.]*(?:,\d+)?\s?%/,
     /(?<![\d.,])(?!(?:19|20)\d\d(?!\d|[.,]\d))\d[\d.]*(?:,\d+)?/];
+  /* o mesmo, mas com a marca escolhida (V.rSublinha, V.rMarca...) */
+  V.rMarcarNumero = (frase, marca) => {
+    for (const re of NUMS) { const m = re.exec(frase); if (m) return frase.slice(0, m.index) + marca(m[0]) + frase.slice(m.index + m[0].length); }
+    return frase;
+  };
   V.rCircularNumero = (frase) => {
     for (const re of NUMS) { const m = re.exec(frase); if (m) return frase.slice(0, m.index) + V.rCirculo(m[0]) + frase.slice(m.index + m[0].length); }
     return frase;

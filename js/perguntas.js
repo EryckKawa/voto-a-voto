@@ -1664,6 +1664,12 @@
           </ul>
         </div>
       </section>
+      <nav class="pq-dif" aria-label="Para entender em um minuto">
+        <a href="#/edicao"><b>O jornal da sua cidade</b><span>Uma edição escrita pelos dados só para a sua cidade.</span></a>
+        <a href="#/tira-teima"><b>Tira-teima do grupo da família</b><span>As frases que circulam, carimbadas com os dados.</span></a>
+        <a href="#/dinheiro"><b>Siga o dinheiro</b><span>De onde veio e para onde foi cada R$ 100 das campanhas.</span></a>
+        <a href="#/cem"><b>Se o Brasil fosse 100 eleitores</b><span>A eleição encolhida para 100 pessoas.</span></a>
+      </nav>
       ${BLOCOS.map(([g, sub]) => { const ts = temas.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
         <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
         <ul class="pq-lista">${ts.map(item).join("")}</ul></section>` : ""; }).join("")}
