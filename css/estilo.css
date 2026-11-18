@@ -1504,7 +1504,7 @@ details.pq-pontos[open], details.pq-cuidado[open] { padding-bottom: 18px; }
   --linha: #D9D6CC; --linha-forte: #8C887C;
   --serif: "Newsreader", Georgia, "Times New Roman", serif;
   --mao: "Permanent Marker", "Comic Sans MS", cursive;
-  --caneta: #E0186C;
+  --caneta: #CC1259;
   --marca-texto: #FFE14D;
   --num: var(--serif);
   --t-display: 800 clamp(44px, 5.4vw, 72px)/1.02 var(--serif);
@@ -1724,3 +1724,10 @@ body { background: var(--fundo); }
 .pq-dif span { font: 400 19px/1.35 var(--serif); color: var(--tinta-2); }
 .pq-dif a:hover b { text-decoration: underline; text-underline-offset: 4px; }
 .dif-jornal .dif-ret, .dif-jornal__pe .dif-ret { font: 700 15px/1.2 var(--fonte); letter-spacing: .02em; }
+
+/* Ninguém: a nota à mão sob os números */
+.ninguem__nota { margin: 6px 0 0; font-size: 26px; }
+.achado__titulo .rb-alvo--circ, .manchete__titulo .rb-alvo--circ { white-space: nowrap; }
+/* número em tamanho real: "R$ 6,2 milhões" vem com espaço que não quebra; diminui um pouco e só quebra se precisar */
+.tamanho__item { min-width: 0; }
+.tamanho__n { font-size: clamp(32px, 3.6vw, 48px); overflow-wrap: break-word; }

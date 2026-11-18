@@ -51,7 +51,7 @@
   const camada = (k) => V.dados("br/lobby/" + k);
 
   /* ---------- cores e tamanhos: cada cidade é uma bolinha no centro dela ---------- */
-  const TINTA = "#2B2B2B", CANETA = "#E0186C", APAGADO = "#D3CFC4";
+  const TINTA = "#2B2B2B", CANETA = "#CC1259", APAGADO = "#D3CFC4";
   function escala() {
     const m = CAM[S.cam], vals = valores(), ok = vals.filter((v) => v != null);
     if (S.modo === "mud") {

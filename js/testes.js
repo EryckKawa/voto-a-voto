@@ -96,9 +96,9 @@
   });
 
   // FUNCIONAMENTO
-  teste("Funcionamento", "Menu com as sete seções (sem Disputas apertadas)", async () => {
+  teste("Funcionamento", "Menu com as oito seções (sem Disputas apertadas)", async () => {
     const ls = qq(".nav a").map((a) => a.textContent.trim());
-    return R(ls.length === 7 && ls[3] === "Perguntas" && ls[4] === "Partidos" && ls[5] === "Políticos" && ls[6] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · Perguntas · Partidos · Políticos · Explorar");
+    return R(ls.length === 8 && ls[3] === "Perguntas" && ls[4] === "Sua cidade" && ls[5] === "Partidos" && ls[6] === "Políticos" && ls[7] === "Explorar" && !ls.some((l) => /Disputas/.test(l)), ls.join(" · "), "Ninguém · Mapa · O que o voto revela · Perguntas · Sua cidade · Partidos · Políticos · Explorar");
   });
   teste("Funcionamento", "Endereço antigo das disputas leva ao mapa", async () => {
     location.hash = "#/apertadas";
@@ -427,33 +427,125 @@
     const some = q("#pol-sugestoes").hidden;
     return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
   });
-  teste("Funcionamento", "Mapa das respostas: camada, filtro, mudança, cidade e jogo", async () => {
-    try { localStorage.setItem("vav-chutes", JSON.stringify({ e4: 30, t6: 30, e9: 70 })); } catch (e) {}
+  teste("Funcionamento", "Mapa das respostas: bolinhas, filtro, mudança e a sua cidade circulada", async () => {
+    try { localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
     await irPara("#/respostas/e4"); await ate(() => q("#lb-cv") && q("#lb-res") && /\d/.test(txt("#lb-res")), 15000).catch(() => {});
-    const leg = qq("#lb-leg li").length, res1 = txt("#lb-res");
+    const leg = qq("#lb-leg li").length, bolinhas = /Cada bolinha é uma cidade/.test(txt("#lb-leg")), res1 = txt("#lb-res");
     const reg = q("#lb-reg"); reg.value = "Sul"; reg.dispatchEvent(new Event("change", { bubbles: true })); await quadros(2);
     const filtrou = /filtro/.test(txt("#lb-res"));
     q("[data-lb-modo='mud']").click(); await quadros(2); const mudou = /pontos|mudou/.test(txt("#lb-res"));
-    const inp = q("#lb-busca"); inp.value = "Teresina (PI)"; inp.dispatchEvent(new Event("change", { bubbles: true })); await quadros(2);
-    const cid = /Teresina/.test(txt("#lb-cid"));
-    q("[data-lb-jogar]").click(); await ate(() => q("[data-lb-resp]"), 8000).catch(() => {}); q("[data-lb-resp='centro']").click(); await quadros(1);
-    const jogo = /Acertou|Não foi/.test(txt(".lb-jogo__res"));
-    try { localStorage.removeItem("vav-chutes"); localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
-    return R(leg >= 5 && /18,2%/.test(res1) && filtrou && mudou && cid && jogo, `${leg} itens na legenda · ${res1.slice(0, 50)} · filtro ${filtrou ? "ok" : "não"} · mudança ${mudou ? "ok" : "não"} · cidade ${cid ? "ok" : "não"} · jogo ${jogo ? "ok" : "não"}`, "mulheres eleitas na cidade típica = 18,2%; filtro, mudança, cidade e jogo respondem");
+    const inp = q("#lb-busca"); inp.value = "Teresina (PI)"; inp.dispatchEvent(new Event("change", { bubbles: true })); await quadros(3);
+    let guardou = null; try { guardou = localStorage.getItem("vav-minha-cidade"); } catch (e) {}
+    const cid = /Teresina/.test(txt("#lb-cid")), semJogo = !q("[data-lb-jogar]") && !q("form.chute");
+    try { localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
+    return R(leg >= 5 && bolinhas && /18,2%/.test(res1) && filtrou && mudou && cid && guardou === "2211001" && semJogo,
+      `${leg} itens na legenda${bolinhas ? " de bolinhas" : ""} · ${res1.slice(0, 46)} · filtro ${filtrou ? "ok" : "não"} · mudança ${mudou ? "ok" : "não"} · cidade ${cid ? "ok" : "não"} (guardada: ${guardou}) · ${semJogo ? "sem jogo" : "com jogo"}`,
+      "legenda de bolinhas; mulheres eleitas na cidade típica = 18,2%; filtro, mudança e a cidade (2211001) guardada; sem jogo nem chute");
   });
-  teste("Funcionamento", "Você chuta: a resposta aparece depois do chute", async () => {
-    try { localStorage.removeItem("vav-chutes"); } catch (e) {}
-    await irPara("#/perguntas/e6"); await ate(() => q("form.chute"), 8000).catch(() => {});
-    const antes = q(".pq-faixa") && q(".pq-faixa").hidden, f = q("form.chute"); f.requestSubmit(); await quadros(1);
-    const depois = !q(".pq-faixa").hidden && /o dado/.test(txt(".chute__res")), tam = !!q(".tamanho__item");
-    try { localStorage.removeItem("vav-chutes"); } catch (e) {}
-    return R(antes && depois && tam, `${antes ? "escondida antes" : "à mostra antes"} · ${depois ? "aparece depois, com o dado" : "não aparece"} · ${tam ? "com o número em tamanho real" : "sem tamanho real"}`, "resposta escondida até o chute; depois, o dado e o tamanho real");
+  teste("Funcionamento", "Mapa das respostas: todas as perguntas abrem com número e legenda", async () => {
+    await irPara("#/respostas/e4"); await ate(() => qq("[data-lb-id]").length > 10, 15000).catch(() => {});
+    const ids = qq("[data-lb-id]").map((a) => a.dataset.lbId), ruins = [];
+    for (const id of ids) {
+      q(`[data-lb-id="${id}"]`).click(); await ate(() => location.hash === "#/respostas/" + id && /\d/.test(txt("#lb-res")), 8000).catch(() => {}); await quadros(1);
+      const t = txt("#lb-res") + " " + txt("#lb-leg") + " " + txt("#lb-tit");
+      if (!/\d/.test(txt("#lb-res")) || !txt("#lb-leg") || /undefined|NaN|null/.test(t)) ruins.push(id);
+    }
+    return R(ids.length >= 19 && !ruins.length, `${ids.length} perguntas no mapa${ruins.length ? "; com problema: " + ruins.join(", ") : ", todas com número e legenda"}`, "19 ou mais perguntas, cada uma com o número da cidade típica e legenda");
   });
-  teste("Funcionamento", "Perguntas: índice por blocos, sem numeração, e número-chave em cada tema", async () => {
+  teste("Funcionamento", "Perguntas: primeira página por blocos, sem numeração, com números grandes em cada tema", async () => {
     await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 25, 8000).catch(() => {});
-    const grupos = qq(".pq-assunto").length, base = qq(".pq-base a").length, numeros = qq(".pq-lista .pq-selo").length, doGrupo = qq(".pq-lista .pq-tag").length; let sem = [];
-    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5", "e6", "e9"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
-    return R(grupos === 5 && base === 12 && !numeros && doGrupo === 9 && !sem.length && !!q("#pq-ir"), `${grupos} blocos; ${doGrupo} perguntas do grupo nos blocos; ${base} perguntas base com link; ${numeros ? numeros + " números à mostra" : "sem números"}; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número-chave e rótulo"}`, "5 blocos com os temas e as perguntas do grupo, sem numeração; as 12 perguntas base com link; número-chave em cada tema; seletor");
+    const grupos = qq(".pq-assunto").length, base = qq(".pq-base a").length, numeros = qq(".pq-lista .pq-selo").length, doGrupo = qq(".pq-lista .pq-tag").length, portas = qq(".pq-dif a").length;
+    const capa = q(".pq-capa h2"), circ = capa && capa.querySelector(".rb-alvo--circ"); let sem = [];
+    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5", "e6", "e9"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".pq-numeros > div").filter((d) => d.querySelector("b") && d.querySelector("b").textContent.trim() && d.querySelector(":scope > span") && d.querySelector(":scope > span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
+    return R(grupos === 5 && base === 12 && !numeros && doGrupo === 9 && portas === 4 && !!circ && !sem.length && !!q("#pq-ir"),
+      `${grupos} blocos; ${doGrupo} perguntas do grupo; ${base} perguntas base; ${portas} portas para os diferenciais; manchete ${circ ? "com o número circulado (" + circ.textContent.trim() + ")" : "sem círculo"}; ${sem.length ? "sem números grandes: " + sem.join(", ") : "todos com números grandes"}`,
+      "5 blocos, 9 do grupo, 12 base, 4 portas, manchete com número circulado, números grandes em cada tema, sem numeração");
+  });
+
+  // JORNAL RABISCADO E DIFERENCIAIS
+  teste("Jornal e diferenciais", "Cabeçalho de jornal com a data de hoje", async () => {
+    const d = txt("#jt-data"), hoje = new Intl.DateTimeFormat("pt-BR", { day: "numeric", month: "long", year: "numeric" }).format(new Date());
+    const nome = getComputedStyle(q(".jornal-topo .marca")).fontFamily;
+    return R(d.toLowerCase().includes(hoje.toLowerCase()) && /Newsreader/.test(nome), `${d} · marca em ${nome.split(",")[0]}`, "a data de hoje por extenso e o nome em Newsreader");
+  });
+  teste("Jornal e diferenciais", "A caneta circula o número da manchete, nunca um ano, em todas as perguntas", async () => {
+    const { temas } = await V.pqCarregar(), ruins = [], vistos = [];
+    for (const t of temas) {
+      await irPara("#/perguntas/" + t.id); await ate(() => q("h1.pq-resposta"), 8000).catch(() => {});
+      const c = q("h1.pq-resposta .rb-alvo--circ"), v = c ? c.textContent.trim() : "";
+      if (!v || /^(19|20)\d\d$/.test(v)) ruins.push(`${t.id}: ${v || "sem círculo"}`); else vistos.push(v);
+    }
+    return R(!ruins.length && vistos.length === temas.length, ruins.length ? ruins.slice(0, 4).join(" · ") : `${vistos.length} manchetes, por exemplo ${vistos.slice(0, 3).join(", ")}`, "toda manchete com um número circulado que não é ano");
+  });
+  teste("Jornal e diferenciais", "Os rabiscos se desenham quando a página rola até eles", async () => {
+    await irPara("#/perguntas/e6"); await ate(() => q(".pq-numeros"), 8000).catch(() => {});
+    scrollTo(0, 0); await quadros(4);
+    const todos = qq(".rb, .rb-marca, .rb-nota, .rb-carimbo, .rb-postit"), baixo = todos.filter((el) => el.getBoundingClientRect().top > innerHeight + 200);
+    const antes = baixo.filter((el) => el.classList.contains("rb-on")).length;
+    for (let y = 0; y < document.documentElement.scrollHeight; y += Math.round(innerHeight * 0.6)) { scrollTo(0, y); await new Promise((r) => setTimeout(r, 160)); }
+    await new Promise((r) => setTimeout(r, 900));
+    const depois = todos.filter((el) => el.classList.contains("rb-on")).length;
+    scrollTo(0, 0);
+    return R(todos.length >= 4 && baixo.length >= 1 && antes === 0 && depois === todos.length, `${todos.length} rabiscos; ${baixo.length} abaixo da tela, ${antes} desenhados antes de rolar; ${depois} depois`, "nenhum rabisco de baixo desenhado antes de rolar; todos depois");
+  });
+  teste("Jornal e diferenciais", "O jornal da sua cidade: três cidades bem diferentes, sem número quebrado", async () => {
+    const BR = await V.baseBR(), menor = BR.lista.slice().sort((a, b) => (a.pop || 1e9) - (b.pop || 1e9))[0];
+    const cidades = ["2211001", "3550308", menor.ibge], ruins = [], manchetes = [];
+    for (const ib of cidades) {
+      await irPara("#/edicao/" + ib, 25000).catch(() => {}); await ate(() => q(".dif-jornal h1"), 15000).catch(() => {});
+      const t = q("main").textContent, h = txt(".dif-jornal h1"), c = q(".dif-jornal h1 .rb-alvo--circ");
+      if (!h || !/\d/.test(h) || !c || /undefined|NaN|null|\.\.|!\./.test(t) || (BR.porIbge.get(ib) && !t.includes(BR.porIbge.get(ib).nome))) ruins.push(ib + ": " + h.slice(0, 40));
+      else manchetes.push(h.slice(0, 48));
+    }
+    let guardou = null; try { guardou = localStorage.getItem("vav-minha-cidade"); localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
+    return R(!ruins.length && guardou === menor.ibge, ruins.length ? ruins.join(" · ") : manchetes.join(" · ") + ` (cidade guardada: ${guardou})`, "manchete com número circulado e o nome da cidade, sem 'undefined', 'NaN' ou pontuação dobrada; a última cidade fica guardada");
+  });
+  teste("Jornal e diferenciais", "Tira-teima: 7 frases carimbadas, números iguais aos do banco", async () => {
+    await irPara("#/tira-teima", 25000).catch(() => {}); await ate(() => qq(".dif-tt").length, 15000).catch(() => {});
+    const { C } = await V.pqCarregar(), linhas = (id) => C[id].linhas.map((l) => Object.fromEntries(C[id].colunas.map((k, i) => [k, l[i]])));
+    const e6 = linhas("e6a"), u = e6[e6.length - 1], esperado = "R$ " + new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(u.vr_por_eleitor);
+    const cards = qq(".dif-tt"), carimbos = cards.filter((c) => c.querySelector(".rb-carimbo") && /MENTIRA|TEM SINAIS|EM PARTE|VERDADE/.test(c.querySelector(".rb-carimbo").textContent)).length;
+    const comNumero = cards.filter((c) => /\d/.test(c.querySelector(".dif-tt__resp p").textContent)).length, t = q("main").textContent;
+    const b = q("[data-copiar]"); b.click(); await new Promise((r) => setTimeout(r, 400)); const ok = q(".dif-tt__ok").textContent.trim();
+    return R(cards.length === 7 && carimbos === 7 && comNumero === 7 && t.includes(esperado) && !/undefined|NaN|null/.test(t) && ok.length > 10, `${cards.length} frases, ${carimbos} carimbos, ${comNumero} com número; fundão por eleitor ${t.includes(esperado) ? "= " + esperado : "diferente do banco"}; copiar: ${ok.slice(0, 30)}`, `7 frases carimbadas, cada uma com número; fundão = ${esperado}; o botão copia ou mostra a resposta`);
+  });
+  teste("Jornal e diferenciais", "Siga o dinheiro: em toda eleição, os R$ 100 fecham nas duas pontas", async () => {
+    await irPara("#/dinheiro", 25000).catch(() => {}); await ate(() => q(".dif-fluxo"), 15000).catch(() => {});
+    const anos = qq(".dif-anos a").map((a) => a.textContent.trim()), ruins = [];
+    for (const a of anos.length ? anos : ["atual"]) {
+      if (a !== "atual") { await irPara("#/dinheiro/" + a, 15000).catch(() => {}); await ate(() => q(".dif-fluxo"), 8000).catch(() => {}); }
+      const dest = qq(".dif-f__v").map((t) => +t.textContent.replace(/\D/g, "")), soma = dest.reduce((s, v) => s + v, 0);
+      const orig = [txt(".dif-f__big"), txt(".dif-f__mid")].map((t) => +t.replace(/\D/g, "")), so = orig[0] + orig[1];
+      if (soma !== 100 || so !== 100 || dest.length !== 10) ruins.push(`${a}: gasto ${soma}, origem ${so}`);
+    }
+    return R(anos.length >= 3 && !ruins.length, ruins.length ? ruins.join(" · ") : `${anos.join(", ")}: de onde veio e para onde foi somam R$ 100`, "3 ou mais eleições; nas duas pontas a soma é R$ 100");
+  });
+  teste("Jornal e diferenciais", "Se o Brasil fosse 100 eleitores: 100 bonequinhos e a conta certa", async () => {
+    await irPara("#/cem", 25000).catch(() => {}); await ate(() => q(".dif-cem"), 15000).catch(() => {});
+    const { C } = await V.pqCarregar(), t6 = C.t6c.linhas.map((l) => Object.fromEntries(C.t6c.colunas.map((k, i) => [k, l[i]]))).find((r) => r.nr_ano_eleicao === 2024 && r.cd_cargo === 11);
+    const bonecos = qq(".dif-boneco").length, n = qq(".dif-cem__lista b").map((b) => +b.textContent), soma = n.reduce((s, v) => s + v, 0);
+    const ninguem = n[3] + n[4] + n[5], nota = txt(".dif-cem__lista .rb-nota");
+    return R(bonecos === 100 && soma === 100 && ninguem === Math.round(t6.pc_ninguem) && nota.startsWith(String(ninguem)), `${bonecos} bonequinhos; grupos ${n.join("+")} = ${soma}; não escolheram ninguém: ${ninguem} (banco: ${t6.pc_ninguem}%)`, `100 bonequinhos, grupos somando 100 e ${Math.round(t6.pc_ninguem)} que não escolheram ninguém`);
+  });
+  teste("Jornal e diferenciais", "Perguntas novas do grupo: números das páginas iguais aos do banco", async () => {
+    const { C } = await V.pqCarregar(), L = (id) => C[id].linhas.map((l) => Object.fromEntries(C[id].colunas.map((k, i) => [k, l[i]])));
+    const e9 = L("e9a").find((r) => r.qt_acertos === 9 && r.qt_eleicoes === 9) || {}, e6 = L("e6a"), u = e6[e6.length - 1];
+    const e8 = L("e8a").find((r) => r.nr_ano_eleicao === 2024 && r.ds_cargo === "VEREADOR" && r.ds_genero === "FEMININO") || {};
+    const confere = [];
+    await irPara("#/perguntas/e9"); await ate(() => q("h1.pq-resposta"), 8000).catch(() => {}); confere.push(txt("h1.pq-resposta").startsWith(String(e9.qt_cidades)));
+    await irPara("#/perguntas/e6"); await ate(() => q("h1.pq-resposta"), 8000).catch(() => {}); confere.push(txt("h1.pq-resposta").includes(new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(u.vr_por_eleitor)));
+    await irPara("#/perguntas/e8"); await ate(() => q("h1.pq-resposta"), 8000).catch(() => {}); confere.push(txt("h1.pq-resposta").includes(new Intl.NumberFormat("pt-BR").format(e8.qt_ate_10_com_publico)));
+    const contaCerta = Math.abs(u.vr_publico / u.qt_eleitores - u.vr_por_eleitor) < 0.01;
+    return R(confere.every(Boolean) && contaCerta, `cidades que sempre acertam ${confere[0] ? "ok" : "diferente"} (${e9.qt_cidades}); fundão por eleitor ${confere[1] ? "ok" : "diferente"}; candidatas com até 10 votos ${confere[2] ? "ok" : "diferente"}; dinheiro ÷ eleitores ${contaCerta ? "confere" : "não confere"}`, "as manchetes de +6, +8 e +9 com os números do banco; R$ por eleitor = total ÷ eleitores");
+  });
+  teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
+    const largas = [];
+    for (const h of ["#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
+      await irPara(h, 25000).catch(() => {}); await quadros(3);
+      if (document.documentElement.scrollWidth > innerWidth + 1) largas.push(`${h} (${document.documentElement.scrollWidth}px)`);
+    }
+    try { localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
+    return R(!largas.length, largas.length ? largas.join(" · ") : "nenhuma rola para o lado", "nenhuma página nova mais larga que a tela");
   });
   teste("Funcionamento", "Perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
     const ruins = []; let n = 0;

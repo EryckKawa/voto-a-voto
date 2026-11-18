@@ -47,7 +47,7 @@ async function rodada(nome, tela) {
   if (!EDGE) { console.error("Não achei o Microsoft Edge (nem o Chrome)."); process.exit(2); }
   const t0 = Date.now(), rodadas = [];
   rodadas.push(await rodada("computador", { w: 1280, h: 900 }));
-  rodadas.push(await rodada("celular", { w: 390, h: 844, m: true }));
+  if (process.env.VAV_SO !== "computador") rodadas.push(await rodada("celular", { w: 390, h: 844, m: true }));   // VAV_SO=computador: só a tela de computador
   let falhas = 0, total = 0;
   for (const [nome, res] of rodadas) {
     console.log(`\n=== ${nome.toUpperCase()} ===`);

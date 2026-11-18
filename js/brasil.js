@@ -160,7 +160,7 @@
   function mancheteMaj(r, ano, cargo, uf, RES) {
     const vs = vencedoresPorNome(BR.venc, uf), a = vs[0], b = vs[1];
     const onde = uf ? DO_UF[uf] : "do Brasil", em = NO_UF(uf);
-    const tit = `Em ${ano}, ${a.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em <span class="conta" data-f="${a.f}">${V.int(a.n)}</span> das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}`;
+    const tit = `Em ${ano}, ${a.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em ${V.rCirculo(`<span class="conta" data-f="${a.f}">${V.int(a.n)}</span>`)} das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}`;
     const vt = votosDe(RES, uf); let sub = b ? `${b.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em ${V.int(b.n)}. ` : "";
     if (vt && vt.l.length > 1) sub += `${vt.t === "t2" ? "No 2º turno" : "No 1º turno"}, ${em}, ${V.titulo(vt.l[0].k[0])} teve ${V.pct(vt.l[0].p)} dos votos válidos e ${V.titulo(vt.l[1].k[0])}, ${V.pct(vt.l[1].p)}.`;
     return { tit, sub };
@@ -170,8 +170,8 @@
     const ordem = ["direita", "centro", "esquerda"].sort((a, b) => r[b] - r[a]);
     const [m, s1, s2] = ordem, popT = r.pop.esquerda + r.pop.centro + r.pop.direita;
     const onde = uf ? DO_UF[uf] : "do Brasil";
-    const tit = cargo === "PREF" ? `Em ${ano}, ${FX[m].art} venceu em <span class="conta" data-f="${m}">${V.int(r[m])}</span> das <span class="conta" data-f="todas">${V.int(r.todas)}</span> prefeituras ${onde}`
-      : `Em ${ano}, para ${NOME_CG[cargo]}, ${FX[m].art} foi ${m === "centro" ? "o mais votado" : "a mais votada"} em <span class="conta" data-f="${m}">${V.int(r[m])}</span> das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}`;
+    const tit = cargo === "PREF" ? `Em ${ano}, ${FX[m].art} venceu em ${V.rCirculo(`<span class="conta" data-f="${m}">${V.int(r[m])}</span>`)} das <span class="conta" data-f="todas">${V.int(r.todas)}</span> prefeituras ${onde}`
+      : `Em ${ano}, para ${NOME_CG[cargo]}, ${FX[m].art} foi ${m === "centro" ? "o mais votado" : "a mais votada"} em ${V.rCirculo(`<span class="conta" data-f="${m}">${V.int(r[m])}</span>`)} das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}`;
     const verbo = cargo === "PREF" ? "venceu" : "ficou na frente";
     const sub = (PROP[cargo] ? "Cada cidade tem a cor do partido mais votado, somando os votos nos candidatos e na legenda. " : "") + `Essas cidades reúnem ${V.pct((100 * r.pop[m]) / (popT || 1), 0)} dos moradores. ${FX[s1].art[0].toUpperCase() + FX[s1].art.slice(1)} ${verbo} em ${V.int(r[s1])} e ${FX[s2].art}, em ${V.int(r[s2])}.`;
     return { tit, sub };
@@ -208,8 +208,8 @@
     const k1 = U.c[w[0]], k2 = w[6] ? U.c[w[6]] : null, v1 = (rs.find((x) => x[0] === w[0]) || [0, 0])[1], v2 = w[6] ? (rs.find((x) => x[0] === w[6]) || [0, 0])[1] : 0;
     if (!w[9]) return { tit: `${c.nome} ficou sem prefeito definido em ${ano}`, sub: "O TSE não marcou nenhum candidato como eleito (eleição anulada ou em julgamento)." };
     const nome = V.titulo(k1[0]) + " (" + k1[1] + ")";
-    const tit = !k2 ? `Em ${c.nome}, ${nome} foi eleito sem adversário em ${ano}` : `Em ${c.nome}, ${nome} ${cargo === "PREF" ? "venceu" : "ficou à frente"} por ${V.int(v1 - v2)} ${v1 - v2 === 1 ? "voto" : "votos"}${t === "t2" ? " no 2º turno" : ""}`;
-    let sub = k2 ? `${V.pct((100 * v1) / tot)} a ${V.pct((100 * v2) / tot)} contra ${V.titulo(k2[0])} (${k2[1]}).` : "";
+    const tit = !k2 ? `Em ${c.nome}, ${nome} foi eleito sem adversário em ${ano}` : `Em ${c.nome}, ${nome} ${cargo === "PREF" ? "venceu" : "ficou à frente"} por ${V.rCirculo(`${V.int(v1 - v2)} ${v1 - v2 === 1 ? "voto" : "votos"}`)}${t === "t2" ? " no 2º turno" : ""}`;
+    let sub = k2 ? `${V.rMarca(V.pct((100 * v1) / tot))} a ${V.pct((100 * v2) / tot)} contra ${V.titulo(k2[0])} (${k2[1]}).` : "";
     if (t === "t2" && r.t1) { const p1 = r.t1.findIndex((x) => x[0] === w[0]); if (p1 > 0) sub += " No 1º turno, tinha ficado em " + (p1 + 1) + "º lugar."; }
     return { tit, sub, v1, v2, tot, k1, k2 };
   }

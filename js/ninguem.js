@@ -93,13 +93,14 @@
     document.title = "Voto a voto · o candidato mais votado do Brasil se chama Ninguém";
     main.innerHTML = `<div class="pagina ninguem">
       <header class="ninguem__topo">
-        <h1 class="ninguem__titulo">O candidato mais votado do Brasil se chama Ninguém</h1>
+        <h1 class="ninguem__titulo">O candidato mais votado do Brasil se chama ${V.rCirculo("Ninguém")}</h1>
         <p class="ninguem__lead">É quem não foi votar, anulou ou votou em branco. Em 2024, no 1º turno para prefeito, ele teve quase o triplo de votos do partido mais votado.</p>
         <ul class="kpis ninguem__kpis">
-          <li><b>${mi(ning)}</b><span>de eleitores não escolheram ninguém para prefeito em 2024</span></li>
-          <li><b>${(ning / top[1]).toFixed(1).replace(".", ",")} vezes</b><span>os votos do partido mais votado, o ${V.esc(top[0])} (${mi(top[1])})</span></li>
+          <li><b>${V.rSublinha(mi(ning))}</b><span>de eleitores não escolheram ninguém para prefeito em 2024</span></li>
+          <li><b>${V.rMarca((ning / top[1]).toFixed(1).replace(".", ",") + " vezes")}</b><span>os votos do partido mais votado, o ${V.esc(top[0])} (${mi(top[1])})</span></li>
           <li><b>${V.int(cidadesNinguem)}</b><span>cidades onde Ninguém teve mais votos que o candidato mais votado</span></li>
         </ul>
+        <p class="ninguem__nota">${V.rNota(`nenhum partido teve tantos votos!`, -2)}</p>
       </header>
       <section class="urna-hero" aria-label="Urna: experimente digitar">
         <div class="urna-corpo">

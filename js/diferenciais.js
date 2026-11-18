@@ -103,7 +103,7 @@
       <p class="dif-links"><a href="#/respostas">Ver a sua cidade no mapa das respostas</a> · <a href="#/mapa/br/${c.uf}/c/${c.ibge}">Quem ganhou em ${V.esc(nome)}</a></p>
     </div>`;
     main.querySelector("[data-dif-imprimir]").addEventListener("click", () => print());
-    main.querySelector("[data-dif-compartilhar]").addEventListener("click", () => V.compartilhar({ titulo: m1.t(nome, m1.v), bloco: "O Voto de " + nome, cor: "#E0186C", frase: outras.slice(0, 2).map((x) => x.t(nome, x.v)).join(". ") + "." }));
+    main.querySelector("[data-dif-compartilhar]").addEventListener("click", () => V.compartilhar({ titulo: m1.t(nome, m1.v), bloco: "O Voto de " + nome, cor: "#CC1259", frase: outras.slice(0, 2).map((x) => x.t(nome, x.v)).join(". ") + "." }));
     main.querySelector("#dif-cidade").addEventListener("change", (e) => {
       const alvo = V.norm(e.target.value), achou = BR.lista.find((x) => V.norm(`${x.nome} (${x.uf})`) === alvo);
       if (achou) V.ir("#/edicao/" + achou.ibge);

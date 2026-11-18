@@ -61,9 +61,9 @@
   V.graf = { barras, linhas, leg, nuvem };   // usados também nas perguntas do trabalho e na ficha do político
 
   const bloco = (b, i) => `<article class="achado" id="${b.id}">
-      <h2 class="achado__titulo">${b.tit}</h2>
+      <h2 class="achado__titulo">${V.rCircularNumero(b.tit)}</h2>
       <p class="achado__tema">${b.tema}</p>
-      <p class="achado__sub">${b.sub}</p>
+      <p class="achado__sub">${V.rMarcarNumero(b.sub, V.rMarca)}</p>
       ${b.legenda || ""}
       ${b.grafico}
       <details class="achado__como"><summary>Como chegamos nesse número</summary><p>${b.como}</p></details>
