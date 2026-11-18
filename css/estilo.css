@@ -1760,3 +1760,21 @@ span.rb-alvo.rb-alvo { font: inherit; color: inherit; letter-spacing: inherit; }
 .pq-parte__a .rb-marca { font-weight: 800; }
 .barras__rot small { font-size: 15px; }
 .kpis span { font-size: 16px; }
+
+/* ---------- rabiscos exatos (18/11): o círculo e o sublinhado se medem pela letra (js/rabisco.js, medir) ---------- */
+.rb-base { display: inline-block; width: 0; height: 0; vertical-align: baseline; }
+.rb-txt { display: inline; }
+/* antes de medir (ou sem JavaScript): uma elipse folgada, que já passa por fora dos cantos */
+.rb-circ { left: calc(-.4em - 6%); top: -.42em; width: calc(100% + .8em + 12%); height: calc(100% + .84em); }
+.rb-sub { left: -.04em; bottom: auto; top: calc(100% - .12em); width: calc(100% + .08em); height: .18em; }
+.rb-sub path { stroke-width: 3.5px; }
+/* marca-texto: cobre a letra do alto dos números até um pouco abaixo da linha de base (Newsreader e Atkinson) */
+.rb-marca { background-position: 0 52%; background-size: 0% 58%; padding: 0 .08em; -webkit-box-decoration-break: clone; box-decoration-break: clone; }
+.rb-marca.rb-on { background-size: 100% 58%; }
+@media (prefers-reduced-motion: reduce) { .rb-marca { background-size: 100% 58%; } }
+@media print { .rb-marca { background-size: 100% 58%; } }
+/* a caixa do texto marcado herda a letra do número (".kpis span" e afins não a encolhem) */
+.rb-alvo.rb-alvo > span.rb-txt, .rb-alvo.rb-alvo > span.rb-base { font: inherit; color: inherit; letter-spacing: inherit; }
+/* no meio da frase, o círculo ganha folga para não riscar a palavra do lado */
+.rb-alvo--circ { margin: 0 .36em; }
+b > .rb-alvo--circ { margin-left: 0; }
