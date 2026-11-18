@@ -66,7 +66,7 @@
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
-  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 21, 1500, 400));
+  teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 25, 1500, 400));
   teste("Velocidade", "Partidos abre", () => medirPagina("#/partidos", () => qq("#pt-ano-graf svg g").length > 20, 1500, 400));
   teste("Velocidade", "Trocar de ano no mapa", () => medirPagina("#/mapa/e/PRES2022", () => /2022/.test(txt("#manchete")), 800, 400));
   teste("Velocidade", "Trocar a régua (voto ↔ Harvard)", async () => {
@@ -177,12 +177,12 @@
   });
   teste("Funcionamento", "Todos os temas e as perguntas a mais: com resposta, pontos e cuidado", async () => {
     const ruins = [];
-    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5"]) {
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9"]) {
       await irPara("#/perguntas/" + id); await quadros(1);
       const r = txt(".pq-resposta"), p = qq(".pq-parte__r p, .pq-pontos li").length, c = qq(".pq-cuidado li").length;
       if (r.length < 60 || p < 1 || c < 1 || /—\s*(das|de|dos)\s/.test(r)) ruins.push(`${id}: resposta ${r.length} letras, ${p} pontos, ${c} cuidados`);
     }
-    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "21 páginas completas", "resposta, pontos e cuidado em todas");
+    return R(ruins.length === 0, ruins.length ? ruins.slice(0, 3).join(" · ") : "25 páginas completas", "resposta, pontos e cuidado em todas");
   });
   teste("Funcionamento", "Endereços antigos das 12 perguntas levam ao tema certo", async () => {
     await irPara("#/perguntas/q9"); await ate(() => /t14$/.test(location.hash), 3000).catch(() => {});
@@ -427,15 +427,37 @@
     const some = q("#pol-sugestoes").hidden;
     return R(n >= 18 && fotos >= 12 && some, `${n} nomes, ${fotos} com foto; ${some ? "somem" : "continuam"} ao buscar`, "18 nomes, quase todos com foto, que somem ao buscar");
   });
+  teste("Funcionamento", "Mapa das respostas: camada, filtro, mudança, cidade e jogo", async () => {
+    try { localStorage.setItem("vav-chutes", JSON.stringify({ e4: 30, t6: 30, e9: 70 })); } catch (e) {}
+    await irPara("#/respostas/e4"); await ate(() => q("#lb-cv") && q("#lb-res") && /\d/.test(txt("#lb-res")), 15000).catch(() => {});
+    const leg = qq("#lb-leg li").length, res1 = txt("#lb-res");
+    const reg = q("#lb-reg"); reg.value = "Sul"; reg.dispatchEvent(new Event("change", { bubbles: true })); await quadros(2);
+    const filtrou = /filtro/.test(txt("#lb-res"));
+    q("[data-lb-modo='mud']").click(); await quadros(2); const mudou = /pontos|mudou/.test(txt("#lb-res"));
+    const inp = q("#lb-busca"); inp.value = "Teresina (PI)"; inp.dispatchEvent(new Event("change", { bubbles: true })); await quadros(2);
+    const cid = /Teresina/.test(txt("#lb-cid"));
+    q("[data-lb-jogar]").click(); await ate(() => q("[data-lb-resp]"), 8000).catch(() => {}); q("[data-lb-resp='centro']").click(); await quadros(1);
+    const jogo = /Acertou|Não foi/.test(txt(".lb-jogo__res"));
+    try { localStorage.removeItem("vav-chutes"); localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
+    return R(leg >= 5 && /18,2%/.test(res1) && filtrou && mudou && cid && jogo, `${leg} itens na legenda · ${res1.slice(0, 50)} · filtro ${filtrou ? "ok" : "não"} · mudança ${mudou ? "ok" : "não"} · cidade ${cid ? "ok" : "não"} · jogo ${jogo ? "ok" : "não"}`, "mulheres eleitas na cidade típica = 18,2%; filtro, mudança, cidade e jogo respondem");
+  });
+  teste("Funcionamento", "Você chuta: a resposta aparece depois do chute", async () => {
+    try { localStorage.removeItem("vav-chutes"); } catch (e) {}
+    await irPara("#/perguntas/e6"); await ate(() => q("form.chute"), 8000).catch(() => {});
+    const antes = q(".pq-faixa") && q(".pq-faixa").hidden, f = q("form.chute"); f.requestSubmit(); await quadros(1);
+    const depois = !q(".pq-faixa").hidden && /o dado/.test(txt(".chute__res")), tam = !!q(".tamanho__item");
+    try { localStorage.removeItem("vav-chutes"); } catch (e) {}
+    return R(antes && depois && tam, `${antes ? "escondida antes" : "à mostra antes"} · ${depois ? "aparece depois, com o dado" : "não aparece"} · ${tam ? "com o número em tamanho real" : "sem tamanho real"}`, "resposta escondida até o chute; depois, o dado e o tamanho real");
+  });
   teste("Funcionamento", "Perguntas: índice por blocos, sem numeração, e número-chave em cada tema", async () => {
-    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 21, 8000).catch(() => {});
+    await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 25, 8000).catch(() => {});
     const grupos = qq(".pq-assunto").length, base = qq(".pq-base a").length, numeros = qq(".pq-lista .pq-selo").length, doGrupo = qq(".pq-lista .pq-tag").length; let sem = [];
-    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
-    return R(grupos === 5 && base === 12 && !numeros && doGrupo === 5 && !sem.length && !!q("#pq-ir"), `${grupos} blocos; ${doGrupo} perguntas do grupo nos blocos; ${base} perguntas base com link; ${numeros ? numeros + " números à mostra" : "sem números"}; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número-chave e rótulo"}`, "5 blocos com os temas e as perguntas do grupo, sem numeração; as 12 perguntas base com link; número-chave em cada tema; seletor");
+    for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5", "e6", "e9"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".kpis--tema li").filter((li) => li.querySelector("b").textContent.trim() && li.querySelector("span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
+    return R(grupos === 5 && base === 12 && !numeros && doGrupo === 9 && !sem.length && !!q("#pq-ir"), `${grupos} blocos; ${doGrupo} perguntas do grupo nos blocos; ${base} perguntas base com link; ${numeros ? numeros + " números à mostra" : "sem números"}; ${sem.length ? "sem número-chave: " + sem.join(", ") : "todos com número-chave e rótulo"}`, "5 blocos com os temas e as perguntas do grupo, sem numeração; as 12 perguntas base com link; número-chave em cada tema; seletor");
   });
   teste("Funcionamento", "Perguntas: cada parte tem uma afirmação direta, curta e sem jargão", async () => {
     const ruins = []; let n = 0;
-    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5"]) {
+    for (const id of [...Array.from({ length: 16 }, (_, i) => "t" + (i + 1)), "e1", "e2", "e3", "e4", "e5", "e6", "e7", "e8", "e9"]) {
       await irPara("#/perguntas/" + id); await ate(() => q(".pq-parte__a"), 8000).catch(() => {});
       const partes = qq(".pq-parte");
       partes.forEach((pt, k) => { n++; const a = pt.querySelector(".pq-parte__a"), t = a ? a.textContent.trim() : "";

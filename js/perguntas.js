@@ -1256,6 +1256,9 @@
           enunciado: ["Quantas mulheres se candidatam e quantas se elegem, do vereador ao presidente?"],
           curta: `Vereador 2024: ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas eram de mulheres, e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos.`,
           kpis: [[pct(v24.pc_mulheres_candidatas, 0), "das candidaturas a vereador eram de mulheres (2024)"], [pct(v24.pc_mulheres_eleitas, 0), "dos vereadores eleitos eram mulheres"]],
+          tamanho: [{ tipo: "cem", n: Math.round(v24.pc_mulheres_eleitas), cor: CF, texto: `De cada 100 vereadores eleitos em 2024, ${Math.round(v24.pc_mulheres_eleitas)} são mulheres. No eleitorado, elas são mais da metade.` },
+            { tipo: "cem", n: Math.round(f16.pc_ate_10_votos), cor: CF2, texto: `De cada 100 candidatas a vereadora em 2016, ${Math.round(f16.pc_ate_10_votos)} tiveram até 10 votos. Entre os homens, ${Math.round(h16.pc_ate_10_votos)}.` }],
+          chute: { q: "De cada 100 vereadores eleitos em 2024, quantos você acha que são mulheres?", real: v24.pc_mulheres_eleitas, min: 0, max: 60, passo: 1, fmt: "pct" },
           resposta: `Elas são cerca de um terço dos candidatos a vereador e deputado, por causa da cota, mas só um em cada cinco eleitos: em 2024, ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas a vereador e ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos`,
           partes: [
             { q: "Quantas se candidatam e quantas se elegem?", a: `Para vereador, ${pct(v24.pc_mulheres_candidatas, 0)} das candidaturas e só ${pct(v24.pc_mulheres_eleitas, 0)} dos eleitos em 2024; para deputado federal, ${pct(d26.pc_mulheres_candidatas, 0)} e ${pct(d26.pc_mulheres_eleitas, 0)} em 2026.`, escada: esCE, p: [0], v: [0, 1] },
@@ -1294,6 +1297,8 @@
           enunciado: ["Quantos eleitos trocam de partido para tentar de novo, e trocar ajuda?"],
           curta: `Vereador 2024: ${pct(ve.pc_trocaram, 0)} dos que tentaram a reeleição foram por outro partido.`,
           kpis: [[pct(ve.pc_trocaram, 0), "dos vereadores que tentaram a reeleição em 2024 trocaram de partido"], [pct(d26.pc_trocaram, 0), "dos deputados federais, em 2026"]],
+          tamanho: [{ tipo: "cem", n: Math.round(ve.pc_trocaram), cor: COR.terra, texto: `De cada 100 vereadores que tentaram a reeleição em 2024, ${Math.round(ve.pc_trocaram)} foram por outro partido.` }],
+          chute: { q: "De cada 100 vereadores que tentaram a reeleição em 2024, quantos você acha que trocaram de partido?", real: ve.pc_trocaram, min: 0, max: 100, passo: 1, fmt: "pct" },
           resposta: `Trocar de partido é comum, e não ajuda a voltar: ${pct(ve.pc_trocaram, 0)} dos vereadores que tentaram a reeleição em 2024 foram por outro partido; para deputado federal, ${pct(d26.pc_trocaram, 0)} em 2026, e quem trocou se reelegeu menos (${pct(d26.pc_reeleitos_trocando, 0)} contra ${pct(d26.pc_reeleitos_ficando, 0)})`,
           partes: [
             { q: "Quantos eleitos trocam de partido?", a: `Quanto mais local o cargo, mais se troca: ${pct(ve.pc_trocaram, 0)} dos vereadores e ${pct(pr.pc_trocaram, 0)} dos prefeitos em 2024; ${pct(d26.pc_trocaram, 0)} dos deputados federais em 2026.`, escada: esT, p: [0], v: [0, 1] },
@@ -1304,6 +1309,140 @@
           cuidado: ["O partido é comparado pela linhagem, com as fusões juntas (DEM e PSL → União; PTB, Patriota e PRP → PRD; PSC e PHS → Podemos; PROS → Solidariedade; PPL → PCdoB): quem só acompanhou uma fusão ou troca de nome não trocou.", "Senador fica de fora: o mandato é de 8 anos. A pessoa é seguida pelo título de eleitor, e 1996 fica de fora.", "É associação: quem troca pode estar saindo de um partido que já ia mal na região."],
           como: "Candidaturas eleitas (TSE) ligadas à candidatura da mesma pessoa, ao mesmo cargo, 4 anos depois, pelo título de eleitor. O partido de cada uma é comparado pela linhagem do partido (página Partidos).",
           tabelas: ["candidatura", "pessoa", "partido", "partido_linhagem", "situacao_totalizacao"], consultas: ["e5a"], fonte: "TSE" });
+      }
+
+      // ---------- perguntas que despertam curiosidade (revamp, novembro de 2026) ----------
+      // +6: o dinheiro público das campanhas por eleitor
+      {
+        const E = L("e6a"), y = (a) => E.find((r) => r.nr_ano_eleicao === a) || {}, B = L("e6b");
+        const v26 = y(2026), v10 = y(2010), v14 = y(2014), v18 = y(2018), v24 = y(2024);
+        const b = (a, cg) => B.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg) || {};
+        const vistaEleitor = { rot: "Por eleitor", graf: () => barras(E.map((r) => ({ rot: String(r.nr_ano_eleicao), sub: reais(r.vr_publico), v: r.vr_por_eleitor, vTxt: centavos(r.vr_por_eleitor) })), { cor: COR.terra, cols: ["Eleição", "Dinheiro público", "Por eleitor"] }),
+          nota: "Dinheiro público recebido pelos candidatos de todos os cargos (fundo eleitoral e fundo partidário), dividido pelos eleitores do Brasil naquele ano. Valores da época, sem correção pela inflação." };
+        const vistaParte = { rot: "Parte da campanha", graf: () => linhas({ anos: E.map((r) => r.nr_ano_eleicao), max: 100, rot: "Parte do dinheiro das campanhas que é público", fmt: (v) => pct(v, 0), fmtPonto: (v) => pct(v, 0), fmtEixo: (t) => `${Math.round(t)}%`,
+            series: [{ nome: "Dinheiro público (% da receita)", curto: "Público", cor: COR.terra, grossa: true, v: E.map((r) => r.pc_publico) }] }),
+          nota: "Parte da receita de todos os candidatos que veio dos fundos públicos. Em 2015 o STF proibiu a doação de empresas; o fundo eleitoral foi criado em 2017." };
+        const vistaCargo = porEleicao("Por cargo", (E7, Y) => ({ rot: `Por cargo · ${Y}`, graf: () => barras(E7.map(([cg, a]) => { const r = b(a, cg); return r.qt_eleitos ? { rot: CARGO[cg], sub: `${a} · ${reais(r.vr_publico)} no total`, v: r.vr_publico_por_eleito, vTxt: reais(r.vr_publico_por_eleito) } : null; }).filter(Boolean),
+            { cor: COR.terra, cols: ["Cargo", "Eleição e total", "Por eleito"] }), nota: "Dinheiro público recebido pelos candidatos do cargo, dividido pelo número de eleitos." }), B.map((r) => r.nr_ano_eleicao), 2026);
+        const df = b(2026, "DEPUTADO FEDERAL"), ve = b(2024, "VEREADOR");
+        tema({ id: "e6", n: "+6", grupo: "Dinheiro", doGrupo: true, titulo: "Quanto o fundão custa para você?", mapa: "fundo",
+          enunciado: ["Quanto dinheiro público vai para as campanhas, e quanto isso dá por eleitor?"],
+          curta: `Em 2026, ${centavos(v26.vr_por_eleitor)} por eleitor: ${reais(v26.vr_publico)} de dinheiro público nas campanhas. Em 2010, ${centavos(v10.vr_por_eleitor)}.`,
+          kpis: [[centavos(v26.vr_por_eleitor), "de dinheiro público por eleitor nas campanhas de 2026"], [pct(v26.pc_publico, 0), "do dinheiro das campanhas veio dos fundos públicos"]],
+          tamanho: [{ tipo: "vezes", de: v10.vr_por_eleitor, para: v26.vr_por_eleitor, rotDe: "2010", rotPara: "2026", fmt: "centavos", texto: `O dinheiro público por eleitor ficou ${Math.round(v26.vr_por_eleitor / v10.vr_por_eleitor)} vezes maior de 2010 a 2026.` },
+            { tipo: "texto", n: reais(df.vr_publico_por_eleito), texto: "de dinheiro público para cada deputado federal eleito em 2026." }],
+          chute: { q: "Quanto você acha que deu, por eleitor, o dinheiro público das campanhas de 2026?", real: v26.vr_por_eleitor, min: 0, max: 100, passo: 1, fmt: "centavos" },
+          resposta: `Depois que as empresas foram proibidas de doar, o dinheiro público passou a pagar quase todas as campanhas: ${reais(v26.vr_publico)} em 2026, ou ${centavos(v26.vr_por_eleitor)} por eleitor, contra ${centavos(v10.vr_por_eleitor)} em 2010`,
+          partes: [
+            { q: "Quanto isso dá por eleitor?", a: `${centavos(v26.vr_por_eleitor)} em 2026, mais de 100 vezes os ${centavos(v10.vr_por_eleitor)} de 2010.`, p: [0], v: [0] },
+            { q: "Quanto da campanha é dinheiro público?", a: `Quase tudo: ${pct(v26.pc_publico, 0)} em 2026; em 2014, antes da proibição das empresas, ${pct(v14.pc_publico, 0)}.`, p: [1], v: [1] },
+            { q: "Para onde vai?", a: `Para deputado federal, ${reais(df.vr_publico)} em 2026, ${reais(df.vr_publico_por_eleito)} por eleito; para vereador, ${reais(ve.vr_publico_por_eleito)} por eleito em 2024.`, p: [2], v: [2] }],
+          pontos: [`<b>O salto veio com o fundo eleitoral:</b> de ${centavos(y(2016).vr_por_eleitor)} por eleitor em 2016 para ${centavos(v18.vr_por_eleitor)} em 2018, a primeira eleição com o fundo.`,
+            `<b>A parte pública não para de subir:</b> ${pct(v18.pc_publico, 0)} das campanhas em 2018, ${pct(v24.pc_publico, 0)} em 2024 e ${pct(v26.pc_publico, 0)} em 2026.`,
+            `<b>O cargo mais caro para o fundo é o de deputado federal:</b> ${reais(df.vr_publico_por_eleito)} por eleito em 2026.`],
+          vistas: [vistaEleitor, vistaParte, vistaCargo],
+          cuidado: ["Valores da época, sem correção pela inflação.", "É o dinheiro público declarado pelos candidatos; parte do fundo fica com os partidos e não chega a uma candidatura.", "Por eleitor é uma conta para dar tamanho ao número: o fundo é pago pelo orçamento federal, não por um imposto de cada eleitor."],
+          como: "Receitas dos candidatos marcadas como recurso público (Fundo Especial de Financiamento de Campanha e Fundo Partidário), de 2010 a 2026 (TSE), divididas pelos eleitores aptos do Brasil no ano.",
+          tabelas: ["receita", "vw_candidatura_resumo", "comparecimento"], consultas: ["e6a", "e6b"], fonte: "TSE, prestação de contas" });
+      }
+
+      // +7: o título no nome de urna
+      {
+        const E = L("e7a"), g = (a, cg, gr) => E.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_grupo === gr) || {};
+        const rel = g(2024, "VEREADOR", "religioso"), far = g(2024, "VEREADOR", "farda"), sem = g(2024, "VEREADOR", "sem título");
+        const rel00 = g(2000, "VEREADOR", "religioso"), far00 = g(2000, "VEREADOR", "farda");
+        const deF = g(2026, "DEPUTADO ESTADUAL", "farda"), deS = g(2026, "DEPUTADO ESTADUAL", "sem título"), deR = g(2026, "DEPUTADO ESTADUAL", "religioso");
+        const CR = "#7a3e9d", CF = "#3d5a40", CS = COR.cinza;
+        const anosV = [...new Set(E.filter((r) => r.ds_cargo === "VEREADOR").map((r) => r.nr_ano_eleicao))].sort();
+        const vistaQuantos = porCargo("Quantos usam", (a, cg) => { const ys = [...new Set(E.filter((r) => r.ds_cargo === cg).map((r) => r.nr_ano_eleicao))].sort(); if (ys.length < 2) return null;
+          return { rot: `Quantos usam · ${CARGO[cg]}`, legenda: leg([[CR, "Título religioso"], [CF, "Título de farda"]]),
+            graf: () => linhas({ anos: ys, rot: `Candidatos a ${CARGO[cg].toLowerCase()} com título no nome de urna`, fmt: (v) => V.int(v), fmtPonto: (v) => V.int(v), fmtEixo: (t) => V.int(t),
+              series: [{ nome: "Título religioso", curto: "Religioso", cor: CR, grossa: true, v: ys.map((a2) => g(a2, cg, "religioso").qt_candidaturas || null) }, { nome: "Título de farda", curto: "Farda", cor: CF, grossa: true, v: ys.map((a2) => g(a2, cg, "farda").qt_candidaturas || null) }] }),
+            nota: "Candidatos cujo nome de urna começa com um título religioso (Pastor, Irmão, Bispo, Missionário…) ou de farda (Delegado, Sargento, Cabo, Capitão…)." }; },
+          { cargos: [["VEREADOR", 2024], ["PREFEITO", 2024], ["DEPUTADO ESTADUAL", 2026], ["DEPUTADO FEDERAL", 2026]], padrao: "VEREADOR" });
+        const vistaElege = porEleicao("Quem se elege", (E7, Y) => ({ rot: `Quem se elege · ${Y}`, legenda: leg([[CR, "Religioso"], [CF, "Farda"], [CS, "Sem título"]]),
+          graf: () => pares(E7.map(([cg, a]) => { const s0 = g(a, cg, "sem título"); return s0.qt_candidaturas ? { rot: CARGO[cg], sub: String(a), v: [g(a, cg, "religioso").pc_eleitos ?? null, g(a, cg, "farda").pc_eleitos ?? null, s0.pc_eleitos] } : null; }).filter(Boolean),
+            { nomes: ["religioso", "farda", "sem título"], cores: [CR, CF, CS], max: 40, fmt: (v) => pct(v, 1), cols: ["Cargo", "Eleição"] }),
+          nota: "De cada 100 candidatos de cada grupo, quantos se elegeram. A barra vai até 40%." }), E.map((r) => r.nr_ano_eleicao), 2024);
+        tema({ id: "e7", n: "+7", grupo: "Perfil", doGrupo: true, titulo: "Pastor, Delegado, Sargento: o título no nome elege?", mapa: "religioso",
+          enunciado: ["Quantos candidatos usam um título religioso ou de farda no nome de urna, e eles se elegem mais?"],
+          curta: `Vereador 2024: ${pct(rel.pc_eleitos, 1)} dos candidatos com título religioso se elegeram; sem título, ${pct(sem.pc_eleitos, 1)}.`,
+          kpis: [[V.int(rel.qt_candidaturas), "candidatos a vereador com título religioso no nome (2024)"], [pct(rel.pc_eleitos, 1), "deles se elegeram; sem título, " + pct(sem.pc_eleitos, 1)]],
+          tamanho: [{ tipo: "cem", n: Math.round(rel.pc_eleitos), cor: CR, texto: `De cada 100 "pastores", "irmãos" e "missionários" candidatos a vereador em 2024, ${Math.round(rel.pc_eleitos)} se elegeram.` },
+            { tipo: "cem", n: Math.round(sem.pc_eleitos), cor: CS, texto: `De cada 100 candidatos sem título, ${Math.round(sem.pc_eleitos)}.` }],
+          chute: { q: "De cada 100 candidatos a vereador com título religioso no nome, quantos você acha que se elegeram em 2024?", real: rel.pc_eleitos, min: 0, max: 30, passo: 1, fmt: "pct" },
+          resposta: `O título religioso aparece cada vez mais, mas elege pouco: ${V.int(rel.qt_candidaturas)} candidatos a vereador usaram em 2024 (eram ${V.int(rel00.qt_candidaturas)} em 2000), e ${pct(rel.pc_eleitos, 1)} se elegeram, contra ${pct(sem.pc_eleitos, 1)} dos sem título`,
+          partes: [
+            { q: "Quantos usam título no nome?", a: `Cada vez mais: com título religioso, de ${V.int(rel00.qt_candidaturas)} candidatos a vereador em 2000 para ${V.int(rel.qt_candidaturas)} em 2024; de farda, de ${V.int(far00.qt_candidaturas)} para ${V.int(far.qt_candidaturas)}.`, p: [0], v: [0] },
+            { q: "O título ajuda a se eleger?", a: `O religioso, não: ${pct(rel.pc_eleitos, 1)} se elegeram vereador em 2024, contra ${pct(sem.pc_eleitos, 1)} dos sem título. O de farda chega perto: ${pct(far.pc_eleitos, 1)}.`, p: [1], v: [1] },
+            { q: "E para deputado?", a: `Para deputado estadual em 2026, a farda elegeu mais que a média (${pct(deF.pc_eleitos, 1)} contra ${pct(deS.pc_eleitos, 1)}); o título religioso, ${pct(deR.pc_eleitos, 1)}.`, p: [2], v: [1] }],
+          pontos: [`<b>O "Pastor" quase dobrou:</b> os candidatos a vereador com título religioso eram ${V.int(rel00.qt_candidaturas)} em 2000 e ${V.int(rel.qt_candidaturas)} em 2024.`,
+            `<b>Mas a urna não premia o título religioso:</b> em 2024, ${pct(rel.pc_eleitos, 1)} deles se elegeram vereador; dos sem título, ${pct(sem.pc_eleitos, 1)}.`,
+            `<b>A farda funciona melhor para deputado:</b> em 2026, ${pct(deF.pc_eleitos, 1)} dos candidatos a deputado estadual com título de farda se elegeram; a média dos sem título foi ${pct(deS.pc_eleitos, 1)}.`],
+          vistas: [vistaQuantos, vistaElege],
+          cuidado: ["O título é a primeira palavra do nome de urna. Muitos pastores e policiais não usam o título, e usar não prova a profissão.", "Abreviações (Pr., Sgt.) entram; títulos no meio do nome não.", "Em 2016 e 2020 houve candidaturas a mais por causa do fim das coligações para vereador; compare as porcentagens, não só as contagens."],
+          como: "Nome de urna de cada candidatura (TSE), de 1998 a 2026, separado pela primeira palavra em três grupos: título religioso, título de farda e sem título. Eleito ou não pela situação final.",
+          tabelas: ["candidatura", "cargo", "situacao_totalizacao"], consultas: ["e7a"], fonte: "TSE" });
+      }
+
+      // +8: candidaturas quase sem voto que receberam dinheiro público
+      {
+        const E = L("e8a"), g = (a, cg, ge) => E.find((r) => r.nr_ano_eleicao === a && r.ds_cargo === cg && r.ds_genero === ge) || {};
+        const f24 = g(2024, "VEREADOR", "FEMININO"), m24 = g(2024, "VEREADOR", "MASCULINO"), f16 = g(2016, "VEREADOR", "FEMININO"), f20 = g(2020, "VEREADOR", "FEMININO");
+        const CF = "#7a3e9d", CH = "#5f6670";
+        const vistaPc = porEleicao("Quantas", (E7, Y) => ({ rot: `Até 10 votos e dinheiro público · ${Y}`, legenda: leg([[CF, "Mulheres"], [CH, "Homens"]]),
+          graf: () => pares(E7.filter(([cg]) => PROPORC(cg)).map(([cg, a]) => { const f = g(a, cg, "FEMININO"), h = g(a, cg, "MASCULINO"); return f.qt_candidaturas ? { rot: CARGO[cg], sub: `${a} · ${V.int(f.qt_ate_10_com_publico)} mulheres, ${V.int(h.qt_ate_10_com_publico)} homens`, v: [f.pc_ate_10_com_publico, h.pc_ate_10_com_publico] } : null; }).filter(Boolean),
+            { nomes: ["mulheres", "homens"], cores: [CF, CH], max: 10, fmt: (v) => pct(v, 1), cols: ["Cargo", "Eleição"] }),
+          nota: "De cada 100 candidaturas aptas, quantas tiveram até 10 votos e mesmo assim receberam dinheiro público. A barra vai até 10%." }), E.map((r) => r.nr_ano_eleicao), 2024);
+        const fs = [...new Set(E.filter((r) => r.ds_cargo === "VEREADOR").map((r) => r.nr_ano_eleicao))].sort();
+        const vistaValor = { rot: "Quanto dinheiro (vereador)", legenda: leg([[CF, "Mulheres"], [CH, "Homens"]]),
+          graf: () => pares(fs.map((a) => ({ rot: String(a), v: [g(a, "VEREADOR", "FEMININO").vr_publico_ate_10 / 1e6, g(a, "VEREADOR", "MASCULINO").vr_publico_ate_10 / 1e6] })), { nomes: ["mulheres", "homens"], cores: [CF, CH], fmt: (v) => `R$ ${N1.format(v)} mi`, cols: ["Eleição"] }),
+          nota: "Dinheiro público recebido pelas candidaturas a vereador que tiveram até 10 votos, em milhões de reais da época." };
+        const porCand = f24.qt_ate_10_com_publico ? f24.vr_publico_ate_10 / f24.qt_ate_10_com_publico : null;
+        tema({ id: "e8", n: "+8", grupo: "Perfil", doGrupo: true, titulo: "Candidatas laranja?", mapa: "laranja",
+          enunciado: ["Quantas candidaturas tiveram quase nenhum voto e mesmo assim receberam dinheiro público? Isso é mais comum entre mulheres?"],
+          curta: `Em 2024, ${V.int(f24.qt_ate_10_com_publico)} candidatas a vereadora tiveram até 10 votos e receberam dinheiro público: ${reais(f24.vr_publico_ate_10)} ao todo.`,
+          kpis: [[V.int(f24.qt_ate_10_com_publico), "candidatas a vereadora com até 10 votos receberam dinheiro público (2024)"], [reais(f24.vr_publico_ate_10), `ao todo; entre os homens, ${reais(m24.vr_publico_ate_10)}`]],
+          tamanho: [{ tipo: "texto", n: reais(porCand), texto: "em média para cada uma dessas candidatas, que tiveram de 0 a 10 votos." }],
+          chute: { q: "Quanto dinheiro público você acha que foi, em 2024, para candidatas a vereadora que tiveram até 10 votos?", real: f24.vr_publico_ate_10 / 1e6, min: 0, max: 100, passo: 1, fmt: "milhoes" },
+          resposta: `Milhares de candidaturas quase sem voto recebem dinheiro público, e mais entre as mulheres, por causa da cota de 30%: em 2024, ${V.int(f24.qt_ate_10_com_publico)} candidatas a vereadora com até 10 votos receberam ${reais(f24.vr_publico_ate_10)}`,
+          partes: [
+            { q: "Quantas candidaturas quase sem voto receberam dinheiro público?", a: `Em 2024, ${V.int(f24.qt_ate_10_com_publico)} candidatas a vereadora (${reais(f24.vr_publico_ate_10)}) e ${V.int(m24.qt_ate_10_com_publico)} candidatos (${reais(m24.vr_publico_ate_10)}).`, p: [0], v: [1] },
+            { q: "É mais comum entre mulheres?", a: `Sim, para vereador: ${pct(f24.pc_ate_10_com_publico, 1)} das candidatas contra ${pct(m24.pc_ate_10_com_publico, 1)} dos candidatos em 2024. Para deputado, a diferença some.`, p: [1], v: [0] },
+            { q: "Cresceu com o fundo eleitoral?", a: `Muito: de ${reais(f16.vr_publico_ate_10)} em 2016 para ${reais(f24.vr_publico_ate_10)} em 2024, nas candidatas a vereadora com até 10 votos.`, p: [2], v: [1] }],
+          pontos: [`<b>O dinheiro chega a quem quase não teve voto:</b> em média ${reais(porCand)} para cada candidata a vereadora com até 10 votos que recebeu dinheiro público em 2024.`,
+            `<b>A cota cria candidaturas de mulheres, e o fundo as paga:</b> desde 2018 o partido tem de mandar pelo menos 30% do fundo para as candidatas; em 2020 eram ${V.int(f20.qt_ate_10_com_publico)} candidatas a vereadora com até 10 votos e dinheiro público.`,
+            `<b>Em 2016, antes do fundo eleitoral,</b> eram ${V.int(f16.qt_ate_10_com_publico)} e ${reais(f16.vr_publico_ate_10)}.`],
+          vistas: [vistaPc, vistaValor],
+          cuidado: ["Até 10 votos e dinheiro público não provam fraude: há quem desista no meio da campanha, adoeça ou faça campanha para o grupo. A investigação é da Justiça Eleitoral.", "Em 2024 e 2026 o TSE não publicou o detalhe da situação, e as renúncias não puderam ser tiradas.", "Valores da época, sem correção pela inflação."],
+          como: "Candidaturas a vereador e a deputado (TSE), sem as barradas pela Justiça Eleitoral, com os votos nominais do 1º turno e o dinheiro público declarado na prestação de contas.",
+          tabelas: ["candidatura", "pessoa", "votacao_candidato", "situacao_registro", "vw_candidatura_resumo"], consultas: ["e8a"], fonte: "TSE" });
+      }
+
+      // +9: as cidades que acertam o presidente
+      {
+        const D = L("e9a"), T9 = L("e9b"), nove = D.filter((r) => r.qt_eleicoes === 9), tot9 = nove.reduce((s, r) => s + r.qt_cidades, 0);
+        const perf = (nove.find((r) => r.qt_acertos === 9) || {}).qt_cidades || 0, oito = (nove.find((r) => r.qt_acertos === 8) || {}).qt_cidades || 0, top = T9[0] || {};
+        const vistaDist = { rot: "Quantas acertam", graf: () => barras(nove.slice().sort((a, b) => b.qt_acertos - a.qt_acertos).map((r) => ({ rot: `${r.qt_acertos} de 9`, v: r.qt_cidades, vTxt: V.int(r.qt_cidades) })), { cor: COR.verde, cols: ["Acertos", "Cidades"] }),
+          nota: `As ${V.int(tot9)} cidades que votaram nas 9 eleições para presidente de 1994 a 2026, pelo número de vezes em que o mais votado ali foi o eleito.` };
+        const vistaLista = vistaTabela("As maiores que sempre acertaram", ["Cidade", "Eleitores (2026)", "Acertos"], T9.map((r) => [`${V.esc(r.nm_municipio)} (${r.sg_uf})`, V.int(r.qt_eleitores), `${r.qt_acertos} de ${r.qt_acertos}`]),
+          "As 30 maiores cidades em que o mais votado para presidente foi o eleito em todas as eleições desde 1994 (ou desde que a cidade existe).");
+        tema({ id: "e9", n: "+9", grupo: "Território", doGrupo: true, titulo: "As cidades que acertam o presidente", mapa: "acerta",
+          enunciado: ["Existe cidade que sempre vota em quem vai ganhar para presidente?"],
+          curta: `${V.int(perf)} cidades votaram no vencedor em todas as 9 eleições para presidente desde 1994. A maior é ${top.nm_municipio} (${top.sg_uf}).`,
+          kpis: [[V.int(perf), "cidades acertaram o presidente nas 9 eleições, de 1994 a 2026"], ["47", "delas ficam em Minas Gerais"]],
+          tamanho: [{ tipo: "texto", n: `${Math.round((1000 * perf) / tot9) / 10}%`.replace(".", ","), texto: `das cidades acertaram as 9: algo como 1 em cada ${Math.round(tot9 / perf)}.` }],
+          chute: { q: "Em quantas cidades você acha que o mais votado para presidente foi sempre o eleito, nas 9 eleições desde 1994?", real: perf, min: 0, max: 1000, passo: 10, fmt: "int" },
+          resposta: `Poucas acertam sempre: das ${V.int(tot9)} cidades que votaram nas 9 eleições para presidente desde 1994, ${V.int(perf)} escolheram o vencedor todas as vezes, e 47 delas ficam em Minas Gerais`,
+          partes: [
+            { q: "Alguma cidade sempre acerta?", a: `${V.int(perf)} cidades acertaram as 9 eleições; a maior é ${top.nm_municipio} (${top.sg_uf}), com ${V.int(top.qt_eleitores)} eleitores.`, p: [0], v: [1] },
+            { q: "Quanto as cidades costumam acertar?", a: `A maioria acerta 7 ou 8 das 9: ${V.int((nove.find((r) => r.qt_acertos === 7) || {}).qt_cidades)} cidades acertaram 7, e ${V.int(oito)} acertaram 8.`, p: [1], v: [0] }],
+          pontos: [`<b>Minas é o termômetro:</b> 47 das ${V.int(perf)} cidades que sempre acertaram ficam em Minas Gerais.`,
+            `<b>Errar uma vez é comum:</b> ${V.int(oito)} cidades acertaram 8 das 9 eleições.`],
+          vistas: [vistaDist, vistaLista],
+          cuidado: ["Vale o turno decisivo (o 2º, quando houve).", "Cidade criada depois de 1994 entra com as eleições que disputou; na lista, 8 de 8 conta como sempre.", "Acertar não é prever: é parecer com a média do Brasil."],
+          como: "Votos para presidente por cidade (TSE), de 1994 a 2026: em cada eleição, o mais votado da cidade no turno decisivo é comparado com o eleito.",
+          tabelas: ["votacao_candidato", "candidatura", "situacao_totalizacao", "municipio", "comparecimento"], consultas: ["e9a", "e9b"], fonte: "TSE" });
       }
     }
     // a ordem segue os blocos do índice; dentro do bloco, os temas do enunciado e depois as perguntas do grupo
@@ -1370,6 +1509,7 @@
   const partesDe = (b) => (b.partes || [{ q: b.enunciado[0], p: b.pontos.map((_, i) => i), v: b.vistas.map((_, i) => i) }])
     .map((x) => ({ ...x, v: x.v.filter((k) => b.vistas[k]), p: x.p.filter((k) => b.pontos[k]) })).filter((x) => x.v.length || x.p.length);
 
+  V.pqCarregar = () => carregar();   // o mapa das respostas (js/lobby.js) usa as mesmas perguntas
   async function carregar() {
     if (CACHE) return CACHE;
     const P = await V.dados("br/perguntas");
@@ -1442,20 +1582,26 @@
 
   const BLOCOS = [["Dinheiro", "Quanto custa, quem paga e o que isso muda"], ["Perfil", "Quem são os candidatos e os eleitos"], ["Território", "O lugar e o voto"], ["Voto", "Como o eleitor vota (ou não vota)"], ["Partidos", "Propostas, partidos e Justiça Eleitoral"]];
   const tagGrupo = (b) => (b.doGrupo ? '<span class="pq-tag">Pergunta do grupo</span>' : "");
+  /* o comentário à mão embaixo da manchete (jornal rabiscado): curto, com o que o leitor não pode perder */
+  const NOTAS = { t1: "e 8 de cada 10 reais são dinheiro público", t6: "mais de 1 em cada 4 eleitores!", t11: "empresa não pode doar desde 2015",
+    e3: "não quer dizer que o programa compra voto", e4: "no eleitorado, elas são mais da metade", e5: "trocar não garante a volta",
+    e6: "dinheiro público = dos nossos impostos", e7: "o título não garante voto", e8: "candidata só no papel, pra cumprir a cota?", e9: "a maioria fica em Minas Gerais" };
   function paginaTema(b, temas, C) {
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
     const partes = partesDe(b), usados = new Set(partes.flatMap((x) => x.p)), outros = b.pontos.map((_, j) => j).filter((j) => !usados.has(j));
-    return `<div class="pagina pq-pagina">
+    const noMapa = V.lobbyTem && V.lobbyTem(b.id), nota = NOTAS[b.id];
+    return `<div class="pagina pq-pagina jornal" style="--bloco:${V.corBloco(b.grupo)}">
       <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a> <span aria-hidden="true">/</span> ${b.grupo}</p>
         <label class="pq-ir"><span>Ir para a pergunta</span><select id="pq-ir">${BLOCOS.map(([g]) => `<optgroup label="${g}">${temas.filter((t) => t.grupo === g).map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${V.esc(t.titulo)}${t.doGrupo ? " (do grupo)" : ""}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
       <header class="pq-cab">
-        <h1 class="pq-titulo">${b.titulo}</h1>${tagGrupo(b)}
+        <p class="pq-titulo">${b.titulo}</p>${tagGrupo(b)}
+        <h1 class="pq-resposta">${V.rCircularNumero(b.curta || b.resposta + ".")}</h1>
+        ${nota ? `<p class="pq-nota-linha">${V.rNota(nota, -2)}</p>` : ""}
         <details class="pq-enunciado"><summary>${b.doGrupo ? "A pergunta do grupo" : "O que o enunciado pede"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
-        <div class="pq-faixa">
-          <p class="pq-resposta">${b.curta || b.resposta + "."}</p>
-          ${b.kpis.length ? `<ul class="kpis kpis--tema">${b.kpis.map(([v, r]) => `<li><b>${v}</b><span>${r}</span></li>`).join("")}</ul>` : ""}
-        </div>
       </header>
+      ${b.kpis.length ? `<section class="pq-numeros" aria-label="Os números">${b.kpis.map(([v, r], k) => `<div><b>${k === 0 ? V.rSublinha(v) : k === 1 ? V.rMarca(v) : v}</b><span>${r}</span></div>`).join("")}</section>` : ""}
+      <p class="pq-acoes"><button type="button" class="btn" data-compartilhar>Compartilhar a resposta</button>${noMapa ? `<a class="btn" href="#/respostas/${b.id}">Ver no mapa do Brasil</a>` : ""}</p>
+      ${V.tamanhoHTML(b.tamanho, "#141414")}
       <section class="pq-partes" aria-labelledby="pq-partes-tit">
         <h2 class="pq-partes__tit" id="pq-partes-tit">${partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
         ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
@@ -1469,9 +1615,10 @@
       ${outros.length ? `<details class="pq-origem pq-pontos"><summary>Outros achados (${outros.length})</summary>
         <ul>${outros.map((j) => `<li>${b.pontos[j]}</li>`).join("")}</ul></details>` : ""}
       ${b.extra || ""}
-      <details class="pq-origem pq-cuidado"><summary>Cuidado ao ler estes números (${b.cuidado.length})</summary>
+      ${b.cuidado.length ? `<div class="pq-cuidado-postit">${V.rPostit(`<b>Cuidado ao ler:</b> ${b.cuidado[0]}`, -1.5)}</div>` : ""}
+      <details class="pq-origem pq-cuidado"><summary>Todos os cuidados ao ler estes números (${b.cuidado.length})</summary>
         <ul>${b.cuidado.map((c) => `<li>${c}</li>`).join("")}</ul></details>
-      <details class="pq-origem"><summary>De onde vêm esses números</summary>
+      <details class="pq-origem"><summary>Ler como fizemos: de onde vêm esses números</summary>
         <p>${b.como}</p>
         <p><b>Fonte:</b> ${b.fonte}.</p>
         <p><b>Tabelas do banco usadas:</b> ${b.tabelas.map((t) => `<code>${t}</code>`).join(", ")}.</p>
@@ -1493,17 +1640,30 @@
       ["A escolaridade dos candidatos é parecida com a da população?", "t4"], ["Quanto vale o voto só no partido (legenda)?", "t7"], ["O que dizem as propostas dos candidatos? (nuvem de palavras)", "t9"],
       ["Jovens e não jovens votam diferente?", "t10"], ["A doação de empresas tem lado político?", "t12"], ["O lado político de cada cidade e região mudou com o tempo?", "t14"],
       ["Dinheiro público ou privado: quem se elege com qual?", "t15"], ["Onde o candidato investe em propaganda? (nuvem de palavras)", "e1"], ["O político e sua linha do tempo: quanto dura uma carreira?", "e2"]];
-    return `<div class="pagina pq-pagina">
+    // a manchete da primeira página: a pergunta que mais mexe com o bolso do leitor
+    const capa = temas.find((t) => t.id === "e6") || temas[0];
+    return `<div class="pagina pq-pagina jornal">
       <header class="pq-cab">
         <h1 class="titulo-grande">Perguntas do trabalho</h1>
-        <p class="pq-mais">Os temas do enunciado e as perguntas do grupo, separados por assunto e respondidos com as eleições de 1994 a 2026 no Brasil inteiro, em ${P.consultas.length} consultas ao banco.</p>
-        <ul class="pq-banco">
-          <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
-          <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
-          <li><b>${mi(T.receitas + T.despesas)} mi</b><span>receitas e despesas</span></li>
-          <li><b>${V.int(T.municipios)}</b><span>cidades</span></li>
-        </ul>
+        <p class="pq-mais">Os temas do enunciado e as perguntas do grupo, respondidos com as eleições de 1994 a 2026 no Brasil inteiro. Os pontos que você não pode perder estão marcados à mão.</p>
       </header>
+      <section class="pq-capa" aria-label="Manchete">
+        <div class="pq-capa__manchete">
+          <span class="pq-tag">${capa.grupo}</span>
+          <h2><a href="#/perguntas/${capa.id}">${V.rCircularNumero(capa.curta)}</a></h2>
+          ${NOTAS[capa.id] ? `<p>${V.rNota(NOTAS[capa.id], -2)}</p>` : ""}
+          <p><a href="#/perguntas/${capa.id}">Ler a resposta completa</a></p>
+        </div>
+        <div class="pq-capa__lado">
+          <a class="pq-porta" href="#/respostas"><span><b>As respostas no mapa do Brasil</b>Cada pergunta pintada nas 5.570 cidades. Procure a sua.</span><span class="pq-porta__bt">Abrir o mapa</span></a>
+          <ul class="pq-banco">
+            <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
+            <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
+            <li><b>${mi(T.receitas + T.despesas)} mi</b><span>receitas e despesas</span></li>
+            <li><b>${V.int(T.municipios)}</b><span>cidades</span></li>
+          </ul>
+        </div>
+      </section>
       ${BLOCOS.map(([g, sub]) => { const ts = temas.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
         <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
         <ul class="pq-lista">${ts.map(item).join("")}</ul></section>` : ""; }).join("")}
@@ -1528,6 +1688,8 @@
 
   /* um só ouvinte de cliques para as páginas dos temas */
   document.getElementById("conteudo").addEventListener("click", (e) => {
+    if (e.target.closest("[data-compartilhar]") && ATUAL) { const b = ATUAL.b, k = b.kpis[0] || [];
+      V.compartilhar({ titulo: b.titulo, bloco: b.grupo, cor: V.corBloco(b.grupo), numero: k[0], rotulo: k[1], frase: b.curta || b.resposta }); return; }
     const ir = e.target.closest("[data-ir]");
     if (ir) { const alvo = document.getElementById("pq-parte-" + ir.dataset.ir); if (alvo) { alvo.closest(".pq-parte").scrollIntoView({ behavior: "smooth", block: "start" }); alvo.focus({ preventScroll: true }); } return; }
     const pn = e.target.closest(".pq-painel[data-p]");

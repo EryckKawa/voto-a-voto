@@ -1526,3 +1526,67 @@ WHERE length(ds_palavra) >= 4 AND ds_palavra NOT IN ('nulo', 'para', 'servicos',
 GROUP BY 1, 2, 3
 QUALIFY ROW_NUMBER() OVER (PARTITION BY nr_ano_eleicao, ds_cargo ORDER BY COUNT(*) DESC, ds_palavra) <= 40
 ORDER BY 1, 2, 4 DESC;
+
+-- @e6a | Pergunta do grupo: quanto o dinheiro público das campanhas (fundo eleitoral e fundo partidário) custa por eleitor, eleição a eleição
+-- Receita dos candidatos marcada como recurso público, de todos os cargos, dividida pelos eleitores aptos do Brasil naquele ano.
+WITH ap AS (SELECT e.nr_ano_eleicao a, max(q) aptos FROM (
+              SELECT cp.id_eleicao, cp.cd_cargo, sum(cp.qt_aptos) q FROM comparecimento cp WHERE cp.nr_turno = 1 GROUP BY 1, 2) x
+            JOIN eleicao e USING (id_eleicao) GROUP BY 1),
+     r AS (SELECT nr_ano_eleicao a, sum(vr_receita_publica) pub, sum(vr_receita_total) tot FROM vw_candidatura_resumo WHERE nr_ano_eleicao >= 2010 GROUP BY 1)
+SELECT r.a AS nr_ano_eleicao, round(r.pub, 0) AS vr_publico, round(100 * r.pub / nullif(r.tot, 0), 1) AS pc_publico,
+       ap.aptos AS qt_eleitores, round(r.pub / ap.aptos, 2) AS vr_por_eleitor
+FROM r JOIN ap USING (a) ORDER BY 1;
+
+-- @e6b | Pergunta do grupo: o dinheiro público por cargo e eleição (quanto foi para cada cargo e quanto por candidato eleito)
+SELECT nr_ano_eleicao, ds_cargo, round(sum(vr_receita_publica), 0) AS vr_publico, round(100 * sum(vr_receita_publica) / nullif(sum(vr_receita_total), 0), 1) AS pc_publico,
+       count_if(fl_eleito) AS qt_eleitos, round(sum(vr_receita_publica) / nullif(count_if(fl_eleito), 0), 0) AS vr_publico_por_eleito
+FROM vw_candidatura_resumo WHERE nr_ano_eleicao >= 2010 GROUP BY 1, 2 ORDER BY 1, 2;
+
+-- @e7a | Pergunta do grupo: "Pastor", "Delegado", "Sargento" — o título religioso ou de farda no nome de urna, e quantos se elegem
+-- O título é a primeira palavra do nome de urna (Pastor, Irmão, Bispo, Missionário...; Delegado, Sargento, Cabo, Capitão, Coronel, Policial...).
+WITH t AS (SELECT e.nr_ano_eleicao, cg.ds_cargo, split_part(upper(trim(c.nm_urna)), ' ', 1) w, COALESCE(st.fl_eleito, false) el
+           FROM candidatura c JOIN eleicao e USING (id_eleicao) JOIN cargo cg ON cg.cd_cargo = c.cd_cargo
+           LEFT JOIN situacao_totalizacao st USING (id_situacao) WHERE c.cd_cargo IN (6, 7, 11, 13) AND e.nr_ano_eleicao >= 1998),
+g AS (SELECT *, CASE WHEN w IN ('PASTOR','PASTORA','IRMÃO','IRMÃ','IRMAO','IRMA','BISPO','BISPA','MISSIONÁRIO','MISSIONÁRIA','MISSIONARIO','MISSIONARIA','PR','PRA','PR.','PRA.','PADRE','APÓSTOLO','APOSTOLO','PRESBÍTERO','PRESBITERO','DIÁCONO','DIACONO','EVANGELISTA') THEN 'religioso'
+                     WHEN w IN ('DELEGADO','DELEGADA','CAPITÃO','CAPITAO','CAPITÃ','SARGENTO','SGT','SGT.','CABO','CORONEL','CEL','CEL.','SOLDADO','SD','POLICIAL','TENENTE','TEN','TEN.','MAJOR','GENERAL','COMANDANTE','SUBTENENTE','INVESTIGADOR','INSPETOR','PM','GUARDA') THEN 'farda'
+                     ELSE 'sem título' END ds_grupo FROM t)
+SELECT nr_ano_eleicao, ds_cargo, ds_grupo, count(*) AS qt_candidaturas, count_if(el) AS qt_eleitos, round(100 * count_if(el) / count(*), 1) AS pc_eleitos
+FROM g GROUP BY 1, 2, 3 ORDER BY 1, 2, 3;
+
+-- @e8a | Pergunta do grupo: candidaturas com até 10 votos que receberam dinheiro público (o sinal das "candidaturas laranja"), por gênero
+-- Vereador e deputados; ficam de fora as barradas pela Justiça Eleitoral. Dinheiro público: fundos eleitoral e partidário recebidos pela candidatura.
+WITH v AS (SELECT id_candidatura, sum(qt_votos_nominais) q FROM votacao_candidato WHERE nr_turno = 1 GROUP BY 1),
+c AS (SELECT r.nr_ano_eleicao, r.ds_cargo, p.ds_genero, COALESCE(v.q, 0) votos, COALESCE(r.vr_receita_publica, 0) pub
+      FROM vw_candidatura_resumo r JOIN candidatura c USING (id_candidatura) JOIN pessoa p USING (id_pessoa) LEFT JOIN v USING (id_candidatura)
+      LEFT JOIN situacao_registro s USING (id_candidatura)
+      WHERE r.cd_cargo IN (6, 7, 13) AND r.nr_ano_eleicao >= 2016 AND p.ds_genero IN ('MASCULINO', 'FEMININO')
+        AND COALESCE(s.ds_situacao_candidatura, '') NOT LIKE 'INAPTO%'
+        AND COALESCE(s.ds_detalhe_situacao, '') NOT SIMILAR TO '.*(INDEFERIDO|RENÚNCIA|CANCELADO|CASSADO|FALECI).*')
+SELECT nr_ano_eleicao, ds_cargo, ds_genero, count(*) AS qt_candidaturas, count_if(votos <= 10) AS qt_ate_10_votos,
+       count_if(votos <= 10 AND pub > 0) AS qt_ate_10_com_publico, round(sum(CASE WHEN votos <= 10 THEN pub END), 0) AS vr_publico_ate_10,
+       round(100 * count_if(votos <= 10 AND pub > 0) / count(*), 1) AS pc_ate_10_com_publico
+FROM c GROUP BY 1, 2, 3 ORDER BY 1, 2, 3;
+
+-- @e9a | Pergunta do grupo: as cidades que acertam o presidente — em quantas das 9 eleições (1994 a 2026) o mais votado na cidade foi o eleito
+-- Vale o turno decisivo (o 2º, quando houve). A cidade "acerta" quando o mais votado nela foi quem venceu no Brasil.
+WITH v AS (SELECT e.nr_ano_eleicao a, vc.nr_turno t, vc.cd_municipio_tse m, c.id_pessoa, COALESCE(st.fl_eleito, false) el, sum(vc.qt_votos_nominais) q
+           FROM votacao_candidato vc JOIN candidatura c USING (id_candidatura) JOIN eleicao e USING (id_eleicao)
+           LEFT JOIN situacao_totalizacao st USING (id_situacao) WHERE c.cd_cargo = 1 GROUP BY 1, 2, 3, 4, 5),
+ult AS (SELECT a, max(t) t FROM v GROUP BY 1),
+esc AS (SELECT v.* FROM v JOIN ult USING (a, t) QUALIFY row_number() OVER (PARTITION BY v.a, v.m ORDER BY v.q DESC) = 1),
+ven AS (SELECT DISTINCT a, id_pessoa FROM v WHERE el),
+ac AS (SELECT esc.m, sum((ven.id_pessoa IS NOT NULL)::INT) acertos, count(*) eleicoes FROM esc LEFT JOIN ven USING (a, id_pessoa) GROUP BY 1)
+SELECT acertos AS qt_acertos, eleicoes AS qt_eleicoes, count(*) AS qt_cidades FROM ac GROUP BY 1, 2 ORDER BY 2, 1;
+
+-- @e9b | Pergunta do grupo: as maiores cidades que acertaram o presidente em todas as eleições de 1994 a 2026
+WITH v AS (SELECT e.nr_ano_eleicao a, vc.nr_turno t, vc.cd_municipio_tse m, c.id_pessoa, COALESCE(st.fl_eleito, false) el, sum(vc.qt_votos_nominais) q
+           FROM votacao_candidato vc JOIN candidatura c USING (id_candidatura) JOIN eleicao e USING (id_eleicao)
+           LEFT JOIN situacao_totalizacao st USING (id_situacao) WHERE c.cd_cargo = 1 GROUP BY 1, 2, 3, 4, 5),
+ult AS (SELECT a, max(t) t FROM v GROUP BY 1),
+esc AS (SELECT v.* FROM v JOIN ult USING (a, t) QUALIFY row_number() OVER (PARTITION BY v.a, v.m ORDER BY v.q DESC) = 1),
+ven AS (SELECT DISTINCT a, id_pessoa FROM v WHERE el),
+ac AS (SELECT esc.m, sum((ven.id_pessoa IS NOT NULL)::INT) acertos, count(*) eleicoes FROM esc LEFT JOIN ven USING (a, id_pessoa) GROUP BY 1),
+el AS (SELECT cp.cd_municipio_tse m, sum(cp.qt_aptos) aptos FROM comparecimento cp JOIN eleicao e USING (id_eleicao) WHERE e.nr_ano_eleicao = 2026 AND cp.nr_turno = 1 AND cp.cd_cargo = 1 GROUP BY 1)
+SELECT mu.nm_municipio, mu.sg_uf, mu.cd_municipio_ibge, el.aptos AS qt_eleitores, ac.acertos AS qt_acertos
+FROM ac JOIN municipio mu ON mu.cd_municipio_tse = ac.m JOIN el ON el.m = ac.m
+WHERE ac.acertos = ac.eleicoes ORDER BY el.aptos DESC LIMIT 30;
