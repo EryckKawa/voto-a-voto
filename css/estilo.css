@@ -1731,3 +1731,32 @@ body { background: var(--fundo); }
 /* número em tamanho real: "R$ 6,2 milhões" vem com espaço que não quebra; diminui um pouco e só quebra se precisar */
 .tamanho__item { min-width: 0; }
 .tamanho__n { font-size: clamp(32px, 3.6vw, 48px); overflow-wrap: break-word; }
+/* cartões do Explorar: o título cabe numa linha com a fonte de jornal */
+.vis-card__tit { font-size: 23px; letter-spacing: -.01em; }
+/* número-chave escrito por extenso ("Quase sempre") menor, para caber na caixa */
+.kpis b.kpis__palavra { font-size: clamp(22px, 3.2vw, 34px); }
+.kpis li { min-width: 0; }
+/* barras das perguntas: todas as linhas dividem as mesmas colunas, e a dos valores cabe o maior ("R$ 217,3 milhões") */
+@media (min-width: 721px) {
+  .pq-painel .barras { grid-template-columns: minmax(150px, 260px) minmax(0, 1fr) minmax(104px, max-content); }
+  .pq-painel .barras li { grid-column: 1 / -1; grid-template-columns: subgrid; }
+}
+
+/* ---------- números maiores e a caneta em mais lugares (18/11, depois da revisão do grupo) ---------- */
+/* o rabisco nunca muda a letra do número que ele marca (antes, ".kpis span" encolhia "42,6 milhões") */
+span.rb-alvo.rb-alvo { font: inherit; color: inherit; letter-spacing: inherit; }
+:root:has(.jornal-topo) {
+  --t-num-xl: 800 64px/1 var(--serif);
+  --t-num: 800 42px/1.02 var(--serif);
+}
+.kpis b { font: var(--t-num); }
+.kpis b.kpis__palavra { font-size: clamp(24px, 3.2vw, 36px); }
+.barras b { font-size: 26px; }
+.ranking b { font: 800 24px/1 var(--serif); }
+.placar__fatia b { font: 800 30px/1 var(--serif); }
+.duelo__linha b { font: 800 24px/1 var(--serif); }
+.manchete__sub { font-size: 21px; line-height: 1.4; }
+.manchete__nota, .pt-nota { margin: 4px 0 0; }
+.pq-parte__a .rb-marca { font-weight: 800; }
+.barras__rot small { font-size: 15px; }
+.kpis span { font-size: 16px; }

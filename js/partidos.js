@@ -184,10 +184,11 @@
         <h1 class="titulo-grande">Onde fica cada partido</h1>
         <p class="pq-resposta">Três estudos feitos por gente diferente põem o partido do mesmo lado em ${pct(igual, n)} das vezes. O voto na Câmara concorda com eles, menos no centrão${afast.length ? `: ${nomesL(afast)} votam mais ao centro do que os estudos dizem, porque acompanham o governo da vez` : ""}.</p>
         <ul class="kpis pt-kpis">
-          <li><b>${pct(igual, n)}</b><span>das vezes, os três estudos põem o partido do mesmo lado</span></li>
-          <li><b>Quase sempre</b><span>as quatro medidas dão notas parecidas a cada partido (correlação de ${r2(rmin)} a ${r2(rmax)}; 1 seria igual)</span></li>
-          <li><b>${nUlt}</b><span>partidos com nota em ${ultAno}</span></li>
+          <li><b>${V.rCirculo(pct(igual, n))}</b><span>das vezes, os três estudos põem o partido do mesmo lado</span></li>
+          <li><b class="kpis__palavra">Quase sempre</b><span>as quatro medidas dão notas parecidas a cada partido (correlação de ${r2(rmin)} a ${r2(rmax)}; 1 seria igual)</span></li>
+          <li><b>${V.rSublinha(String(nUlt))}</b><span>partidos com nota em ${ultAno}</span></li>
         </ul>
+        ${afast.length ? `<p class="pt-nota">${V.rNota("o centrão é a exceção: vota com o governo", -1.5)}</p>` : ""}
         <p class="pt-escala">A nota de cada partido vai de <b>−1</b> (mais à esquerda) a <b>+1</b> (mais à direita); entre −0,25 e +0,25 é centro.</p>
         <details class="mais pt-mais"><summary>Quem deu as notas e como elas viram uma régua só</summary><p class="pq-mais">Deputados federais (Zucco e Power, 2024), 519 cientistas políticos brasileiros (Bolognesi, Ribeiro e Codato, 2023) e especialistas internacionais (V-Party, 2022) deram notas aos partidos. A quarta medida é o que as bancadas mandaram votar na Câmara de 2019 a 2026, a única que já pega o PL de Bolsonaro e o União Brasil. Tudo fica na mesma escala, de −1 (esquerda) a +1 (direita). A nota de cada partido em cada eleição pesa mais a medida feita mais perto dela, e é a régua que pinta o mapa.</p></details>
       </header>

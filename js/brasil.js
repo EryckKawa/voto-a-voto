@@ -109,7 +109,7 @@
 
 
   /* link que guarda a eleição escolhida (prefeito 2024 é o padrão e não aparece no endereço) */
-  const lk = (uf, ib, e, cam) => { const cg = e ? e[0] : H ? H.cargo : "PREF", an = e ? e[1] : H ? H.ano : 2024, cm = cam || (H && H.cam) || "venc"; return "#/mapa" + (cg === "PREF" && an === 2024 ? "" : `/e/${cg}${an}`) + (cm !== "venc" ? `/v/${cm}` : "") + (uf ? "/br/" + uf + (ib ? "/c/" + ib : "") : ""); };
+  const lk = (uf, ib, e, cam) => { const cg = e ? e[0] : H ? H.cargo : "PRES", an = e ? e[1] : H ? H.ano : 2026, cm = cam || (H && H.cam) || "venc"; return "#/mapa" + (cg === "PRES" && an === 2026 ? "" : `/e/${cg}${an}`) + (cm !== "venc" ? `/v/${cm}` : "") + (uf ? "/br/" + uf + (ib ? "/c/" + ib : "") : ""); };
   V.linkBR = (uf, ib) => lk(uf, ib);
   const NO_UF = (uf) => (uf ? DO_UF[uf].replace(/^do /, "no ").replace(/^da /, "na ").replace(/^de /, "em ") : "no Brasil");
   const NOME_CG = { PREF: "prefeito", PRES: "presidente", GOV: "governador", SEN: "senador", DF: "deputado federal", DE: "deputado estadual", VER: "vereador" };
@@ -732,7 +732,8 @@
     const fatAntes = {}; cab.querySelectorAll(".placar__fatia[data-f]").forEach((el) => (fatAntes[el.dataset.f] = el.style.flexBasis));
     cab.innerHTML = `<p class="manchete__onde"><a href="${lk()}">Brasil</a>${uf ? ` › ${cid ? `<a href="${lk(uf)}">${UFN[uf]}</a> › ${V.esc(cid.nome)}` : UFN[uf]}` : ""} · ${V.CARGOS[cargo]} ${ano}</p>
         <h1 class="manchete__titulo">${m.tit}</h1>
-        ${m.sub ? `<p class="manchete__sub">${m.sub}</p>` : ""}
+        ${m.sub ? `<p class="manchete__sub">${/</.test(m.sub) ? m.sub : V.rMarcarNumero(m.sub, V.rMarca)}</p>` : ""}
+        ${!cid && !uf ? `<p class="manchete__nota">${V.rNota("clique na sua cidade!", -2)}</p>` : ""}
         ${cid ? barraCidade : apuracaoHtml(true) + placar(r, rotulosPlacar(cargo, BR.venc, uf)) + legendaPlacar(r, rotulosPlacar(cargo, BR.venc, uf))}`;
     cab.querySelectorAll(".conta").forEach((el) => { if (antes[el.dataset.f] != null && !trocou) tween(el, antes[el.dataset.f], r[el.dataset.f]); });
     const fats = cab.querySelectorAll(".placar__fatia[data-f]");
@@ -760,8 +761,9 @@
     // BR.venc é de todos: um pedido velho que termina depois não pode trocar a eleição do pedido atual
     const meu = V.pedido, velho = () => meu !== V.pedido;
     await base(); await V.geoBR(); if (velho()) return;
-    let cargo = cg || "PREF", ano = an ? +an : 2024;
-    if (!ELEICOES[cargo] || !ELEICOES[cargo].prontos.includes(ano)) { cargo = "PREF"; ano = 2024; }
+    // sem eleição no endereço, o mapa abre na mais recente para presidente
+    let cargo = cg || "PRES", ano = an ? +an : 2026;
+    if (!ELEICOES[cargo] || !ELEICOES[cargo].prontos.includes(ano)) { cargo = "PRES"; ano = 2026; }
     const venc = await V.dados("br/venc/" + cargo + ano); if (velho()) return;
     BR.venc = venc; BR.eleicao = { cargo, ano };
     // endereço digitado à mão: estado ou cidade inexistente cai no Brasil, e a cidade decide o estado

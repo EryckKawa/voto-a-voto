@@ -225,7 +225,7 @@
             <li><b>${cands.length}</b><span>${cands.length === 1 ? "candidatura" : "candidaturas"}</span></li>
             <li><b>${vit}</b><span>${vit === 1 ? "vitória" : "vitórias"}</span></li>
             <li><b>${anos[0]}${anos.length > 1 ? "–" + anos[anos.length - 1] : ""}</b><span>${anos.length} ${anos.length === 1 ? "eleição" : "eleições"}</span></li>
-            <li><b>${topo.v ? V.int(topo.v) : "—"}</b><span>maior votação (${CARGO[topo.c[1]]} ${topo.c[0]}${topo.t2 ? ", 2º turno" : ""})</span></li>
+            <li><b>${topo.v ? V.rCirculo(V.int(topo.v)) : "—"}</b><span>maior votação (${CARGO[topo.c[1]]} ${topo.c[0]}${topo.t2 ? ", 2º turno" : ""})</span></li>
           </ul></div>
       </header>
       ${semTitulo ? '<p class="aviso">O arquivo do TSE não trouxe o título de eleitor desta candidatura (acontece em 1996 e em registros incompletos). Sem ele, não dá para ligar com certeza as candidaturas desta pessoa em outros anos, que podem estar em outra ficha.</p>' : ""}

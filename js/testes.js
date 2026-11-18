@@ -63,7 +63,7 @@
   // VELOCIDADE (a primeira visita a cada página: os dados ainda não estão na memória)
   teste("Velocidade", "Página inicial (Ninguém) abre", () => medirPagina("#/", () => /Ninguém/.test(txt("main h1")), 1500, 300));
   teste("Velocidade", "O que o voto revela abre", () => medirPagina("#/revela", () => qq(".achado").length >= 5, 1200, 300));
-  teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /prefeituras/.test(txt("#manchete")), 2000, 600));
+  teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /2026.*cidades/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
   teste("Velocidade", "Perguntas do trabalho abre", () => medirPagina("#/perguntas", () => qq(".pq-lista a").length === 25, 1500, 400));
@@ -139,7 +139,7 @@
     return R(imgs.length >= cands + 1 && carregou, `${imgs.length} fotos para ${cands} candidatos a prefeito de Fortaleza (2024) · foto da urna ${carregou ? "carregou" : "não carregou"}`, "foto na urna (carregada) e em cada candidato da lista");
   });
   teste("Funcionamento", "▶ Passar os anos avança sozinho", async () => {
-    await irPara("#/mapa"); await quadros(2);
+    await irPara("#/mapa/e/PREF2024"); await quadros(2);
     q("#tocar").click();
     await ate(() => /\/e\/PREF(1996|2000)/.test(location.hash), 4000);
     const ano = location.hash; q("#tocar") && q("#tocar").click(); await new Promise((r) => setTimeout(r, 300));
@@ -316,7 +316,7 @@
   const NOME_E = { PRES: "presidente", PREF: "prefeito", GOV: "governador", DF: "deputado federal", VER: "vereador" };
   for (const e of ["PRES1994", "PREF1996", "PREF2024", "GOV2022", "DF2022", "VER1996"]) {
     teste("Preenchimento", `Mapa de ${NOME_E[e.slice(0, -4)]} ${e.slice(-4)}: nenhuma cidade em branco, legenda fecha a conta`, async () => {
-      await irPara(e === "PREF2024" ? "#/mapa" : "#/mapa/e/" + e); await ate(() => q("#apu-rever") && !q("#apu-rever").hidden, 8000); await quadros(2);
+      await irPara("#/mapa/e/" + e); await ate(() => q("#apu-rever") && !q("#apu-rever").hidden, 8000); await quadros(2);
       const ps = qq("#mapa-br path.mun"), branco = ps.filter((p) => { const f = p.getAttribute("fill"); return !f || f === "none" || f === "#eceef1"; });
       const num = (id) => (q(id) && !q(id).closest("[hidden]") ? +q(id).textContent.replace(/\D/g, "") : 0);
       const comCor = ps.filter((p) => !/^url/.test(p.getAttribute("fill") || "")).length;
@@ -537,6 +537,20 @@
     await irPara("#/perguntas/e8"); await ate(() => q("h1.pq-resposta"), 8000).catch(() => {}); confere.push(txt("h1.pq-resposta").includes(new Intl.NumberFormat("pt-BR").format(e8.qt_ate_10_com_publico)));
     const contaCerta = Math.abs(u.vr_publico / u.qt_eleitores - u.vr_por_eleitor) < 0.01;
     return R(confere.every(Boolean) && contaCerta, `cidades que sempre acertam ${confere[0] ? "ok" : "diferente"} (${e9.qt_cidades}); fundão por eleitor ${confere[1] ? "ok" : "diferente"}; candidatas com até 10 votos ${confere[2] ? "ok" : "diferente"}; dinheiro ÷ eleitores ${contaCerta ? "confere" : "não confere"}`, "as manchetes de +6, +8 e +9 com os números do banco; R$ por eleitor = total ÷ eleitores");
+  });
+  teste("Jornal e diferenciais", "O mapa abre em presidente, na eleição de 2026", async () => {
+    await irPara("#/mapa"); await ate(() => /2026/.test(txt("#manchete")), 10000).catch(() => {});
+    const ativo = qq("#controles .chip[aria-pressed='true'], #controles .chip[aria-current]").map((e) => e.textContent.trim()).join(" · ");
+    return R(/Presidente 2026/.test(txt(".manchete__onde")) && /Lula/.test(txt(".manchete__titulo")), `${txt(".manchete__onde")} · ${txt(".manchete__titulo").slice(0, 60)} · botões: ${ativo}`, "Presidente 2026, com Lula na manchete");
+  });
+  teste("Jornal e diferenciais", "Caneta e marca-texto nas páginas principais", async () => {
+    const pags = [["#/", "h1"], ["#/mapa", "#manchete"], ["#/revela", ".achado"], ["#/partidos", ".pt-kpis"], ["#/perguntas/t1", ".pq-parte__a"], ["#/edicao/2211001", ".dif-jornal h1"]], poucas = [], cont = [];
+    for (const [h, sel] of pags) {
+      await irPara(h, 25000).catch(() => {}); await ate(() => q(sel), 12000).catch(() => {}); await quadros(2);
+      const n = qq("#conteudo .rb-alvo, #conteudo .rb-marca, #conteudo .rb-nota, #conteudo .rb-carimbo, #conteudo .rb-postit").length;
+      cont.push(`${h} ${n}`); if (n < 3) poucas.push(h);
+    }
+    return R(!poucas.length, cont.join(" · "), "3 ou mais rabiscos (círculo, sublinhado, marca-texto ou nota) em cada página");
   });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];

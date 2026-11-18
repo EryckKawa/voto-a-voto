@@ -98,7 +98,7 @@
         <ul class="kpis ninguem__kpis">
           <li><b>${V.rSublinha(mi(ning))}</b><span>de eleitores não escolheram ninguém para prefeito em 2024</span></li>
           <li><b>${V.rMarca((ning / top[1]).toFixed(1).replace(".", ",") + " vezes")}</b><span>os votos do partido mais votado, o ${V.esc(top[0])} (${mi(top[1])})</span></li>
-          <li><b>${V.int(cidadesNinguem)}</b><span>cidades onde Ninguém teve mais votos que o candidato mais votado</span></li>
+          <li><b>${V.rCirculo(V.int(cidadesNinguem))}</b><span>cidades onde Ninguém teve mais votos que o candidato mais votado</span></li>
         </ul>
         <p class="ninguem__nota">${V.rNota(`nenhum partido teve tantos votos!`, -2)}</p>
       </header>
@@ -121,7 +121,8 @@
       </section>
 
       <section class="ninguem__secao" id="capitais">
-        <h2 class="ninguem__h2">Em 2024, Ninguém venceu em ${venceu.length} capitais</h2>
+        <h2 class="ninguem__h2">Em 2024, Ninguém venceu em ${V.rCirculo(venceu.length + " capitais")}</h2>
+        <p class="ninguem__nota">${V.rNota("o mais votado perdeu para o Ninguém!", -1.5)}</p>
         <p class="ninguem__sub">No 1º turno, ele teve mais votos que o candidato a prefeito mais votado em ${venceu.map((x) => x.c.nome).join(", ").replace(/, ([^,]*)$/, " e $1")}. No país todo, foram ${V.int(cidadesNinguem)} cidades.</p>
         <ol class="duelos duelos--grade">${lista(venceu.slice(0, 6))}</ol>
         <details class="duelos__mais"><summary>Ver as outras ${caps.length - Math.min(6, venceu.length)} capitais</summary><ol class="duelos duelos--grade">${lista([...venceu.slice(6), ...caps.filter((x) => x.n <= x.v)])}</ol></details>
@@ -137,7 +138,7 @@
 
       <section class="ninguem__secao" id="cap-1">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>1</b></span><span class="visualmente-oculto">Capítulo 1 · Quem é o Ninguém</span></p>
-        <h2 class="ninguem__h2">${Math.round(pf / 10)} em cada 10 votos do Ninguém são de quem nem foi votar</h2>
+        <h2 class="ninguem__h2">${V.rCirculo(Math.round(pf / 10) + " em cada 10")} votos do Ninguém são de quem nem foi votar</h2>
         <p class="ninguem__sub">Os outros são de quem foi até a urna e não escolheu ninguém: ${mi(P.nulos)} anularam e ${mi(P.brancos)} votaram em branco.</p>
         <div class="dez" role="img" aria-label="De cada 10 votos do Ninguém, ${Math.round(pf / 10)} são de quem não foi votar">${(() => { const nf = Math.round(pf / 10), nn = Math.max(1, Math.round(pn / 10)), nb = Math.max(0, 10 - nf - nn); return [["falta", nf, nf + " não foram votar"], ["nulo", nn, nn + " anulou"], ["branco", nb, nb + " votou em branco"]].filter((g) => g[1]).map(([k, n, rot]) => `<span class="dez__g dez__g--${k}"><span class="dez__fig">${PESSOA[k].repeat(n)}</span><small>${rot}</small></span>`).join(""); })()}</div>
         <div class="composicao" role="img" aria-label="Ninguém: ${V.pct(pf)} não foram votar, ${V.pct(pn)} anularam, ${V.pct(pb)} votaram em branco">
@@ -151,7 +152,7 @@
 
       <section class="ninguem__secao" id="cap-2">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>2</b></span><span class="visualmente-oculto">Capítulo 2 · Onde ele mora</span></p>
-        <h2 class="ninguem__h2">Nas cidades grandes, Ninguém é ${V.pct(porTam[4].v, 0)} do eleitorado; nas pequenas, ${V.pct(porTam[0].v, 0)}</h2>
+        <h2 class="ninguem__h2">Nas cidades grandes, Ninguém é ${V.rCirculo(V.pct(porTam[4].v, 0))} do eleitorado; nas pequenas, ${V.rSublinha(V.pct(porTam[0].v, 0))}</h2>
         <p class="ninguem__sub">Quanto maior a cidade, maior o Ninguém. Cada cidade do mapa está pintada pela parte dos eleitores que não foi votar, anulou ou votou em branco em 2024.</p>
         <div class="cap2">
           <div class="cap2__mapa"><div id="mapa-ninguem"></div><p class="cap2__leg"><span>menos</span><i></i><span>mais Ninguém</span></p></div>
@@ -161,7 +162,7 @@
 
       <section class="ninguem__secao" id="cap-3">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>3</b></span><span class="visualmente-oculto">Capítulo 3 · Ele é rico ou pobre?</span></p>
-        <h2 class="ninguem__h2">Nas cidades mais ricas, Ninguém é ${V.pct(porRenda[4].v, 0)} do eleitorado; nas mais pobres, ${V.pct(porRenda[0].v, 0)}</h2>
+        <h2 class="ninguem__h2">Nas cidades mais ricas, Ninguém é ${V.rCirculo(V.pct(porRenda[4].v, 0))} do eleitorado; nas mais pobres, ${V.rSublinha(V.pct(porRenda[0].v, 0))}</h2>
         <p class="ninguem__sub">As cidades foram divididas em cinco grupos do mesmo tamanho pela riqueza produzida por habitante (PIB per capita). Nas mais pobres, menos gente falta e menos gente anula. Uma hipótese: lá, a prefeitura pesa mais na vida de cada um.</p>
         ${barrasH(porRenda.map((x) => ({ rot: x.rot, v: x.v, partes: [{ v: x.ab, cls: "ninguem-barra", tit: "Não foram votar: " + V.pct(x.ab) }, { v: x.bn, cor: "#8f939b", tit: "Branco e nulo: " + V.pct(x.bn) }] })), 45)}
         <p class="achado__leg"><span><i class="ninguem-barra"></i>não foram votar</span><span><i style="background:#8f939b"></i>branco e nulo</span></p>
@@ -171,7 +172,7 @@
 
       <section class="ninguem__secao" id="cap-4">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>4</b></span><span class="visualmente-oculto">Capítulo 4 · Quantos anos ele tem</span></p>
-        <h2 class="ninguem__h2">Quem mais vai votar tem 16 anos: só ${V.pct(idadesT[0].p, 0)} faltaram. Quem mais falta tem entre 21 e 29: ${V.pct(p2129, 0)}</h2>
+        <h2 class="ninguem__h2">Quem mais vai votar tem 16 anos: só ${V.pct(idadesT[0].p, 0)} faltaram. Quem mais falta tem entre 21 e 29: ${V.rCirculo(V.pct(p2129, 0))}</h2>
         <p class="ninguem__sub">Aos 16 e 17 anos o voto é opcional: só tira o título quem quer, e quem tira, vai. A falta cresce até os vinte e poucos, cai com a idade e dispara depois dos 70, quando o voto volta a ser opcional (${V.pct(p70, 0)} de falta a partir dos 70).</p>
         <div class="idade" id="graf-idade"></div>
         <p class="achado__leg"><span><i class="ninguem-barra"></i>voto obrigatório</span><span><i style="background:#b9bcc3"></i>voto opcional (16 e 17 anos, 70 ou mais)</span></p>
@@ -185,7 +186,7 @@
 
       <section class="ninguem__secao" id="cap-5">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>5</b></span><span class="visualmente-oculto">Capítulo 5 · Preguiça ou protesto?</span></p>
-        <h2 class="ninguem__h2">Quando a disputa esquentou, o voto branco e nulo para presidente caiu pela metade. A falta, não.</h2>
+        <h2 class="ninguem__h2">Quando a disputa esquentou, o voto branco e nulo para presidente caiu pela metade. ${V.rMarca("A falta, não.")}</h2>
         <p class="ninguem__sub">Em 2018, ${V.pct(e18.bnC)} de quem foi votar anulou ou votou em branco para presidente; em 2022, ${V.pct(e22.bnC)}. Mas a parte que nem foi votar ficou parecida: ${V.pct(e18.ab)} e ${V.pct(e22.ab)} dos eleitores. Para presidente, Ninguém venceu o mais votado em ${V.int(vence(N18))} cidades em 2018 e em só ${V.int(vence(N22))} em 2022.</p>
         ${barrasH(eleicoes.map((x) => ({ rot: String(x.a), sub: x.cg, v: x.ab + x.nu + x.br, partes: [{ v: x.ab, cls: "ninguem-barra", tit: "Não foram votar: " + V.pct(x.ab) }, { v: x.nu, cor: "#686c75", tit: "Nulos: " + V.pct(x.nu) }, { v: x.br, cor: "#c9ccd2", tit: "Brancos: " + V.pct(x.br) }] })), 35)}
         <p class="achado__leg"><span><i class="ninguem-barra"></i>não foram votar</span><span><i style="background:#686c75"></i>nulos</span><span><i style="background:#c9ccd2"></i>brancos</span></p>
@@ -194,7 +195,7 @@
 
       <section class="ninguem__secao" id="cap-6">
         <p class="ninguem__cap"><span class="digitos digitos--cap" aria-hidden="true"><b>6</b></span><span class="visualmente-oculto">Capítulo 6 · Quem governa, com o voto de quem?</span></p>
-        <h2 class="ninguem__h2">${Math.round((10 * menosMetade) / pe.length)} em cada 10 prefeitos foram eleitos com o voto de menos da metade dos eleitores da cidade</h2>
+        <h2 class="ninguem__h2">${V.rCirculo(Math.round((10 * menosMetade) / pe.length) + " em cada 10")} prefeitos foram eleitos com o voto de menos da metade dos eleitores da cidade</h2>
         <p class="ninguem__sub">Somando quem faltou, quem anulou, quem votou em branco e quem votou em outro candidato, ${V.int(menosMetade)} dos ${V.int(pe.length)} prefeitos eleitos em 2024 não tiveram o voto da maioria dos eleitores. Nas capitais, ${capsMenos} de ${capsEl.length}.</p>
         <ol class="governa">${capsEl.map((x) => `<li><span class="governa__cid">${V.esc(x.c.nome)} <small>${V.esc(x.nome)} · ${V.esc(x.sg)}${x.t === 2 ? " · 2º turno" : ""}</small></span><span class="governa__barra" role="img" aria-label="${V.pct(x.p)} dos eleitores"><i style="width:${x.p}%"></i><em></em></span><b>${V.pct(x.p, 0)}</b></li>`).join("")}</ol>
         <p class="achado__leg"><span><i style="background:var(--confirma)"></i>votou no eleito</span><span>a linha preta marca a metade dos eleitores</span></p>

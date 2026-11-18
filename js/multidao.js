@@ -24,7 +24,7 @@
     ];
     main.innerHTML = `<div class="pagina pagina--larga vis">
       <header class="manchete"><p class="manchete__onde"><a href="#/explorar">Explorar</a> · <a href="#/">Ninguém</a> · A multidão</p>
-        <h1 class="manchete__titulo">${mi(total)} milhões de pessoas, um ponto para cada mil</h1></header>
+        <h1 class="manchete__titulo">${V.rCirculo(mi(total) + " milhões")} de pessoas, um ponto para cada mil</h1></header>
       <div class="vis-multidao">
         <div class="vis-passos" role="group" aria-label="Passos">${PASSOS.map(([t], k) => `<button type="button" class="chip" data-passo="${k}" aria-pressed="${k === 0}">${k + 1}. ${t}</button>`).join("")}</div>
         <p class="vis-multidao__txt" id="mult-txt" aria-live="polite"></p>

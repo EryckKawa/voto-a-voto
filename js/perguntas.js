@@ -1607,7 +1607,7 @@
         ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
         ${partes.map((pt, k) => `<article class="pq-parte" aria-labelledby="pq-parte-${k}">
           <h3 class="pq-parte__q" id="pq-parte-${k}" tabindex="-1">${pt.q}</h3>
-          ${pt.a ? `<p class="pq-parte__a">${pt.a}</p>` : ""}
+          ${pt.a ? `<p class="pq-parte__a">${/</.test(pt.a) ? pt.a : V.rMarcarNumero(pt.a, V.rMarca)}</p>` : ""}
           ${painelHTML(b, pt, k)}
           ${pt.p.length ? `<details class="mais pq-parte__r"><summary>Os números em detalhe</summary>${pt.p.map((j) => `<p>${b.pontos[j]}</p>`).join("")}</details>` : ""}
         </article>`).join("")}

@@ -15,7 +15,7 @@
     const pessoa = (k, eleito) => `<span class="santo"><span class="mini-foto"><span class="iniciais" style="background:${V.parNota(nt(k[1]))[0]};color:${V.parNota(nt(k[1]))[1]};font-size:16px">${V.esc(V.iniciais(k[0]))}</span></span><span class="santo__nome">${V.esc(V.titulo(k[0]))} <small>${V.esc(k[1])}</small>${eleito ? '<span class="selo selo--eleito">Eleito</span>' : ""}</span></span>`;
     document.title = "Disputas apertadas · Voto a voto";
     main.innerHTML = `<div class="pagina pagina--larga">
-      <header class="manchete"><p class="manchete__onde"><a href="#/mapa">Brasil</a> · Prefeito ${ano}</p>
+      <header class="manchete"><p class="manchete__onde"><a href="#/mapa/e/PREF${ano}">Brasil</a> · Prefeito ${ano}</p>
         <h1 class="manchete__titulo">Em ${ano}, ${V.int(ate10)} prefeituras foram decididas por menos de 10 votos</h1>
         <p class="manchete__sub">${empates ? `Em ${V.int(empates)} ${empates === 1 ? "cidade houve empate" : "cidades houve empate"}: pela lei, vence o candidato mais velho. ` : ""}Abaixo, as ${top.length} disputas mais apertadas do país, da menor diferença para a maior.</p></header>
       <ol class="apertadas">${top.map(({ c, w }) => { const C = U[c.uf].c, a = C[w[0]], b = C[w[6]];

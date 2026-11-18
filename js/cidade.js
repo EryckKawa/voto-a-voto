@@ -43,7 +43,7 @@
         const N = await nomesBR();
         const nac = N.filter((x) => x.n.includes(t)).sort((a, b) => b.r[6] - a.r[6]).slice(0, 6).map(({ r }) => {
           const [nome, sg, cg, ano, uf, ib, , el] = r, c = ib && BR.porIbge.get(ib);
-          const h = "#/mapa" + (cg === "PREF" && ano === 2024 ? "" : "/e/" + cg + ano) + (uf ? "/br/" + uf + (c ? "/c/" + ib : "") : "");
+          const h = "#/mapa" + (cg === "PRES" && ano === 2026 ? "" : "/e/" + cg + ano) + (uf ? "/br/" + uf + (c ? "/c/" + ib : "") : "");
           const s = sg + " · " + (cg === "PREF" ? `eleito prefeito de ${c ? c.nome + " (" + uf + ")" : uf} em ${ano}` : `${V.CARGOS[cg]} ${ano}${uf ? " · " + uf : ""}${el ? " · eleito" : ""}`);
           return { h, v: r[6], ico: '<span class="busca__ico" style="background:' + V.corPartido(sg) + '">' + V.esc(V.iniciais(nome)) + "</span>", t: V.titulo(nome), s };
         });
