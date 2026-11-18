@@ -50,7 +50,8 @@
   let S = null;   // o estado da página
   const camada = (k) => V.dados("br/lobby/" + k);
 
-  /* ---------- cores ---------- */
+  /* ---------- cores e tamanhos: cada cidade é uma bolinha no centro dela ---------- */
+  const TINTA = "#2B2B2B", CANETA = "#E0186C", APAGADO = "#D3CFC4";
   function escala() {
     const m = CAM[S.cam], vals = valores(), ok = vals.filter((v) => v != null);
     if (S.modo === "mud") {
@@ -67,10 +68,10 @@
     else if (S.clas === "faixas" && m.fixas) { cortes = m.fixas; rots = m.rotFixas; }
     else if (S.clas === "faixas") { const a = d3.quantile(ord, 0.02), b = d3.quantile(ord, 0.98), p = (b - a) / 5; cortes = [1, 2, 3, 4].map((k) => a + k * p); }
     else { cortes = [0.2, 0.4, 0.6, 0.8].map((q) => d3.quantile(ord, q)); }
-    const n = cortes.length + 1, base = d3.interpolateRgb("#f1efe9", m.cor), cores = d3.range(n).map((k) => base(n === 2 ? (k ? 0.85 : 0.22) : 0.12 + (0.88 * k) / (n - 1)));
-    if (!rots) { const f = (v) => fmt(m.fmt, v); rots = cores.map((_, k) => (k === 0 ? "até " + f(cortes[0]) : k === n - 1 ? "mais de " + f(cortes[n - 2]) : f(cortes[k - 1]) + " a " + f(cortes[k]))); }
+    const n = cortes.length + 1, raios = n === 2 ? [1.3, 3.4] : [0.9, 1.6, 2.3, 3.1, 4.1].slice(5 - n);
+    if (!rots) { const f = (v) => fmt(m.fmt, v); rots = raios.map((_, k) => (k === 0 ? "até " + f(cortes[0]) : k === n - 1 ? "mais de " + f(cortes[n - 2]) : f(cortes[k - 1]) + " a " + f(cortes[k]))); }
     const classe = (v) => { let k = 0; while (k < cortes.length && v > cortes[k]) k++; return k; };
-    return { val: vals, cor: (v) => (v == null ? null : cores[classe(v)]), leg: { itens: cores.map((c, k) => [c, rots[k]]) } };
+    return { val: vals, cor: (v) => (v == null ? null : TINTA), raio: (v) => raios[classe(v)], leg: { pontos: raios.map((r, k) => [r, rots[k]]) } };
   }
   const anosDa = () => (S.dados.anos[S.var] || []);
   const anoAnterior = () => { const a = anosDa(), i = a.indexOf(S.ano); return i > 0 ? a[i - 1] : null; };
@@ -94,16 +95,48 @@
     cv.style.width = larg + "px"; cv.style.height = Math.round(S.G.H * S.esc) + "px";
     S.ctx.setTransform(S.esc * dpr, 0, 0, S.esc * dpr, 0, 0);
   }
-  function pintar() {
+  function pintar(prog = 1) {
     const { ctx, G } = S, e = S.e = escala();
     ctx.clearRect(0, 0, G.W, G.H);
-    for (let i = 0; i < S.paths.length; i++) {
-      const c = passa(i) ? e.cor(e.val[i]) || "#e6e8eb" : "#f4f5f7";
-      ctx.fillStyle = c; ctx.fill(S.paths[i]);
+    for (let i = 0; i < G.mun.length; i++) {
+      const [x, y] = G.mun[i].c, v = e.val[i], ok = passa(i) && v != null;
+      ctx.fillStyle = ok ? e.cor(v) || APAGADO : APAGADO;
+      ctx.beginPath(); ctx.arc(x, y, ok ? (e.raio ? e.raio(v) : 2.2) : 0.8, 0, 2 * Math.PI); ctx.fill();
     }
-    ctx.strokeStyle = "rgba(255,255,255,.95)"; ctx.lineWidth = 1.2 / S.esc; for (const u of S.ufs) ctx.stroke(u);
-    const marca = (i, cor, larg) => { if (i == null || i < 0) return; ctx.strokeStyle = cor; ctx.lineWidth = larg / S.esc; ctx.stroke(S.paths[i]); const [x, y] = G.mun[i].c; ctx.beginPath(); ctx.arc(x, y, 9 / S.esc, 0, 2 * Math.PI); ctx.stroke(); };
-    marca(S.minha, "#141414", 2.6); if (S.sel !== S.minha) marca(S.sel, "#E0186C", 2.8);
+    // a caneta: a sua cidade circulada com seta e bilhete; a cidade clicada, só circulada
+    const circulo = (i, p) => {
+      if (i == null || i < 0) return;
+      const [x, y] = G.mun[i].c, pts = [[-30, 6], [-34, -30, 26, -36, 34, -6], [40, 24, -4, 38, -24, 26], [-36, 18, -30, -14, -12, -24]];
+      ctx.save(); ctx.strokeStyle = CANETA; ctx.lineWidth = 4.5; ctx.lineCap = "round";
+      const comp = 260; ctx.setLineDash([comp * p, comp]);
+      ctx.beginPath(); ctx.moveTo(x + pts[0][0], y + pts[0][1]);
+      for (const c of pts.slice(1)) ctx.bezierCurveTo(x + c[0], y + c[1], x + c[2], y + c[3], x + c[4], y + c[5]);
+      ctx.stroke(); ctx.restore();
+    };
+    const bilhete = (i, txt, p) => {
+      if (i == null || i < 0 || p < 1) return;
+      const [x, y] = G.mun[i].c, esq = x > G.W * 0.55, sx = esq ? -1 : 1;
+      ctx.save(); ctx.strokeStyle = CANETA; ctx.lineWidth = 4; ctx.lineCap = "round";
+      ctx.beginPath(); ctx.moveTo(x + sx * 110, y - 120); ctx.bezierCurveTo(x + sx * 105, y - 75, x + sx * 70, y - 55, x + sx * 34, y - 34);
+      ctx.moveTo(x + sx * 34, y - 34); ctx.lineTo(x + sx * 54, y - 40); ctx.moveTo(x + sx * 34, y - 34); ctx.lineTo(x + sx * 40, y - 54); ctx.stroke();
+      ctx.font = '400 34px "Permanent Marker", cursive'; ctx.fillStyle = CANETA; ctx.textAlign = esq ? "right" : "left";
+      ctx.lineJoin = "round"; ctx.strokeStyle = "#F6F5F1"; ctx.lineWidth = 8;
+      ctx.strokeText("a sua cidade!", x + sx * 80, y - 160); ctx.fillText("a sua cidade!", x + sx * 80, y - 160);
+      ctx.font = '400 26px "Permanent Marker", cursive'; ctx.fillStyle = "#141414";
+      ctx.strokeText(txt, x + sx * 80, y - 128); ctx.fillText(txt, x + sx * 80, y - 128);
+      ctx.restore();
+    };
+    circulo(S.minha, prog);
+    if (S.minha != null && S.minha >= 0) bilhete(S.minha, S.cids[S.minha] ? S.cids[S.minha].nome : "", prog);
+    if (S.sel != null && S.sel !== S.minha) circulo(S.sel, prog);
+  }
+  /* a caneta circula devagar quando a cidade muda */
+  function desenharCaneta() {
+    const k = S.minha + ":" + S.sel; if (k === S.ultimaMarca) { pintar(); return; } S.ultimaMarca = k;
+    if (window.matchMedia && matchMedia("(prefers-reduced-motion: reduce)").matches) { pintar(); return; }
+    pintar(0);   // já pinta as cidades (e calcula a escala) antes de a caneta começar
+    const t0 = performance.now(), passo = (t) => { const p = Math.min(1, (t - t0) / 700); pintar(p); if (p < 1) requestAnimationFrame(passo); };
+    requestAnimationFrame(passo);
   }
   function achar(ev) {
     const r = S.cv.getBoundingClientRect(), x = (ev.clientX - r.left) / S.esc, y = (ev.clientY - r.top) / S.esc, ctx = S.ctx;
@@ -116,9 +149,10 @@
   /* ---------- textos: legenda, resumo, cidade, listas ---------- */
   const mediana = (idx) => { const vs = idx.map((i) => S.e.val[i]).filter((v) => v != null).sort(d3.ascending); return vs.length ? d3.quantile(vs, 0.5) : null; };
   function legendaHTML() {
-    const L = S.e.leg, f = filtrando() ? '<li><i style="background:#f4f5f7;border:1px solid #c9ccd1"></i>Fora do filtro</li>' : "";
+    const L = S.e.leg, f = filtrando() ? `<li><svg width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="2" fill="${APAGADO}"></circle></svg>Fora do filtro</li>` : "";
     if (L.grad) return `<div class="lb-grad"><i style="background:linear-gradient(90deg,${L.grad.join(",")})"></i><span><b>${L.ini}</b><b>${L.meio}</b><b>${L.fim}</b></span></div><ul class="lb-leg"><li><i style="background:#e6e8eb"></i>Sem dado</li>${f}</ul>`;
-    return `<ul class="lb-leg">${L.itens.map(([c, r]) => `<li><i style="background:${c}"></i>${r}</li>`).join("")}<li><i style="background:#e6e8eb"></i>Sem dado</li>${f}</ul>`;
+    if (L.pontos) return `<ul class="lb-leg"><li>Cada bolinha é uma cidade:</li>${L.pontos.map(([r, t]) => `<li><svg width="22" height="22" aria-hidden="true"><circle cx="11" cy="11" r="${(r * 2.3).toFixed(1)}" fill="${TINTA}"></circle></svg>${t}</li>`).join("")}${f}</ul>`;
+    return `<ul class="lb-leg"><li>Cada bolinha é uma cidade:</li>${L.itens.map(([c, r]) => `<li><i style="background:${c};border-radius:50%"></i>${r}</li>`).join("")}${f}</ul>`;
   }
   function resumoHTML() {
     const m = CAM[S.cam], todas = S.cids.map((_, i) => i), fil = todas.filter(passa), mud = S.modo === "mud";
@@ -136,8 +170,8 @@
     if (anos.length < 2 || vs.every((v) => v == null)) return "";
     const W = 300, H = 70, ok = vs.filter((v) => v != null), lo = Math.min(...ok, 0), hi = Math.max(...ok) || 1, x = (k) => 10 + (k * (W - 20)) / (anos.length - 1), y = (v) => H - 18 - ((v - lo) / (hi - lo || 1)) * (H - 30);
     const pts = vs.map((v, k) => (v == null ? null : [x(k), y(v)])), d = pts.filter(Boolean).map((p, k) => (k ? "L" : "M") + p[0].toFixed(1) + "," + p[1].toFixed(1)).join("");
-    return `<svg class="lb-serie" viewBox="0 0 ${W} ${H}" role="img" aria-label="Valores de ${anos[0]} a ${anos[anos.length - 1]}"><path d="${d}" fill="none" stroke="${CAM[S.cam].cor || "#16181d"}" stroke-width="2.5"/>
-      ${pts.map((p, k) => (p ? `<circle cx="${p[0]}" cy="${p[1]}" r="${anos[k] === S.ano ? 5 : 3}" fill="${anos[k] === S.ano ? "#d96a12" : CAM[S.cam].cor || "#16181d"}"/>` : "")).join("")}
+    return `<svg class="lb-serie" viewBox="0 0 ${W} ${H}" role="img" aria-label="Valores de ${anos[0]} a ${anos[anos.length - 1]}"><path d="${d}" fill="none" stroke="#141414" stroke-width="2.5"/>
+      ${pts.map((p, k) => (p ? `<circle cx="${p[0]}" cy="${p[1]}" r="${anos[k] === S.ano ? 5 : 3}" fill="${anos[k] === S.ano ? CANETA : "#141414"}"/>` : "")).join("")}
       <text x="10" y="${H - 2}" font-size="12" fill="#5f6672">${anos[0]}</text><text x="${W - 10}" y="${H - 2}" font-size="12" text-anchor="end" fill="#5f6672">${anos[anos.length - 1]}</text></svg>`;
   }
   function cidadeHTML(i) {
@@ -183,7 +217,7 @@
       ${filtrando() ? '<button type="button" class="btn" data-lb-limpar>Limpar filtros</button>' : ""}</div>`;
   }
   function pintarTudo() {
-    pintar();
+    desenharCaneta();
     const m = CAM[S.cam], tit = (S.modo === "mud" ? "Mudança: " : "") + (m.rot[S.var] || m.rot[Object.keys(m.rot)[0]]);
     document.getElementById("lb-ctl").innerHTML = controlesHTML();
     document.getElementById("lb-fil").innerHTML = filtrosHTML();
@@ -230,7 +264,7 @@
       V.dica(ev, V.linhasDica(c.nome + " (" + c.uf + ")", [[S.modo === "mud" ? "Mudança" : String(S.ano), S.modo === "mud" ? (v == null ? "sem dado" : fmtDif(m.fmt, v)) : m.esc === "cat" ? ((m.cats.find((x) => x[0] === v) || [])[1] || "sem dado") : fmt(m.fmt, v)]]));
     });
     cv.addEventListener("mouseleave", () => V.dica(null));
-    cv.addEventListener("click", (ev) => { const i = achar(ev); if (i < 0) return; S.sel = i; pintar(); document.getElementById("lb-cid").innerHTML = cidadeHTML(i); });
+    cv.addEventListener("click", (ev) => { const i = achar(ev); if (i < 0) return; S.sel = i; desenharCaneta(); document.getElementById("lb-cid").innerHTML = cidadeHTML(i); });
     main.addEventListener("click", async (e) => {
       const t = e.target, q = (s) => t.closest(s);
       if (q("[data-lb-id]")) { e.preventDefault(); await abrirPergunta(q("[data-lb-id]").dataset.lbId); return; }
@@ -244,7 +278,7 @@
       }
       if (q("[data-lb-limpar]")) { S.filtro = { reg: "todas", porte: "todas", idh: "todas" }; pintarTudo(); return; }
       if (q("[data-lb-minha]")) { S.minha = +q("[data-lb-minha]").dataset.lbMinha; V.guardarCidade(S.cids[S.minha].ibge); pintarTudo(); return; }
-      if (q("[data-lb-cid]")) { S.sel = +q("[data-lb-cid]").dataset.lbCid; pintar(); document.getElementById("lb-cid").innerHTML = cidadeHTML(S.sel); document.getElementById("lb-cid").scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
+      if (q("[data-lb-cid]")) { S.sel = +q("[data-lb-cid]").dataset.lbCid; desenharCaneta(); document.getElementById("lb-cid").innerHTML = cidadeHTML(S.sel); document.getElementById("lb-cid").scrollIntoView({ behavior: "smooth", block: "nearest" }); return; }
       if (q("[data-lb-comp]")) {
         const t2 = S.tema, k2 = t2.kpis[0] || [], i = S.minha, c = i != null && i >= 0 ? S.cids[i] : null, m = CAM[S.cam];
         V.compartilhar({ titulo: t2.titulo, bloco: t2.grupo, cor: V.corBloco(t2.grupo), numero: k2[0], rotulo: k2[1], frase: t2.curta, cidade: c && S.e.val[i] != null && S.modo === "valor" && m.esc !== "cat" ? `Em ${c.nome} (${c.uf}): ${fmt(m.fmt, S.e.val[i])} (${(m.rot[S.var] || "").toLowerCase()}, ${S.ano}).` : "" });
@@ -260,7 +294,6 @@
       else if (id === "lb-perg-sel") await abrirPergunta(e.target.value);
       else if (id === "lb-busca") { const c = S.porRot.get(V.norm(e.target.value)); if (c != null) { S.minha = c; S.sel = c; V.guardarCidade(S.cids[c].ibge); pintarTudo(); } }
     });
-    main.addEventListener("chute-revelado", () => { const r = document.querySelector(".lb-resposta"); if (r) r.hidden = false; const c = document.querySelector(".lb-cartao"); if (c && c.hidden) { c.hidden = false; medir(); pintar(); } });
     let rz; const onRz = () => { clearTimeout(rz); rz = setTimeout(() => { if (document.body.contains(cv)) { medir(); pintar(); } else removeEventListener("resize", onRz); }, 150); };
     addEventListener("resize", onRz);
   }
@@ -300,6 +333,8 @@
       </div></div>`;
     S.cv = document.getElementById("lb-cv"); S.ctx = S.cv.getContext("2d");
     medir(); ligar(main.querySelector(".lb-pagina"));
+    // a letra da caneta precisa estar carregada antes de escrever no mapa
+    try { document.fonts.load('400 34px "Permanent Marker"').then(() => { if (S && S.e) pintar(); }); } catch (e) {}
     await abrirPergunta(id && PERG[id] ? id : "e4");
   });
 })();
