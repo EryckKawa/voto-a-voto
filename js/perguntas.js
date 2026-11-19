@@ -1629,6 +1629,7 @@
         <p><b>Consultas:</b> ${b.consultas.map((id) => `<code title="${V.esc((C[id] || {}).descricao || "")}">${id}</code>`).join(", ")}, no arquivo <a href="${GH}" rel="noopener"><code>scripts/consultas_brasil.sql</code></a>, rodadas no banco nacional em DuckDB.</p>
       </details>
       ${b.link ? `<p class="pq-link"><a href="${b.link}">${b.linkTxt}</a></p>` : ""}
+      ${V.trilhaDe && V.trilhaDe(b.id) ? `<p class="pq-na-trilha">Esta pergunta faz parte da história <a href="#/trilhas" style="color:${V.trilhaDe(b.id).cor}"><b>${V.trilhaDe(b.id).n}. ${V.trilhaDe(b.id).t}</b></a>: veja a pergunta que vem antes e a que vem depois.</p>` : ""}
       <nav class="pq-passos" aria-label="Outras perguntas">
         ${ant ? `<a href="#/perguntas/${ant.id}" class="pq-passos__ant"><small>Anterior</small><span>${ant.titulo}</span></a>` : "<span></span>"}
         ${prox ? `<a href="#/perguntas/${prox.id}" class="pq-passos__prox"><small>Próximo</small><span>${prox.titulo}</span></a>` : ""}
@@ -1668,6 +1669,7 @@
           </ul>
         </div>
       </section>
+      <a class="pq-trilhas" href="#/trilhas"><span class="pq-trilhas__n" aria-hidden="true">6</span><span><b>Uma pergunta puxa a outra</b><span>As 25 perguntas contadas em 6 histórias, para ler da esquerda para a direita.</span></span><span class="pq-trilhas__bt">Ler as histórias →</span></a>
       <nav class="pq-dif" aria-label="Para entender em um minuto">
         <a href="#/edicao"><b>O jornal da sua cidade</b><span>Uma edição escrita pelos dados só para a sua cidade.</span></a>
         <a href="#/tira-teima"><b>Tira-teima do grupo da família</b><span>As frases que circulam, carimbadas com os dados.</span></a>

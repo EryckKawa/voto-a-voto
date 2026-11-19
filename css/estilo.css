@@ -1956,3 +1956,52 @@ b > .rb-alvo--circ { margin-left: 0; }
 .rp-pote { width: 42px; }
 .rp-pares { gap: 12px; flex-wrap: nowrap; }
 .rp-pares__c i { width: 24px; }
+
+/* ---------- uma pergunta puxa a outra (js/trilhas.js), 19/11 ---------- */
+.tr-pagina { max-width: 1360px; display: flex; flex-direction: column; gap: 36px; }
+.tr-cab { display: flex; flex-direction: column; gap: 14px; }
+.tr-lead { font: 400 23px/1.42 var(--serif); max-width: 62ch; margin: 0; }
+.tr-mapa { display: grid; grid-template-columns: repeat(6, minmax(0, 1fr)); gap: 10px; }
+.tr-mapa a { display: flex; flex-direction: column; gap: 4px; border: 2px solid var(--tinta); border-top-width: 8px; padding: 10px 12px 12px; background: #FFFFFF; color: var(--tinta); text-decoration: none; }
+.tr-mapa a b { font: 800 30px/1 var(--serif); }
+.tr-mapa a span { font: 700 16px/1.2 var(--serif); }
+.tr-mapa a small { font-size: 13px; color: var(--tinta-2); }
+.tr-mapa a:hover span, .tr-mapa a:focus-visible span { text-decoration: underline; }
+.tr-cap { display: flex; flex-direction: column; gap: 18px; border-top: 4px solid var(--tinta); padding-top: 20px; scroll-margin-top: 20px; }
+.tr-cap__cab { display: flex; align-items: flex-end; gap: 20px; }
+.tr-cap__cab .tr-cap__n { font: 800 110px/0.8 var(--serif); }
+.tr-cap__cab h2 { font: 800 40px/1.05 var(--serif); margin: 0 0 6px; }
+.tr-cap__cab div span { font-size: 16px; color: var(--tinta-2); }
+.tr-fila { display: flex; align-items: stretch; }
+.tr-cartao { flex: 1 1 0; min-width: 0; background: #FFFFFF; border: 2px solid var(--tinta); border-top-width: 10px; padding: 14px 14px 16px; display: flex; flex-direction: column; gap: 8px; box-shadow: 4px 4px 0 rgba(20,20,20,.08); color: var(--tinta); text-decoration: none; }
+.tr-cartao:hover, .tr-cartao:focus-visible { box-shadow: 6px 6px 0 rgba(20,20,20,.18); }
+.tr-cartao__tag { font: 700 13px var(--fonte); display: flex; justify-content: space-between; gap: 6px; }
+.tr-cartao__tag span:last-child { color: var(--tinta-2); font-weight: 400; }
+.tr-cartao__q { font: 700 20px/1.2 var(--serif); }
+.tr-cartao__n { font: 800 34px/1.05 var(--serif); margin-top: 4px; letter-spacing: -.01em; }
+.tr-cartao__a { font: 400 16px/1.4 var(--serif); }
+.tr-cartao__d { margin-top: 4px; font: 400 13px/1.35 var(--fonte); background: #FFE14D; padding: 6px 8px; display: flex; flex-direction: column; gap: 2px; }
+.tr-cartao__d b { font-weight: 700; }
+.tr-cartao__ir { margin-top: auto; padding-top: 6px; font: 700 13px var(--fonte); text-decoration: underline; text-underline-offset: 3px; }
+.tr-liga { flex: 0 0 92px; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 2px; padding: 0 4px; text-align: center; }
+.tr-liga span { font-family: var(--mao); color: var(--caneta); font-size: 17px; line-height: 1.1; }
+.tr-liga svg { width: 78px; height: 30px; overflow: visible; }
+.tr-liga path { fill: none; stroke: var(--caneta); stroke-width: 3.5; stroke-linecap: round; stroke-linejoin: round; }
+.tr-moral { align-self: flex-end; max-width: 760px; }
+.tr-moral .rb-postit { max-width: none; font-size: 23px; }
+.tr-fim { margin: 0; font-size: 21px; }
+/* a porta na primeira página das perguntas e a linha em cada pergunta */
+.pq-trilhas { display: grid; grid-template-columns: auto minmax(0, 1fr) auto; gap: 22px; align-items: center; border: 3px solid var(--tinta); background: #FFFFFF; padding: 18px 24px; color: var(--tinta); text-decoration: none; }
+.pq-trilhas__n { font: 800 80px/0.8 var(--serif); color: var(--caneta); }
+.pq-trilhas b { display: block; font: 800 32px/1.1 var(--serif); }
+.pq-trilhas span span { font: 400 19px/1.35 var(--serif); }
+.pq-trilhas__bt { font: 700 16px var(--fonte); background: var(--tinta); color: #FFFFFF; padding: 12px 18px; white-space: nowrap; }
+.pq-trilhas:hover .pq-trilhas__bt, .pq-trilhas:focus-visible .pq-trilhas__bt { background: var(--caneta); }
+.pq-na-trilha { margin: 0; font: 400 19px/1.4 var(--serif); border-top: 1px solid var(--tinta); padding-top: 14px; }
+@media (max-width: 900px) {
+  .tr-mapa { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .tr-fila { flex-direction: column; gap: 6px; }
+  .tr-liga { flex-basis: auto; flex-direction: row; gap: 10px; }
+  .tr-liga svg { transform: rotate(90deg); width: 40px; }
+  .pq-trilhas { grid-template-columns: minmax(0, 1fr); }
+}

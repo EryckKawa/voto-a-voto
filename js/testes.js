@@ -563,9 +563,18 @@
     }
     return R(!ruins.length && formas.size >= 40, ruins.length ? "sem resposta desenhada completa: " + ruins.join(", ") : `${temas.length} perguntas com 3 números diferentes e gráficos; ${formas.size} tipos de peça visual`, "todas as perguntas com 3 números diferentes, uma seção visual com gráfico e nada de NaN");
   });
+  teste("Jornal e diferenciais", "Uma pergunta puxa a outra: 6 histórias com as 25 perguntas, números do banco", async () => {
+    await irPara("#/trilhas", 25000).catch(() => {}); await ate(() => qq(".tr-cartao").length >= 25, 15000).catch(() => {});
+    const { temas } = await V.pqCarregar(), ids = qq(".tr-cartao").map((a) => a.getAttribute("href").split("/").pop()), nums = qq(".tr-cartao__n").map((e) => e.textContent.trim());
+    const t = q("main").innerText, faltam = temas.map((x) => x.id).filter((id) => !ids.includes(id));
+    const { C } = await V.pqCarregar(), u = C.e6a.linhas.map((l) => Object.fromEntries(C.e6a.colunas.map((k, i) => [k, l[i]]))).sort((a, b) => a.nr_ano_eleicao - b.nr_ano_eleicao).pop();
+    const fundo = "R$ " + new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 2 }).format(u.vr_por_eleitor);
+    const ok = qq(".tr-cap").length === 6 && ids.length === 25 && new Set(ids).size === 25 && !faltam.length && nums.every((n) => /\d/.test(n)) && qq(".tr-moral").length === 6 && t.includes(fundo) && !/(NaN|undefined|Infinity|null)/.test(t) && qq(".tr-cartao__d").length === 2;
+    return R(ok, `${qq(".tr-cap").length} histórias, ${ids.length} cartões (${new Set(ids).size} perguntas diferentes)${faltam.length ? "; faltam " + faltam.join(", ") : ""}; fundão no cartão: ${t.includes(fundo) ? fundo : "diferente do banco"}; ${qq(".tr-cartao__d").length} faixas "nos números"`, "6 histórias, as 25 perguntas uma vez cada, todo cartão com número, fundão igual ao banco, nada de NaN");
+  });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];
-    for (const h of ["#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
+    for (const h of ["#/trilhas", "#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
       await irPara(h, 25000).catch(() => {}); await quadros(3);
       if (document.documentElement.scrollWidth > innerWidth + 1) largas.push(`${h} (${document.documentElement.scrollWidth}px)`);
     }
