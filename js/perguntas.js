@@ -1590,7 +1590,11 @@
     const i = temas.indexOf(b), ant = temas[i - 1], prox = temas[i + 1];
     const partes = partesDe(b), usados = new Set(partes.flatMap((x) => x.p)), outros = b.pontos.map((_, j) => j).filter((j) => !usados.has(j));
     const noMapa = V.lobbyTem && V.lobbyTem(b.id), nota = NOTAS[b.id];
-    return `<div class="pagina pq-pagina jornal" style="--bloco:${V.corBloco(b.grupo)}">
+    // a resposta desenhada (js/respostas.js): três números diferentes e as seções com a forma que o dado pede
+    let vis = null;
+    try { vis = V.rp && V.rp.TELAS[b.id] ? V.rp.TELAS[b.id](C) : null; } catch (e) { console.warn("resposta desenhada de " + b.id + " falhou", e); vis = null; }
+    const kpis = vis ? vis.tres : b.kpis;
+    return `<div class="pagina pq-pagina jornal${vis ? " pq-pagina--rp" : ""}" style="--bloco:${V.corBloco(b.grupo)}">
       <div class="pq-topo"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a> <span aria-hidden="true">/</span> ${b.grupo}</p>
         <label class="pq-ir"><span>Ir para a pergunta</span><select id="pq-ir">${BLOCOS.map(([g]) => `<optgroup label="${g}">${temas.filter((t) => t.grupo === g).map((t) => `<option value="${t.id}"${t === b ? " selected" : ""}>${V.esc(t.titulo)}${t.doGrupo ? " (do grupo)" : ""}</option>`).join("")}</optgroup>`).join("")}</select></label></div>
       <header class="pq-cab">
@@ -1599,11 +1603,11 @@
         ${nota ? `<p class="pq-nota-linha">${V.rNota(nota, -2)}</p>` : ""}
         <details class="pq-enunciado"><summary>${b.doGrupo ? "A pergunta do grupo" : "O que o enunciado pede"}</summary><ul>${b.enunciado.map((e) => `<li>${e}</li>`).join("")}</ul></details>
       </header>
-      ${b.kpis.length ? `<section class="pq-numeros" aria-label="Os números">${b.kpis.map(([v, r], k) => `<div><b>${k === 0 ? V.rSublinha(v) : k === 1 ? V.rMarca(v) : v}</b><span>${r}</span></div>`).join("")}</section>` : ""}
+      ${kpis.length ? `<section class="pq-numeros${vis ? " pq-numeros--tres" : ""}" aria-label="Os números">${kpis.map(([v, r], k) => `<div><b>${k === 0 ? V.rSublinha(v) : k === 1 ? V.rMarca(v) : v}</b><span>${r}</span></div>`).join("")}</section>` : ""}
       <p class="pq-acoes"><button type="button" class="btn" data-compartilhar>Compartilhar a resposta</button>${noMapa ? `<a class="btn" href="#/respostas/${b.id}">Ver no mapa do Brasil</a>` : ""}</p>
-      ${V.tamanhoHTML(b.tamanho, "#141414")}
+      ${vis ? `<div class="rp">${vis.html}</div>` : V.tamanhoHTML(b.tamanho, "#141414")}
       <section class="pq-partes" aria-labelledby="pq-partes-tit">
-        <h2 class="pq-partes__tit" id="pq-partes-tit">${partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
+        <h2 class="pq-partes__tit" id="pq-partes-tit">${vis ? "Cargo a cargo: os gráficos de cada parte" : partes.length > 1 ? `A resposta em ${partes.length} partes` : "A resposta, com os números"}</h2>
         ${partes.length > 1 ? `<ol class="pq-indice">${partes.map((pt, k) => `<li><button type="button" data-ir="${k}"><span>${pt.q}</span></button></li>`).join("")}</ol>` : ""}
         ${partes.map((pt, k) => `<article class="pq-parte" aria-labelledby="pq-parte-${k}">
           <h3 class="pq-parte__q" id="pq-parte-${k}" tabindex="-1">${pt.q}</h3>
@@ -1723,6 +1727,7 @@
     main.innerHTML = paginaTema(b, temas, C);
     ATUAL = { b, modo: modoSalvo(), paineis: partesDe(b).map((pt) => (pt.v.length ? { vi: pt.v[0], ci: {}, ano: {}, tab: null } : null)) };
     pintarTodos();
+    if (V.rpLigar) V.rpLigar(main);
     if (b.ligar) await b.ligar();
   });
 })();

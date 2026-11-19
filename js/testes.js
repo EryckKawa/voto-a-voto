@@ -552,6 +552,17 @@
     }
     return R(!poucas.length, cont.join(" · "), "3 ou mais rabiscos (círculo, sublinhado, marca-texto ou nota) em cada página");
   });
+  teste("Jornal e diferenciais", "Cada pergunta tem a resposta desenhada: 3 números diferentes e gráficos próprios", async () => {
+    const { temas } = await V.pqCarregar(), ruins = [], formas = new Set();
+    for (const t of temas) {
+      await irPara("#/perguntas/" + t.id); await ate(() => q(".rp"), 8000).catch(() => {}); await quadros(1);
+      const rp = q(".rp"), tres = qq(".pq-numeros--tres > div b").map((b) => b.textContent.trim());
+      const txt = rp ? rp.innerText : "";
+      if (!rp || qq(".rp .rp-sec").length < 1 || tres.length !== 3 || new Set(tres).size !== 3 || /(NaN|undefined|Infinity|null)/.test(txt + tres.join(" ")) || !rp.querySelector("svg, table, .rp-bolinhas, .rp-recibo, .rp-pilha, .rp-waffle, .rp-pares, .rp-barras, .rp-familia, .rp-espelhos, .rp-funis, .rp-quintis, .rp-col100, .rp-potes, .rp-hist, .rp-quadros, .rp-borbs, .rp-cabos, .rp-mosaicos")) ruins.push(t.id);
+      if (rp) [...rp.querySelectorAll("[class^='rp-']")].forEach((e) => formas.add(e.classList[0]));
+    }
+    return R(!ruins.length && formas.size >= 40, ruins.length ? "sem resposta desenhada completa: " + ruins.join(", ") : `${temas.length} perguntas com 3 números diferentes e gráficos; ${formas.size} tipos de peça visual`, "todas as perguntas com 3 números diferentes, uma seção visual com gráfico e nada de NaN");
+  });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];
     for (const h of ["#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
