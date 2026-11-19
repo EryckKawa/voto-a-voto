@@ -1,5 +1,5 @@
 /* Voto a voto — os quatro diferenciais do jornal rabiscado:
-   #/edicao        O jornal da sua cidade: uma edição escrita pelos dados para cada uma das 5.570 cidades
+   #/edicao        (em js/edicao.js) O jornal da sua cidade
    #/tira-teima    Tira-teima do grupo da família: as frases que circulam, carimbadas com os dados
    #/dinheiro      Siga o dinheiro: de onde vieram e para onde foram cada R$ 100 das campanhas
    #/cem           Se o Brasil fosse 100 eleitores
@@ -18,98 +18,7 @@
     x.map((v, i) => [v - b[i], i]).sort((p, q) => q[0] - p[0]).forEach(([, i]) => { if (falta > 0) { b[i]++; falta--; } }); return b; };
   const MASTRO = (titulo) => `<div class="dif-mastro"><span>${titulo}</span></div>`;
 
-  /* ===================== O jornal da sua cidade ===================== */
-  // cada camada do mapa vira uma notícia possível; a manchete é a mais diferente da cidade comum
-  const NOTICIAS = [
-    { cam: "cadeira", var: "VEREADOR", ret: "VOTO", t: (n, v) => `Cada vereador de ${n} representa ${N0.format(v)} eleitores`, f: (v) => N0.format(v) },
-    { cam: "fundo", var: "CAMPANHA MUNICIPAL", ret: "DINHEIRO", t: (n, v) => `${n} recebeu ${reais(v)} de dinheiro público por eleitor nas campanhas de 2024`, f: reais },
-    { cam: "gasto", var: "CAMPANHA MUNICIPAL", ret: "DINHEIRO", t: (n, v) => `As campanhas de ${n} gastaram ${reais(v)} por eleitor em 2024`, f: reais },
-    { cam: "religioso", var: "TÍTULO RELIGIOSO", ret: "QUEM SE ELEGE", t: (n, v) => (v < 1 ? `Menos de 1 em cada 100 candidatos a vereador de ${n} usou “Pastor” ou “Irmão” no nome` : `${N0.format(v)} em cada 100 candidatos a vereador de ${n} puseram “Pastor” ou “Irmão” no nome`), f: (v) => N1.format(v) + "%" },
-    { cam: "superior", var: "ELEITORES", ret: "ESTUDO", t: (n, v) => `${N0.format(v)} em cada 100 eleitores de ${n} têm curso superior`, f: (v) => N1.format(v) + "%" },
-    { cam: "mulheres", var: "VEREADOR", ret: "MULHERES", t: (n, v) => `${N0.format(v)} em cada 100 vereadores eleitos em ${n} são mulheres`, f: (v) => N1.format(v) + "%" },
-    { cam: "ninguem", var: "PREFEITO", ret: "VOTO", t: (n, v) => `${N0.format(v)} em cada 100 eleitores de ${n} não escolheram ninguém para prefeito`, f: (v) => N1.format(v) + "%" },
-    { cam: "troca", var: "VEREADOR", ret: "PARTIDOS", t: (n, v) => `${N0.format(v)} em cada 100 vereadores de ${n} que tentaram a reeleição trocaram de partido`, f: (v) => N1.format(v) + "%" },
-    { cam: "laranja", var: "CANDIDATAS A VEREADORA", ret: "MULHERES", t: (n, v) => `${N0.format(v)} em cada 100 candidatas a vereadora de ${n} tiveram até 10 votos`, f: (v) => N1.format(v) + "%" },
-    { cam: "bf", var: "BENEFÍCIOS", ret: "BOLSA FAMÍLIA", t: (n, v) => `${n} tem ${N1.format(v)} benefícios do Bolsa Família para cada 100 eleitores`, f: (v) => N1.format(v) },
-    { cam: "acerta", var: "PRESIDENTE", ret: "PRESIDENTE", t: (n, v) => (v === 9 ? `${n} votou em quem venceu para presidente em todas as eleições desde 1994` : `${n} acertou o presidente em ${v} das 9 eleições desde 1994`), f: (v) => N0.format(v) + " de 9" },
-  ];
-  // o número a circular dentro da manchete
-  const circular = (frase) => (V.rCircularNumero ? V.rCircularNumero(frase) : frase);
-  function comparar(x) {
-    const { v, med, p, f } = x;
-    if (med > 0 && v / med >= 2) return `numa cidade comum, ${f(med)}. Aqui é ${N0.format(v / med)} vezes mais!`;
-    if (med > 0 && v / med <= 0.5) return `numa cidade comum, ${f(med)}. Aqui é menos da metade.`;
-    return p >= 50 ? `mais que em ${N0.format(Math.round(p / 10))} de cada 10 cidades` : `menos que em ${N0.format(Math.round((100 - p) / 10))} de cada 10 cidades`;
-  }
-  // a frase de comparação como legenda: primeira letra maiúscula e um ponto final só quando falta
-  const legenda = (x) => { const t = comparar(x).replace(/^./, (c) => c.toUpperCase()); return /[.!?]$/.test(t) ? t : t + "."; };
-  async function edicao(main, ibgeRota) {
-    V.marcarNav("cidade");
-    const [BR, G, { C }] = await Promise.all([V.baseBR(), V.geoBR(), V.pqCarregar()]);
-    const cams = await Promise.all([...new Set(NOTICIAS.map((x) => x.cam)), "lado"].map(async (k) => [k, await V.dados("br/lobby/" + k)]));
-    const D = Object.fromEntries(cams);
-    const ibge = ibgeRota || V.minhaCidade() || "2211001";
-    const i = G.mun.findIndex((f) => f.id === ibge), c = BR.porIbge.get(ibge);
-    if (i < 0 || !c) { main.innerHTML = '<div class="pagina"><p class="aviso">Cidade não encontrada.</p></div>'; return; }
-    V.guardarCidade(ibge);
-    const nome = c.nome;
-    const lista = NOTICIAS.map((x) => {
-      const camada = D[x.cam], anos = camada.anos[x.var] || []; if (!anos.length) return null;
-      const ano = anos[anos.length - 1], vs = camada.v[x.var][String(ano)], v = vs[i]; if (v == null) return null;
-      const ok = vs.filter((y) => y != null).sort((a, b) => a - b), med = ok[Math.floor(ok.length / 2)], abaixo = ok.filter((y) => y < v).length, igual = ok.filter((y) => y === v).length;
-      const p = (100 * (abaixo + igual / 2)) / ok.length;
-      return { ...x, v, med, p, ano, forca: x.cam === "acerta" && v < 9 ? 0 : Math.abs(p - 50) };
-    }).filter(Boolean).sort((a, b) => b.forca - a.forca);
-    const [m1, ...resto] = lista, outras = resto.slice(0, 6);
-    // o lado do presidente: a notícia de política que todo mundo quer saber
-    const lado = D.lado, anoL = lado.anos.PRESIDENTE[lado.anos.PRESIDENTE.length - 1], nL = lado.v.PRESIDENTE[String(anoL)][i];
-    const fx = (n) => (n == null ? null : n < -0.25 ? "esquerda" : n > 0.25 ? "direita" : "centro");
-    const q9 = L(C, "q9").find((r) => r.nr_ano_eleicao === anoL) || {}, contaL = { esquerda: q9.qt_mun_esquerda_na_frente, direita: q9.qt_mun_direita_na_frente };
-    const ladoTxt = nL == null ? "" : `Para presidente, o mais votado em ${nome} em ${anoL} foi da ${fx(nL)}.`;
-    document.title = `O Voto de ${nome} · Voto a voto`;
-    const datalist = BR.lista.map((x) => `<option value="${V.esc(x.nome)} (${x.uf})"></option>`).join("");
-    main.innerHTML = `<div class="pagina dif-pagina">
-      <div class="dif-barra">
-        <p><b>Uma edição do jornal só para a sua cidade.</b> Escrita pelos dados: o site compara a cidade com as outras 5.569 e põe na manchete o que ela tem de mais diferente.</p>
-        <div class="dif-acoes">
-          <label>Cidade <input id="dif-cidade" type="text" list="dif-cidades" autocomplete="off" value="${V.esc(nome)} (${c.uf})"><datalist id="dif-cidades">${datalist}</datalist></label>
-          <button type="button" class="btn btn--forte" data-dif-imprimir>Imprimir ou salvar em PDF</button>
-          <button type="button" class="btn" data-dif-compartilhar>Compartilhar</button>
-        </div>
-      </div>
-      <article class="dif-jornal" aria-label="O Voto de ${V.esc(nome)}">
-        <header class="dif-jornal__cab">
-          <div class="dif-jornal__linha"><span>Edição de ${V.esc(nome)} (${c.uf})</span><span>Eleições de 1994 a 2026 · dados do TSE</span></div>
-          <div class="dif-jornal__nome"><span>O Voto de ${V.esc(nome)}</span>${V.rCarimbo("só sua", 9)}</div>
-        </header>
-        <section class="dif-jornal__abre">
-          <div class="dif-jornal__manchete">
-            <span class="dif-ret">${m1.ret}</span>
-            <h1>${circular(m1.t(nome, m1.v))}</h1>
-            <p>${V.rNota(comparar(m1), -2)}</p>
-          </div>
-          <div class="dif-jornal__lado">
-            ${outras.slice(0, 2).map((x) => `<div><span class="dif-ret">${x.ret}</span><b>${x.t(nome, x.v)}</b><span>${legenda(x)}</span></div>`).join("")}
-          </div>
-        </section>
-        <section class="dif-jornal__tres">
-          ${outras.slice(2, 5).map((x, k) => `<div><span class="dif-ret">${x.ret}</span><b>${k === 1 ? V.rMarcarNumero(x.t(nome, x.v), V.rSublinha) : x.t(nome, x.v)}</b><span>${legenda(x)}</span></div>`).join("")}
-        </section>
-        <section class="dif-jornal__pe">
-          <div><span class="dif-ret">LADO</span><b>${ladoTxt}</b><span>No Brasil, a direita ficou na frente em ${N0.format(contaL.direita)} cidades; a esquerda, em ${N0.format(contaL.esquerda)}.</span></div>
-          ${V.rPostit("Os números são das eleições mais recentes de cada assunto (2024 para a cidade, 2026 para presidente), dos dados abertos do TSE, do IBGE e do Ministério do Desenvolvimento Social.", -2)}
-        </section>
-      </article>
-      <p class="dif-links"><a href="#/respostas">Ver a sua cidade no mapa das respostas</a> · <a href="#/mapa/br/${c.uf}/c/${c.ibge}">Quem ganhou em ${V.esc(nome)}</a></p>
-    </div>`;
-    main.querySelector("[data-dif-imprimir]").addEventListener("click", () => print());
-    main.querySelector("[data-dif-compartilhar]").addEventListener("click", () => V.compartilhar({ titulo: m1.t(nome, m1.v), bloco: "O Voto de " + nome, cor: "#CC1259", frase: outras.slice(0, 2).map((x) => x.t(nome, x.v)).join(". ") + "." }));
-    main.querySelector("#dif-cidade").addEventListener("change", (e) => {
-      const alvo = V.norm(e.target.value), achou = BR.lista.find((x) => V.norm(`${x.nome} (${x.uf})`) === alvo);
-      if (achou) V.ir("#/edicao/" + achou.ibge);
-    });
-  }
-  V.rota(/^\/edicao(?:\/(\d{7}))?\/?$/, async function (main, ibge) { await edicao(main, ibge); });
+  /* O jornal da sua cidade (#/edicao) mora em js/edicao.js */
 
   /* ===================== Tira-teima ===================== */
   V.rota(/^\/tira-teima\/?$/, async function (main) {

@@ -112,6 +112,7 @@
   const lk = (uf, ib, e, cam) => { const cg = e ? e[0] : H ? H.cargo : "PRES", an = e ? e[1] : H ? H.ano : 2026, cm = cam || (H && H.cam) || "venc"; return "#/mapa" + (cg === "PRES" && an === 2026 ? "" : `/e/${cg}${an}`) + (cm !== "venc" ? `/v/${cm}` : "") + (uf ? "/br/" + uf + (ib ? "/c/" + ib : "") : ""); };
   V.linkBR = (uf, ib) => lk(uf, ib);
   const NO_UF = (uf) => (uf ? DO_UF[uf].replace(/^do /, "no ").replace(/^da /, "na ").replace(/^de /, "em ") : "no Brasil");
+  V.noUF = NO_UF;
   const NOME_CG = { PREF: "prefeito", PRES: "presidente", GOV: "governador", SEN: "senador", DF: "deputado federal", DE: "deputado estadual", VER: "vereador" };
   // o mesmo resumo é pedido várias vezes por tela (título, placar, painel): guarda o resultado
   const memoResumo = new WeakMap();

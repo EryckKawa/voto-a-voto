@@ -197,7 +197,7 @@
   });
 
   // ACESSIBILIDADE
-  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/revela/virada", "Um achado aberto"], ["#/perguntas", "Perguntas do trabalho"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/revela/virada", "Um achado aberto"], ["#/edicao/2211001", "Sua cidade"], ["#/perguntas", "Perguntas do trabalho"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
   for (const [h, nome] of PAGS_A11Y) {
     teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
       await carregarAxe(); await irPara(h); await quadros(3);
@@ -591,6 +591,18 @@
     const volta = location.hash === "#/revela";
     const ok = ind === 8 && /Desde 2006/.test(lead) && novos.length === 6 && /cidades foram da esquerda para a direita/.test(novos[0]) && tres.length === 3 && tres[0].endsWith(Math.round(r.pt[0]) + "%") && /Achado 1 de 8/.test(migalha) && veja === 3 && volta && !/(NaN|undefined|Infinity)/.test(t + t2);
     return R(ok, `${ind} no índice · ${lead.slice(0, 40)} · ${novos.length} novos (${(novos[0] || "").slice(0, 40)}) · achado aberto: ${tres.join(" | ")} · ${veja} links · ${volta ? "endereço errado volta à capa" : "não voltou"}`, "índice dos 8, manchete, 6 achados novos, achado aberto com 3 números e Veja também");
+  });
+  teste("Jornal e diferenciais", "Sua cidade: quem manda, manchete por regras, cidades parecidas e o voto desde a primeira eleição", async () => {
+    const casos = [["2211001", /O PT ganhou aqui todas as 9/, "capitais", true], ["5300108", /Brasília/, "capitais", false], ["2206720", /desde 2006/, "10 a 20 mil", true]], ruins = [], ok = [];
+    for (const [ib, re, grupo, pref] of casos) {
+      await irPara("#/edicao/" + ib, 25000).catch(() => {}); await ate(() => q(".sc-hist") && q(".sc-manda"), 15000).catch(() => {});
+      const h = txt(".dif-jornal h1"), manda = qq(".sc-manda > div").length, caps = txt(".sc-caps h2"), gc = qq(".sc-gc").length, secs = qq(".sc-sec h2").map((x) => x.textContent), t = q("main").innerText;
+      const temPref = secs.some((x) => /prefeitos/.test(x));
+      if (!re.test(h) || manda !== 3 || !caps.includes(grupo) || gc < 15 || temPref !== pref || /(NaN|undefined|null|Infinity)/.test(t)) ruins.push(`${ib}: ${h.slice(0, 40)} · ${manda} · ${caps} · ${gc} · ${secs.join("/")}`);
+      else ok.push(`${h.slice(0, 36)}… (${gc} eleições, ${secs.length} seções)`);
+    }
+    try { localStorage.removeItem("vav-minha-cidade"); } catch (e) {}
+    return R(!ruins.length, ruins.length ? ruins.join(" · ") : ok.join(" · "), "Teresina, Brasília (sem prefeito) e Nazária (criada em 2006) com quem manda, manchete, grupo certo e grade");
   });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];

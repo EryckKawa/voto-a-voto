@@ -2151,3 +2151,71 @@ b > .rb-alvo--circ { margin-left: 0; }
 .rv-veja a:hover b { text-decoration: underline; }
 @media (max-width: 1000px) { .rv-capa, .rv-novos, .rv-rodape, .rv-veja > div { grid-template-columns: minmax(0, 1fr); } .rv-capa__lado { border-left: 0; padding-left: 0; } .rv-rodape article + article { border-left: 0; padding-left: 0; } .rv-indice { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 .rv-ler, .rv-migalha a { display: inline-flex; align-items: center; min-height: 28px; padding: 2px 0; }
+
+/* ---------- Sua cidade (19/11): quem manda, manchete por regras, entre as parecidas e o voto desde a primeira eleição ---------- */
+.sc-jornal { transform: none; gap: 30px; }
+.sc-tag { margin: 0; font: 700 14px var(--fonte); color: var(--tinta-2); }
+.sc-tag--caneta { color: var(--caneta); }
+.sc-manda { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); border-bottom: 1px solid var(--tinta); }
+.sc-manda > div { display: flex; flex-direction: column; gap: 6px; padding: 4px 22px 18px 0; min-width: 0; }
+.sc-manda > div + div { border-left: 1px solid var(--tinta); padding-left: 22px; }
+.sc-cg { margin: 0; font: 700 14px var(--fonte); color: var(--tinta-2); }
+.sc-quem { margin: 0; font: 800 30px/1.08 var(--serif); }
+.sc-pp { margin: 0; font: 400 17px/1.4 var(--fonte); color: var(--tinta); }
+.sc-ld { display: inline-block; border: 1.5px solid; padding: 0 7px; margin-left: 8px; font: 700 13px/1.5 var(--fonte); vertical-align: 4px; }
+.sc-ld--esquerda { background: #F4D5D8; border-color: #B8232F; color: #8E1520; }
+.sc-ld--centro { background: #E6E2D8; border-color: #8C887C; color: #4A473F; }
+.sc-ld--direita { background: #D6DDF2; border-color: #1D3C9E; color: #1D3C9E; }
+.sc-sub { margin: 0; font: 400 21px/1.42 var(--serif); }
+.sc-fila { display: flex; flex-direction: column; gap: 8px; }
+.sc-fila > div { display: grid; grid-template-columns: 96px minmax(0, 1fr); gap: 10px; align-items: center; }
+.sc-fila small { font: 700 14px var(--fonte); }
+.sc-cx { display: flex; gap: 4px; }
+.sc-cx span { flex: 1 1 0; min-width: 0; height: 46px; border: 2px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 12px/1.1 var(--fonte); overflow: hidden; color: #141414; }
+.sc-cx span i { font-style: normal; font-weight: 400; font-size: 11px; }
+.sc-vs { display: flex; flex-direction: column; gap: 12px; border-left: 1px solid var(--tinta); padding-left: 28px; }
+.sc-vs h2 { margin: 0; font: 700 24px/1.2 var(--serif); }
+.sc-bar { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 2px 12px; align-items: baseline; }
+.sc-bar small { font: 700 14px var(--fonte); color: var(--tinta-2); }
+.sc-bar b { font: 800 28px/1 var(--serif); }
+.sc-bar i { grid-column: 1 / -1; display: block; height: 14px; background: #F1EFE9; border: 1px solid #C9C5B9; }
+.sc-bar u { display: block; height: 100%; }
+.sc-ler { display: inline-flex; align-items: center; min-height: 28px; font: 700 16px var(--fonte); color: var(--link); text-decoration: none; }
+.sc-ler:hover { text-decoration: underline; }
+.sc-caps, .sc-hist { border-top: 4px solid var(--tinta); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; }
+.sc-caps h2, .sc-hist h2, .sc-sec h2 { margin: 0; font: 800 32px/1.1 var(--serif); }
+.sc-a { margin: 0; font: 400 20px/1.42 var(--serif); max-width: 70ch; }
+.sc-cap { display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(0, 1fr); gap: 28px; align-items: center; border-top: 1px solid #C9C5B9; padding: 12px 0; }
+.sc-cap h3 { margin: 0; font: 700 21px/1.28 var(--serif); }
+.sc-cap p { margin: 4px 0 0; font: 400 15px/1.4 var(--fonte); color: var(--tinta-2); }
+.sc-tira { width: 100%; height: auto; display: block; }
+.sc-tira__eu { font: 700 14px var(--fonte); fill: var(--caneta); }
+.sc-tira__e { font: 400 13px var(--fonte); fill: #55524a; }
+.sc-leg { display: flex; flex-wrap: wrap; gap: 6px 18px; font: 400 15px var(--fonte); }
+.sc-leg span { display: inline-flex; gap: 6px; align-items: center; }
+.sc-leg i { width: 16px; height: 16px; border: 2px solid; display: inline-block; }
+.sc-leg .sc-leg__dif { border-color: #FFFFFF; outline: 3px solid var(--caneta); }
+.sc-grade-rola { overflow-x: auto; }
+.sc-grade { display: grid; gap: 4px; min-width: 760px; }
+.sc-grade__ano { font: 700 13px var(--fonte); text-align: center; color: var(--tinta-2); }
+.sc-grade__rot { font: 700 15px var(--fonte); display: flex; align-items: center; }
+.sc-gc { height: 56px; border: 2px solid; display: flex; flex-direction: column; align-items: center; justify-content: center; font: 700 13px/1.1 var(--fonte); color: #141414; overflow: hidden; min-width: 0; }
+.sc-gc i { font-style: normal; font-weight: 400; font-size: 12px; }
+.sc-gc--dif { outline: 3px solid var(--caneta); outline-offset: 2px; }
+.sc-como { margin: 0; font: 400 15px/1.45 var(--fonte); color: var(--tinta-2); max-width: 90ch; }
+.sc-duas { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 40px; align-items: start; }
+.sc-sec { border-top: 4px solid var(--tinta); padding-top: 16px; display: flex; flex-direction: column; gap: 12px; min-width: 0; }
+.sc-l { width: 100%; height: auto; display: block; }
+.sc-l__e { font: 400 13px var(--fonte); fill: #55524a; }
+.sc-l__n { font: 700 15px var(--fonte); }
+.sc-prefs > div { display: grid; grid-template-columns: 52px minmax(0, 1fr) 70px 140px; gap: 12px; align-items: center; border-top: 1px solid #C9C5B9; padding: 7px 0; font: 400 17px var(--fonte); }
+.sc-prefs b, .sc-gov b { font: 800 19px var(--serif); }
+.sc-pb { height: 12px; background: #F1EFE9; border: 1px solid #C9C5B9; display: block; }
+.sc-pb u { display: block; height: 100%; }
+.sc-gov > div { display: grid; grid-template-columns: 52px minmax(0, 1fr) minmax(0, 1fr) 30px; gap: 12px; align-items: center; border-top: 1px solid #C9C5B9; padding: 7px 0; font: 400 17px var(--fonte); }
+.sc-gov small { font-size: 13px; color: var(--tinta-2); }
+.sc-gov__h { font-weight: 700 !important; font-size: 14px !important; color: var(--tinta-2); }
+.sc-gov--dif > span:last-child { color: var(--caneta); font: 400 22px var(--mao); }
+.sc-pe { grid-template-columns: minmax(0, 1fr); }
+.sc-pe .rb-postit { max-width: 760px; font-size: 19px; }
+@media (max-width: 900px) { .sc-manda, .sc-duas, .sc-cap { grid-template-columns: minmax(0, 1fr); } .sc-manda > div + div { border-left: 0; padding-left: 0; border-top: 1px solid var(--tinta); padding-top: 12px; } .sc-vs { border-left: 0; padding-left: 0; } }
