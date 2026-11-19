@@ -455,7 +455,7 @@
   teste("Funcionamento", "Perguntas: primeira página por blocos, sem numeração, com números grandes em cada tema", async () => {
     await irPara("#/perguntas"); await ate(() => qq(".pq-lista a").length === 25, 8000).catch(() => {});
     const grupos = qq(".pq-assunto").length, base = qq(".pq-base a").length, numeros = qq(".pq-lista .pq-selo").length, doGrupo = qq(".pq-lista .pq-tag").length, portas = qq(".pq-dif a").length;
-    const capa = q(".pq-capa h2"), circ = capa && capa.querySelector(".rb-alvo--circ"); let sem = [];
+    await ate(() => qq("#pq-trilhas-host .tr-cartao").length === 25, 15000).catch(() => {}); const capa = q("#pq-trilhas-host .tr-cartao"), circ = capa && capa.querySelector(".rb-alvo--circ"); let sem = [];
     for (const t of ["t1", "t2", "t6", "t13", "t16", "e2", "e4", "e5", "e6", "e9"]) { await irPara("#/perguntas/" + t); await ate(() => q(".pq-resposta"), 8000).catch(() => {}); const k = qq(".pq-numeros > div").filter((d) => d.querySelector("b") && d.querySelector("b").textContent.trim() && d.querySelector(":scope > span") && d.querySelector(":scope > span").textContent.trim().length > 8).length; if (!k) sem.push(t); }
     return R(grupos === 5 && base === 12 && !numeros && doGrupo === 9 && portas === 4 && !!circ && !sem.length && !!q("#pq-ir"),
       `${grupos} blocos; ${doGrupo} perguntas do grupo; ${base} perguntas base; ${portas} portas para os diferenciais; manchete ${circ ? "com o número circulado (" + circ.textContent.trim() + ")" : "sem círculo"}; ${sem.length ? "sem números grandes: " + sem.join(", ") : "todos com números grandes"}`,
@@ -563,8 +563,8 @@
     }
     return R(!ruins.length && formas.size >= 40, ruins.length ? "sem resposta desenhada completa: " + ruins.join(", ") : `${temas.length} perguntas com 3 números diferentes e gráficos; ${formas.size} tipos de peça visual`, "todas as perguntas com 3 números diferentes, uma seção visual com gráfico e nada de NaN");
   });
-  teste("Jornal e diferenciais", "Uma pergunta puxa a outra: 6 histórias com as 25 perguntas, números do banco", async () => {
-    await irPara("#/trilhas", 25000).catch(() => {}); await ate(() => qq(".tr-cartao").length >= 25, 15000).catch(() => {});
+  teste("Jornal e diferenciais", "Perguntas abrem com Uma pergunta puxa a outra: 6 histórias, as 25 perguntas, números do banco", async () => {
+    await irPara("#/perguntas", 25000).catch(() => {}); await ate(() => qq(".tr-cartao").length >= 25, 15000).catch(() => {});
     const { temas } = await V.pqCarregar(), ids = qq(".tr-cartao").map((a) => a.getAttribute("href").split("/").pop()), nums = qq(".tr-cartao__n").map((e) => e.textContent.trim());
     const t = q("main").innerText, faltam = temas.map((x) => x.id).filter((id) => !ids.includes(id));
     const { C } = await V.pqCarregar(), u = C.e6a.linhas.map((l) => Object.fromEntries(C.e6a.colunas.map((k, i) => [k, l[i]]))).sort((a, b) => a.nr_ano_eleicao - b.nr_ano_eleicao).pop();
@@ -572,9 +572,18 @@
     const ok = qq(".tr-cap").length === 6 && ids.length === 25 && new Set(ids).size === 25 && !faltam.length && nums.every((n) => /\d/.test(n)) && qq(".tr-moral").length === 6 && t.includes(fundo) && !/(NaN|undefined|Infinity|null)/.test(t) && qq(".tr-cartao__d").length === 2;
     return R(ok, `${qq(".tr-cap").length} histórias, ${ids.length} cartões (${new Set(ids).size} perguntas diferentes)${faltam.length ? "; faltam " + faltam.join(", ") : ""}; fundão no cartão: ${t.includes(fundo) ? fundo : "diferente do banco"}; ${qq(".tr-cartao__d").length} faixas "nos números"`, "6 histórias, as 25 perguntas uma vez cada, todo cartão com número, fundão igual ao banco, nada de NaN");
   });
+  teste("Jornal e diferenciais", "Mapa: voto em barra, 27 casas, gente × chão e quem virou", async () => {
+    await irPara("#/mapa"); await ate(() => qq(".uf-casa").length === 27 && qq(".mapa-mais__sec").length >= 2, 15000).catch(() => {});
+    const tit = txt(".manchete__titulo"), barra = qq(".voto2 .voto2__f b").map((b) => b.textContent.trim()), casas = qq(".uf-casa").length, secs = qq(".mapa-mais__sec").length;
+    const bolas = qq(".mapa-mais__svg circle").length, virou = txt("#mm-virou + .mapa-mais__lead"), maiores = qq(".home .maiores li").length, t = q("main").innerText;
+    await irPara("#/mapa/br/PI/c/2211001"); await ate(() => /Teresina/.test(txt(".manchete__titulo")) && q(".voto2--fina"), 10000).catch(() => {});
+    const cid = txt(".manchete__titulo"), brasil = !!q(".voto2--fina"), semMais = !q(".mapa-mais__sec");
+    const ok = /eleito com .*% dos votos válidos/.test(tit) && barra.length === 2 && casas === 27 && secs === 2 && bolas > 5000 && /\d+ cidades passaram/.test(virou) && maiores === 6 && /Teresina, .* teve .*%/.test(cid) && brasil && semMais && !/(NaN|undefined|Infinity)/.test(t);
+    return R(ok, `${tit.slice(0, 50)} · barra ${barra.join(" × ")} · ${casas} casas · ${secs} seções (${bolas} bolinhas) · ${virou.slice(0, 40)} · ${maiores} maiores cidades · cidade: ${cid.slice(0, 40)}${brasil ? " com a barra do Brasil" : ""}`, "manchete pelo voto, barra dos dois, 27 casas, gente × chão e quem virou no Brasil; na cidade, o percentual e a barra do Brasil");
+  });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];
-    for (const h of ["#/trilhas", "#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
+    for (const h of ["#/perguntas", "#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
       await irPara(h, 25000).catch(() => {}); await quadros(3);
       if (document.documentElement.scrollWidth > innerWidth + 1) largas.push(`${h} (${document.documentElement.scrollWidth}px)`);
     }

@@ -1629,7 +1629,7 @@
         <p><b>Consultas:</b> ${b.consultas.map((id) => `<code title="${V.esc((C[id] || {}).descricao || "")}">${id}</code>`).join(", ")}, no arquivo <a href="${GH}" rel="noopener"><code>scripts/consultas_brasil.sql</code></a>, rodadas no banco nacional em DuckDB.</p>
       </details>
       ${b.link ? `<p class="pq-link"><a href="${b.link}">${b.linkTxt}</a></p>` : ""}
-      ${V.trilhaDe && V.trilhaDe(b.id) ? `<p class="pq-na-trilha">Esta pergunta faz parte da história <a href="#/trilhas" style="color:${V.trilhaDe(b.id).cor}"><b>${V.trilhaDe(b.id).n}. ${V.trilhaDe(b.id).t}</b></a>: veja a pergunta que vem antes e a que vem depois.</p>` : ""}
+      ${V.trilhaDe && V.trilhaDe(b.id) ? `<p class="pq-na-trilha">Esta pergunta faz parte da história <a href="#/perguntas" style="color:${V.trilhaDe(b.id).cor}"><b>${V.trilhaDe(b.id).n}. ${V.trilhaDe(b.id).t}</b></a>: veja a pergunta que vem antes e a que vem depois.</p>` : ""}
       <nav class="pq-passos" aria-label="Outras perguntas">
         ${ant ? `<a href="#/perguntas/${ant.id}" class="pq-passos__ant"><small>Anterior</small><span>${ant.titulo}</span></a>` : "<span></span>"}
         ${prox ? `<a href="#/perguntas/${prox.id}" class="pq-passos__prox"><small>Próximo</small><span>${prox.titulo}</span></a>` : ""}
@@ -1646,39 +1646,31 @@
       ["Jovens e não jovens votam diferente?", "t10"], ["A doação de empresas tem lado político?", "t12"], ["O lado político de cada cidade e região mudou com o tempo?", "t14"],
       ["Dinheiro público ou privado: quem se elege com qual?", "t15"], ["Onde o candidato investe em propaganda? (nuvem de palavras)", "e1"], ["O político e sua linha do tempo: quanto dura uma carreira?", "e2"]];
     // a manchete da primeira página: a pergunta que mais mexe com o bolso do leitor
-    const capa = temas.find((t) => t.id === "e6") || temas[0];
-    return `<div class="pagina pq-pagina jornal">
+    return `<div class="pagina pq-pagina jornal pq-indice-pagina">
       <header class="pq-cab">
         <h1 class="titulo-grande">Perguntas do trabalho</h1>
-        <p class="pq-mais">Os temas do enunciado e as perguntas do grupo, respondidos com as eleições de 1994 a 2026 no Brasil inteiro. Os pontos que você não pode perder estão marcados à mão.</p>
+        <p class="pq-mais">As 25 perguntas do trabalho contam 6 histórias. Escolha uma e leia da esquerda para a direita: a resposta de cada pergunta leva à próxima.</p>
       </header>
-      <section class="pq-capa" aria-label="Manchete">
-        <div class="pq-capa__manchete">
-          <span class="pq-tag">${capa.grupo}</span>
-          <h2><a href="#/perguntas/${capa.id}">${V.rCircularNumero(capa.curta)}</a></h2>
-          ${NOTAS[capa.id] ? `<p>${V.rNota(NOTAS[capa.id], -2)}</p>` : ""}
-          <p><a href="#/perguntas/${capa.id}">Ler a resposta completa</a></p>
-        </div>
-        <div class="pq-capa__lado">
+      <div id="pq-trilhas-host" class="tr-dentro"><p class="vazio">Carregando as histórias…</p></div>
+      <section class="pq-todas" aria-labelledby="pq-todas-tit"><h2 class="pq-todas__tit" id="pq-todas-tit">Todas as 25 perguntas, por assunto</h2>
+        <p class="pq-mais">Para achar uma pergunta direto: os 16 temas do enunciado e as 9 perguntas do grupo.</p></section>
+      ${BLOCOS.map(([g, sub]) => { const ts = temas.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
+        <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
+        <ul class="pq-lista">${ts.map(item).join("")}</ul></section>` : ""; }).join("")}
+      <section class="pq-capa__lado pq-rodape-mapa">
           <a class="pq-porta" href="#/respostas"><span><b>As respostas no mapa do Brasil</b>Cada pergunta pintada nas 5.570 cidades. Procure a sua.</span><span class="pq-porta__bt">Abrir o mapa</span></a>
           <ul class="pq-banco">
             <li><b>${mi(T.candidaturas)} mi</b><span>candidaturas</span></li>
             <li><b>${mi(T.votos)} mi</b><span>linhas de votos</span></li>
             <li><b>${mi(T.receitas + T.despesas)} mi</b><span>receitas e despesas</span></li>
             <li><b>${V.int(T.municipios)}</b><span>cidades</span></li>
-          </ul>
-        </div>
-      </section>
-      <a class="pq-trilhas" href="#/trilhas"><span class="pq-trilhas__n" aria-hidden="true">6</span><span><b>Uma pergunta puxa a outra</b><span>As 25 perguntas contadas em 6 histórias, para ler da esquerda para a direita.</span></span><span class="pq-trilhas__bt">Ler as histórias →</span></a>
+          </ul></section>
       <nav class="pq-dif" aria-label="Para entender em um minuto">
         <a href="#/edicao"><b>O jornal da sua cidade</b><span>Uma edição escrita pelos dados só para a sua cidade.</span></a>
         <a href="#/tira-teima"><b>Tira-teima do grupo da família</b><span>As frases que circulam, carimbadas com os dados.</span></a>
         <a href="#/dinheiro"><b>Siga o dinheiro</b><span>De onde veio e para onde foi cada R$ 100 das campanhas.</span></a>
         <a href="#/cem"><b>Se o Brasil fosse 100 eleitores</b><span>A eleição encolhida para 100 pessoas.</span></a>
       </nav>
-      ${BLOCOS.map(([g, sub]) => { const ts = temas.filter((b) => b.grupo === g); return ts.length ? `<section class="pq-assunto" aria-labelledby="pq-g-${V.norm(g)}">
-        <h2 class="pq-assunto__tit" id="pq-g-${V.norm(g)}">${g} <span>${sub}</span></h2>
-        <ul class="pq-lista">${ts.map(item).join("")}</ul></section>` : ""; }).join("")}
       <details class="pq-origem pq-base"><summary>As perguntas que o grupo escolheu no começo do trabalho</summary>
         <ul>${BASE.map(([q, id]) => { const t = temas.find((x) => x.id === id); return t ? `<li>${q} <a href="#/perguntas/${id}">${t.titulo}</a></li>` : ""; }).join("")}</ul></details>
       <p class="pq__rodape">Consultas em <code>scripts/consultas_brasil.sql</code>, rodadas em ${P.gerado.split("-").reverse().join("/")} no banco nacional (DuckDB).</p>
@@ -1724,7 +1716,7 @@
     const { P, C, temas } = await carregar();
     const b = id && temas.find((x) => x.id === id);
     ATUAL = null;
-    if (!b) { document.title = "Perguntas do trabalho · Voto a voto"; main.innerHTML = paginaIndice(P, temas); return; }
+    if (!b) { document.title = "Perguntas do trabalho · Voto a voto"; main.innerHTML = paginaIndice(P, temas); if (V.trilhasMontar) await V.trilhasMontar(document.getElementById("pq-trilhas-host")); return; }
     document.title = `${b.titulo} · Perguntas do trabalho · Voto a voto`;
     main.innerHTML = paginaTema(b, temas, C);
     ATUAL = { b, modo: modoSalvo(), paineis: partesDe(b).map((pt) => (pt.v.length ? { vi: pt.v[0], ci: {}, ano: {}, tab: null } : null)) };

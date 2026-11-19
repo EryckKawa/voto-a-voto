@@ -2005,3 +2005,74 @@ b > .rb-alvo--circ { margin-left: 0; }
   .tr-liga svg { transform: rotate(90deg); width: 40px; }
   .pq-trilhas { grid-template-columns: minmax(0, 1fr); }
 }
+
+/* ---------- página Mapa, polida (19/11): jornal, voto em barra, casas dos estados, gente × chão, quem virou ---------- */
+.home .filtros { background: transparent; border: 0; border-radius: 0; padding: 0; gap: 10px 26px; }
+.home .camadas { border: 0; border-bottom: 2px solid var(--tinta); border-radius: 0; gap: 26px; overflow-x: auto; }
+.home .camadas__op { flex: 0 0 auto; background: transparent; border: 0; padding: 8px 0 10px; font: 700 17px var(--fonte); color: var(--tinta-2); }
+.home .camadas__op:hover { background: transparent; color: var(--tinta); }
+.home .camadas__op[aria-current="true"] { background: transparent; color: var(--tinta); box-shadow: inset 0 -5px 0 var(--caneta); }
+.home .controles__linha .chip { border: 0; border-radius: 0; background: transparent; padding: 6px 2px; font-size: 15px; color: var(--tinta-2); }
+.home .controles__linha .chip[aria-pressed="true"] { background: transparent; color: var(--tinta); text-decoration: underline; text-decoration-thickness: 3px; text-underline-offset: 6px; }
+.home .controles__linha .chip:hover { color: var(--tinta); }
+.home .tempo__ano { font: 800 19px/1 var(--serif); }
+.home .tempo__ano[aria-current="true"], .home .tempo__ano[aria-pressed="true"] { border-bottom-color: var(--tinta); }
+.home .painel__mapa { background: transparent; border: 0; border-radius: 0; padding: 0; }
+.home .lado { background: transparent; border: 0; border-top: 4px solid var(--tinta); border-radius: 0; padding: 16px 0 0; }
+.home .mapa-zoom .btn { border-radius: 0; }
+/* a barra do voto */
+.voto2__rot { margin: 14px 0 4px; font: 700 13px var(--fonte); text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-2); }
+.voto2 { display: flex; min-height: 46px; border: 2px solid var(--tinta); }
+.voto2__f { display: flex; align-items: center; gap: 8px; padding: 0 12px; min-width: 0; overflow: hidden; white-space: nowrap; }
+.voto2__f b { font: 800 22px/1 var(--serif); }
+.voto2__f span { font: 700 15px var(--fonte); overflow: hidden; text-overflow: ellipsis; }
+.voto2__f--fim { justify-content: flex-end; flex-direction: row-reverse; }
+.voto2__resto { background: var(--fundo); padding: 0; }
+.voto2--fina { min-height: 30px; }
+.voto2--fina .voto2__f b { font-size: 17px; }
+/* o 1º turno enxuto e as maiores cidades */
+.lado__outros { margin: 8px 0 0; font-size: 15px; color: var(--tinta-2); }
+.maiores { list-style: none; margin: 6px 0 0; padding: 0; }
+.maiores a { display: grid; grid-template-columns: 18px minmax(0, 1fr) auto; gap: 10px; align-items: center; border-top: 1px solid var(--linha-forte); padding: 8px 0; color: var(--tinta); text-decoration: none; font: 400 18px var(--serif); }
+.maiores a:hover span { text-decoration: underline; }
+.maiores i { width: 16px; height: 16px; display: block; }
+.maiores b { font: 800 18px var(--serif); white-space: nowrap; }
+/* as 27 casas */
+.uf-casas { display: grid; grid-template-columns: repeat(7, minmax(0, 1fr)); gap: 5px; max-width: 460px; }
+.uf-casa { aspect-ratio: 1.1; display: flex; flex-direction: column; justify-content: space-between; padding: 6px 7px; text-decoration: none; font: 700 13px var(--fonte); border: 2px solid transparent; }
+.uf-casa span { display: flex; gap: 4px; align-items: center; }
+.uf-casa span i { width: 7px; height: 7px; border-radius: 50%; background: #2f7d5b; box-shadow: 0 0 0 1.5px #FFFFFF; }
+.uf-casa b { font: 800 18px/1 var(--serif); align-self: flex-end; }
+.uf-casa:hover, .uf-casa:focus-visible, .uf-casa[aria-current="true"] { border-color: var(--tinta); }
+/* a cidade: histórico em grade limpa */
+.linha-tempo__anos { grid-template-columns: repeat(9, minmax(0, 1fr)); gap: 3px; }
+.linha-tempo__anos a { border-radius: 0; min-height: 46px; padding: 4px 2px; }
+.linha-tempo__anos b { font: 700 11px/1.1 var(--fonte); max-width: 100%; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.linha-tempo__anos small { font: 700 12px/1 var(--serif); }
+/* as seções abaixo do mapa */
+.mapa-mais { display: flex; flex-direction: column; gap: 40px; margin: 40px 0 10px; }
+.mapa-mais:empty { display: none; }
+.mapa-mais__sec { border-top: 4px solid var(--tinta); padding-top: 18px; display: flex; flex-direction: column; gap: 14px; }
+.mapa-mais__lead { font: 400 22px/1.42 var(--serif); max-width: 64ch; margin: 0; }
+.mapa-mais__duas { display: grid; grid-template-columns: minmax(0, 1.2fr) minmax(0, 1fr); gap: 36px; align-items: start; }
+.mapa-mais__svg { width: 100%; height: auto; display: block; }
+.mapa-mais__placar { display: flex; flex-direction: column; gap: 18px; }
+.mapa-mais__placar > div { border-top: 1px solid var(--tinta); padding-top: 10px; }
+.mapa-mais__placar small { font: 700 13px var(--fonte); text-transform: uppercase; letter-spacing: .04em; color: var(--tinta-2); }
+.mapa-mais__placar p { margin: 4px 0 0; font: 800 32px/1.05 var(--serif); }
+.mapa-mais__placar p span { font: 400 15px var(--fonte); color: var(--tinta-2); }
+.mapa-mais__placar .esq { color: #B8232F; } .mapa-mais__placar .dir { color: #1D3C9E; }
+.mapa-mais__placar .rb-postit { max-width: none; font-size: 20px; }
+.mapa-mais__listas h3 { font: 700 22px/1.2 var(--serif); margin: 0 0 4px; }
+.mapa-mais__listas .maiores { margin-bottom: 18px; }
+@media (max-width: 900px) { .mapa-mais__duas { grid-template-columns: minmax(0, 1fr); } }
+.home .placar { border-radius: 0; }
+.home .placar__fatia:first-child, .home .placar__fatia--fim { border-radius: 0; }
+/* a primeira página das Perguntas abre com as 6 histórias (19/11) */
+.pagina.pq-pagina.pq-indice-pagina { max-width: 1360px; }
+.pq-indice-pagina > .pq-cab, .pq-indice-pagina > .pq-todas, .pq-indice-pagina > .pq-assunto, .pq-indice-pagina > .pq-base, .pq-indice-pagina > .pq-dif, .pq-indice-pagina > .pq-rodape-mapa, .pq-indice-pagina > .pq__rodape { max-width: 1240px; }
+.tr-dentro { display: flex; flex-direction: column; gap: 36px; }
+.pq-todas { border-top: 4px solid var(--tinta); padding-top: 18px; margin-top: 18px; }
+.pq-todas__tit { font: 800 36px/1.1 var(--serif); margin: 0 0 6px; }
+.pq-rodape-mapa { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 24px; align-items: center; }
+@media (max-width: 900px) { .pq-rodape-mapa { grid-template-columns: minmax(0, 1fr); } }

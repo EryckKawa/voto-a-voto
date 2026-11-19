@@ -157,11 +157,21 @@
     const rot = {}; for (const v of vencedoresPorNome(venc, uf)) if (!rot[v.f]) rot[v.f] = v.nome; return rot;
   }
   function votosDe(RES, uf) { const sc = uf ? RES.UF[uf] : RES.BR; if (!sc) return null; const t = sc.t2 ? "t2" : "t1"; const tot = sc[t].reduce((a, x) => a + x[1], 0); return { t, l: sc[t].map(([sq, v]) => ({ k: RES.c[sq], v, p: (100 * v) / tot })), t1: sc.t1 }; }
+  // presidente: a cor do lado de quem venceu, mais clara quando venceu por pouco e mais forte quando venceu por muito (w[4]: vantagem em pontos)
+  const corVitoria = (w, cargo) => { const c = V.corNota(w[8]); if (cargo !== "PRES" || w[4] == null || !c) return c; const t = Math.max(0, Math.min(1, w[4] / 40)); return d3.interpolateLab("#EFEBE2", c)(0.3 + 0.7 * t); };
   function mancheteMaj(r, ano, cargo, uf, RES) {
     const vs = vencedoresPorNome(BR.venc, uf), a = vs[0], b = vs[1];
     const onde = uf ? DO_UF[uf] : "do Brasil", em = NO_UF(uf);
     const tit = `Em ${ano}, ${a.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em ${V.rCirculo(`<span class="conta" data-f="${a.f}">${V.int(a.n)}</span>`)} das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}`;
-    const vt = votosDe(RES, uf); let sub = b ? `${b.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em ${V.int(b.n)}. ` : "";
+    const vt = votosDe(RES, uf);
+    if (cargo === "PRES" && vt && vt.l.length > 1) {
+      // a resposta é o voto; a contagem de cidades vem logo abaixo
+      const g = vt.l[0], quem = V.titulo(g.k[0]), turno = vt.t === "t2" ? " no 2º turno" : "";
+      const titP = uf ? `Em ${ano}, ${quem} teve ${V.rCirculo(V.pct(g.p))} dos votos válidos ${em}${turno}` : `Em ${ano}, ${quem} foi eleito com ${V.rCirculo(V.pct(g.p))} dos votos válidos${turno}`;
+      const subP = `${a.nome} ficou em primeiro em <span class="conta" data-f="${a.f}">${V.int(a.n)}</span> das <span class="conta" data-f="todas">${V.int(r.todas)}</span> cidades ${onde}${b ? `; ${b.nome}, em ${V.int(b.n)}` : ""}.`;
+      return { tit: titP, sub: subP, vt };
+    }
+    let sub = b ? `${b.nome} ${cargo === "PREF" ? "venceu" : "ficou em primeiro"} em ${V.int(b.n)}. ` : "";
     if (vt && vt.l.length > 1) sub += `${vt.t === "t2" ? "No 2º turno" : "No 1º turno"}, ${em}, ${V.titulo(vt.l[0].k[0])} teve ${V.pct(vt.l[0].p)} dos votos válidos e ${V.titulo(vt.l[1].k[0])}, ${V.pct(vt.l[1].p)}.`;
     return { tit, sub };
   }
@@ -208,6 +218,12 @@
     const k1 = U.c[w[0]], k2 = w[6] ? U.c[w[6]] : null, v1 = (rs.find((x) => x[0] === w[0]) || [0, 0])[1], v2 = w[6] ? (rs.find((x) => x[0] === w[6]) || [0, 0])[1] : 0;
     if (!w[9]) return { tit: `${c.nome} ficou sem prefeito definido em ${ano}`, sub: "O TSE não marcou nenhum candidato como eleito (eleição anulada ou em julgamento)." };
     const nome = V.titulo(k1[0]) + " (" + k1[1] + ")";
+    if (cargo === "PRES" && k2) {
+      const titP = `Em ${c.nome}, ${V.titulo(k1[0])} teve ${V.rCirculo(V.pct((100 * v1) / tot))}${t === "t2" ? " no 2º turno" : ""}`;
+      let subP = `Ficou ${V.rMarca(`${V.int(v1 - v2)} ${v1 - v2 === 1 ? "voto" : "votos"}`)} à frente de ${V.titulo(k2[0])} (${k2[1]}).`;
+      if (t === "t2" && r.t1) { const p1 = r.t1.findIndex((x) => x[0] === w[0]); if (p1 > 0) subP += " No 1º turno, tinha ficado em " + (p1 + 1) + "º lugar."; }
+      return { tit: titP, sub: subP, v1, v2, tot, k1, k2, rot1: V.titulo(k1[0]), rot2: V.titulo(k2[0]) };
+    }
     const tit = !k2 ? `Em ${c.nome}, ${nome} foi eleito sem adversário em ${ano}` : `Em ${c.nome}, ${nome} ${cargo === "PREF" ? "venceu" : "ficou à frente"} por ${V.rCirculo(`${V.int(v1 - v2)} ${v1 - v2 === 1 ? "voto" : "votos"}`)}${t === "t2" ? " no 2º turno" : ""}`;
     let sub = k2 ? `${V.rMarca(V.pct((100 * v1) / tot))} a ${V.pct((100 * v2) / tot)} contra ${V.titulo(k2[0])} (${k2[1]}).` : "";
     if (t === "t2" && r.t1) { const p1 = r.t1.findIndex((x) => x[0] === w[0]); if (p1 > 0) sub += " No 1º turno, tinha ficado em " + (p1 + 1) + "º lugar."; }
@@ -229,6 +245,12 @@
     ROT = rot;
     return `<div class="placar" role="img" aria-label="${ORD.map((f) => ((rot && rot[f]) || FX[f].nome) + ": " + r[f] + " cidades").join(", ")}">${ORD.map((f) => `<div class="placar__fatia placar__fatia--${f}" data-f="${f}" style="flex-basis:${(100 * r[f]) / (r.total || 1)}%">${fatiaHtml(f, r[f], r.total)}</div>`).join("")}</div>`;
   }
+  function barraVoto(vt, rot, fina) {
+    if (!vt || vt.l.length < 2) return "";
+    const notas = BR.ideo.anos[H.ano] || {}, nt = (sg) => (notas[sg] ? notas[sg][0] : null), [a, b] = vt.l, resto = Math.max(0, 100 - a.p - b.p);
+    const lado = (x, fim) => `<div class="voto2__f${fim ? " voto2__f--fim" : ""}" style="flex-basis:${x.p}%;background:${V.parNota(nt(x.k[1]))[0]};color:${V.parNota(nt(x.k[1]))[1]}"><b>${V.pct(x.p)}</b>${fina ? "" : `<span>${V.esc(V.titulo(x.k[0]))}</span>`}</div>`;
+    return `<p class="voto2__rot">${rot}</p><div class="voto2${fina ? " voto2--fina" : ""}" role="img" aria-label="${V.esc(V.titulo(a.k[0]))} ${V.pct(a.p)}, ${V.esc(V.titulo(b.k[0]))} ${V.pct(b.p)}">${lado(a)}${resto > 0.5 ? `<div class="voto2__f voto2__resto" style="flex-basis:${resto}%"></div>` : ""}${lado(b, true)}</div>`;
+  }
   function apuracaoHtml(pronto) {
     return `<div class="apuracao" id="apuracao"><span class="apuracao__rot"><span id="apu-rot">${pronto ? "Apuração concluída" : "Apurando"}</span> · <b id="apu-pct">${pronto ? "100%" : "0%"}</b> das cidades</span>
       <span class="apuracao__trilho"><i id="apu-barra" style="width:${pronto ? 100 : 0}%"></i></span>
@@ -243,7 +265,7 @@
     const N = ids.length, acc = { esquerda: [0], centro: [0], direita: [0], total: [0], todas: [0] };
     ids.forEach((ib, i) => { const w = venc[ib], f = w[9] ? V.faixa(w[8]) : null; for (const k of [...ORD, "total"]) acc[k].push(acc[k][i] + ((k === "total" ? !!f : f === k) ? 1 : 0)); acc.todas.push(acc.todas[i] + (w[9] ? 1 : 0)); });
     const fat = {}; document.querySelectorAll(".placar__fatia").forEach((el) => (fat[el.dataset.f] = el));
-    const contas = [...document.querySelectorAll(".manchete__titulo .conta")];
+    const contas = [...document.querySelectorAll("#manchete .conta")];
     const barra = document.getElementById("apu-barra"), pct = document.getElementById("apu-pct"), rot = document.getElementById("apu-rot");
     const sub = document.querySelector(".manchete__sub"); sub.classList.add("apuracao-esconde");
     document.getElementById("apu-rever").hidden = true; rot.textContent = "Apurando";
@@ -267,16 +289,37 @@
     if (cargo !== "PREF" && !PROP[cargo] && !ESTADUAL(cargo, uf)) {
       const vt = votosDe(RES, uf); if (!vt) return "";
       const sc = vt.t1, tot = sc.reduce((a, x) => a + x[1], 0), mx = sc[0][1], notas = BR.ideo.anos[ano] || {};
-      return `<h2 class="lado__titulo">Votos no 1º turno ${NO_UF(uf)}</h2><p class="lado__sub">Todos os candidatos. Cada barra tem a cor da nota do partido ${NOME_REGUA[REGUA]}.</p>
-        <p class="ranking__cab ranking__cab--cand" aria-hidden="true"><span>Candidato</span><span></span><span>Votos</span><span>Nota</span></p>
-        <ol class="ranking ranking--cand">${sc.map(([sq, v]) => { const k = RES.c[sq], n = notas[k[1]] ? notas[k[1]][0] : null; return `<li><span class="ranking__sg">${V.esc(V.titulo(k[0]))} <small>${V.esc(V.nomePartido(k[1]))}</small></span><span class="ranking__barra"><i style="width:${(100 * v) / mx}%;background:${V.corNota(n)}"></i></span><b>${V.pct((100 * v) / tot)}</b><small>${fmtNota(n)}</small></li>`; }).join("")}</ol>`;
+      return `<h2 class="lado__titulo">Votos no 1º turno ${NO_UF(uf)}</h2><p class="lado__sub">Os mais votados. A cor da barra é o lado do partido.</p>
+        <p class="ranking__cab ranking__cab--cand" aria-hidden="true"><span>Candidato</span><span></span><span>Votos</span><span></span></p>
+        <ol class="ranking ranking--cand">${sc.slice(0, 4).map(([sq, v]) => { const k = RES.c[sq], n = notas[k[1]] ? notas[k[1]][0] : null; return `<li><span class="ranking__sg">${V.esc(V.titulo(k[0]))} <small>${V.esc(V.nomePartido(k[1]))}</small></span><span class="ranking__barra"><i style="width:${(100 * v) / mx}%;background:${V.corNota(n)}"></i></span><b>${V.pct((100 * v) / tot)}</b><small></small></li>`; }).join("")}</ol>${sc.length > 4 ? `<p class="lado__outros">Outros ${sc.length - 4} candidatos: ${V.pct((100 * sc.slice(4).reduce((a, x) => a + x[1], 0)) / tot)} juntos.</p>` : ""}${cargo === "PRES" ? maioresCidades(uf) : ""}`;
     }
     const ps = [...r.partidos.values()].sort((a, b) => b.n - a.n).slice(0, 12), mx = ps.length ? ps[0].n : 1;
     return `<h2 class="lado__titulo">${cargo === "PREF" ? "Quem mais elegeu prefeitos" : PROP[cargo] ? `Partido mais votado para ${NOME_CG[cargo]}, em número de cidades` : `Partido do candidato a ${NOME_CG[cargo]} mais votado, em número de cidades`}</h2><p class="lado__sub">A cor é a nota do partido. <span class="so-mouse">Passe o mouse para ver as cidades dele.</span></p>
       <p class="ranking__cab" aria-hidden="true"><span>Partido</span><span></span><span>Cidades</span><span>Nota</span></p>
       <ol class="ranking">${ps.map((p) => `<li data-sg="${V.esc(p.sg)}"><span class="ranking__sg">${V.esc(V.nomePartido(p.sg))}</span><span class="ranking__barra"><i style="width:${(100 * p.n) / mx}%;background:${V.corNota(p.nota)}"></i></span><b>${V.int(p.n)}</b><small>${fmtNota(p.nota)}</small></li>`).join("")}</ol>`;
   }
+  function maioresCidades(uf) {
+    const xs = BR.lista.filter((c) => (!uf || c.uf === uf) && BR.venc[c.ibge] && BR.venc[c.ibge][9]).sort((a, b) => (b.pop || 0) - (a.pop || 0)).slice(0, 6);
+    if (!xs.length) return "";
+    return `<h2 class="lado__titulo lado__titulo--2">As maiores cidades ${uf ? DO_UF[uf] : "do Brasil"}</h2><ul class="maiores">${xs.map((c) => { const w = BR.venc[c.ibge];
+      return `<li><a href="${lk(c.uf, c.ibge)}"><i style="background:${corVitoria(w, "PRES")}"></i><span>${V.esc(c.nome)}${uf ? "" : ` (${c.uf})`}</span><b>${V.esc(V.titulo(w[1]).split(" ")[0])} ${V.pct(w[3], 0)}</b></a></li>`; }).join("")}</ul>`;
+  }
+  // os 27 estados em casas do mesmo tamanho, cada uma no lugar dela no mapa
+  const CASAS = { RR: [2, 0], AP: [4, 0], AM: [1, 1], PA: [3, 1], MA: [4, 1], CE: [5, 1], RN: [6, 1], AC: [0, 2], RO: [1, 2], MT: [2, 2], TO: [3, 2], PI: [4, 2], PE: [5, 2], PB: [6, 2],
+    MS: [2, 3], GO: [3, 3], DF: [4, 3], BA: [5, 3], AL: [6, 3], PR: [2, 4], SP: [3, 4], MG: [4, 4], ES: [5, 4], SE: [6, 4], SC: [2, 5], RJ: [4, 5], RS: [2, 6] };
   function porEstado(venc, ufSel, cargo) {
+    const casa = (s) => { const q = resumo(venc, s), f = ORD.slice().sort((a, b) => q[b] - q[a])[0], p = (100 * q[f]) / (q.total || 1), t = Math.max(0, Math.min(1, (p - 40) / 60));
+      const bg = d3.interpolateLab("#EFEBE2", FX[f].cor)(0.35 + 0.65 * t), lum = (c) => { const r = d3.rgb(c), l = (v) => { v /= 255; return v <= 0.03928 ? v / 12.92 : ((v + 0.055) / 1.055) ** 2.4; }; return 0.2126 * l(r.r) + 0.7152 * l(r.g) + 0.0722 * l(r.b); }, cw = (c) => 1.05 / (lum(c) + 0.05), cp = (c) => (lum(c) + 0.05) / (lum("#141414") + 0.05);
+      // nem branco nem preto com contraste bom: escurece a casa até o texto branco ficar legível (4,5 : 1)
+      let bg2 = bg; for (let k = 0; k < 8 && Math.max(cw(bg2), cp(bg2)) < 4.6; k++) bg2 = d3.color(bg2).darker(0.15).formatHex();
+      const escuro = cw(bg2) >= cp(bg2);
+      return `<a class="uf-casa" href="${lk(s)}" data-uf="${s}"${s === ufSel ? ' aria-current="true"' : ""} style="background:${bg2};color:${escuro ? "#FFFFFF" : "#141414"}" title="${UFN[s]}: ${V.pct(p, 0)} das cidades com ${FX[f].nome.toLowerCase()}"><span>${s}${GRUPO.includes(s) ? "<i></i>" : ""}</span><b>${V.pct(p, 0)}</b></a>`; };
+    const cel = {}; for (const [s, [c, r]] of Object.entries(CASAS)) cel[c + "," + r] = casa(s);
+    return `<h2 class="lado__titulo lado__titulo--2">Estado por estado</h2><p class="lado__sub">Cada casa é um estado, no lugar dele no mapa. O número é a parte das cidades em que venceu o lado mais forte do estado. Clique para aproximar.</p>
+      <div class="uf-casas">${Array.from({ length: 49 }, (_, k) => cel[(k % 7) + "," + Math.floor(k / 7)] || "<span></span>").join("")}</div>
+      <p class="estados-lista__leg"><i class="g"></i> estado do Grupo 6</p>`;
+  }
+  function porEstadoAntigo(venc, ufSel, cargo) {
     const linhas = Object.keys(UFN).filter((s) => s !== "DF").map((s) => { const q = resumo(venc, s); return { s, q, pd: q.direita / (q.total || 1) }; }).sort((a, b) => b.pd - a.pd);
     return `<h2 class="lado__titulo lado__titulo--2">Estado por estado</h2><p class="lado__sub">Do mais à direita ao mais à esquerda. Clique para aproximar.</p>
       <ol class="estados-lista">${linhas.map(({ s, q }) => `<li${s === ufSel ? ' aria-current="true"' : ""}><a href="${lk(s)}" data-uf="${s}"><span class="estados-lista__uf">${s}${GRUPO.includes(s) ? '<i title="Estado do grupo"></i>' : ""}</span>
@@ -339,7 +382,7 @@
     svg.on("wheel", (ev) => { if (ev.ctrlKey || ev.metaKey) return; if (!aviso) { aviso = d3.select(host).append("div").attr("class", "mapa-aviso").text("Use Ctrl + rolagem (ou os botões +/−) para aproximar"); } aviso.classed("ver", true); clearTimeout(aviso._t); aviso._t = setTimeout(() => aviso.classed("ver", false), 1400); });
     // cidade sem vencedor: hachurada quando a eleição houve mas não tem resultado oficial; pontilhada quando não houve eleição ali
     const FUNDO = { indef: "url(#hach)", semArq: "url(#hach)", novo: "url(#novo)", semPref: "url(#novo)" };
-    const corDe = (w, id) => (w && w[9] ? V.corNota(w[8]) : FUNDO[porQue(id, w, agora().ano, agora().cargo)]);
+    const corDe = (w, id) => (w && w[9] ? corVitoria(w, agora().cargo) : FUNDO[porQue(id, w, agora().ano, agora().cargo)]);
     const dicaSem = (c, w) => { const [t, s] = textoPorQue(porQue(c.ibge, w, agora().ano, agora().cargo), c, agora().ano, agora().cargo); return `<b>${V.esc(c.nome)} (${c.uf})</b>${V.esc(t.replace(c.nome + " ", "").replace(/^./, (x) => x.toUpperCase()))}.<br><small>${V.esc(s)}</small>`; };
     const elPor = new Map(); mun.each(function (f) { elPor.set(f.id, this); });
     // um único ouvinte para as 5.570 cidades (em vez de três por cidade)
@@ -403,17 +446,18 @@
     const vk = w && U.c[w[0]];
     const urna = vk ? `<div class="urna urna--compacta"><div class="urna__tela"><span class="urna__cab">SEU VOTO PARA</span><span class="urna__cargo">${V.CARGOS[cargo]} · ${ano}</span>
       <div class="urna__campos"><div class="urna__linha"><span>Número:</span><span class="digitos">${String(vk[2]).split("").map((d) => "<b>" + d + "</b>").join("")}</span></div>
-      <div class="urna__linha"><span>Nome:</span><span class="urna__nome">${V.esc(V.titulo(vk[0]))}</span></div><div class="urna__linha"><span>Partido:</span><span><b>${V.esc(vk[1])}</b> <small class="nota-chip" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">nota ${fmtNota(nt(vk[1]))} · ${V.nome5(nt(vk[1]))}</small></span></div></div>
+      <div class="urna__linha"><span>Nome:</span><span class="urna__nome">${V.esc(V.titulo(vk[0]))}</span></div><div class="urna__linha"><span>Partido:</span><span><b>${V.esc(vk[1])}</b> <small class="nota-chip" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">${V.nome5(nt(vk[1]))}</small></span></div></div>
       <div class="urna__foto">${V.fotoOu(ano, w[0], `<span class="iniciais" style="background:${V.parNota(nt(vk[1]))[0]};color:${V.parNota(nt(vk[1]))[1]}">${V.esc(V.iniciais(vk[0]))}</span>`)}</div>
       <div class="urna__rodape"><span class="urna__votos">${V.pct(w[3])}<small>dos votos válidos</small></span>${cargo === "PREF" ? `<span class="tecla ${w[9] ? "tecla--eleito" : "tecla--nao"}">${w[9] ? "Eleito" : "Sem resultado definido"}</span>` : `<span class="tecla tecla--nao">Mais votado aqui</span>${String(vk[3]).startsWith("ELEITO") ? '<span class="tecla tecla--eleito">Eleito no país</span>' : ""}`}</div></div></div>` : "";
     const lista = turnos.map((t) => {
       const rs = r[t], tot = rs.reduce((a, x) => a + x[1], 0);
-      return `<h3 class="lado__turno">${r.t2 ? "Como foi o 1º turno" : "Todos os candidatos"}</h3><ul class="lista-cand lista-cand--curta">${rs.map(([sq, v]) => {
+      const mostra = cargo === "VER" ? rs : rs.slice(0, 4), outros = rs.slice(mostra.length).reduce((a, x) => a + x[1], 0);
+      return `<h3 class="lado__turno">${r.t2 ? "Como foi o 1º turno" : "Os mais votados"}</h3><ul class="lista-cand lista-cand--curta">${mostra.map(([sq, v]) => {
         const k = U.c[sq] || ["?", "?", "", ""], p = (100 * v) / (tot || 1);
         return `<li><span class="mini-foto" style="width:40px;height:40px">${V.fotoOu(ano, sq, `<span class="iniciais" style="background:${V.parNota(nt(k[1]))[0]};color:${V.parNota(nt(k[1]))[1]};font-size:16px">${V.esc(V.iniciais(k[0]))}</span>`)}</span>
           <span><span class="cand-nome">${V.esc(V.titulo(k[0]))}<small>${V.esc(k[1])}</small>${String(k[3]).startsWith("ELEITO") ? '<span class="selo selo--eleito">Eleito</span>' : ""}</span><span class="barra"><i style="width:${p}%;background:${V.corNota(nt(k[1]))}"></i></span></span>
           <span class="cand-num">${V.pct(p)}<small>${V.int(v)} votos</small></span></li>`;
-      }).join("")}</ul>`;
+      }).join("")}</ul>${outros ? `<p class="lado__outros">Outros ${rs.length - mostra.length} candidatos: ${V.pct((100 * outros) / (tot || 1))} juntos.</p>` : ""}`;
     }).join("");
     alvo("cid-corpo").innerHTML = urna + lista + '<div id="hist"></div>';
     alvo("hist").innerHTML = await historicoHtml(ib);
@@ -427,7 +471,7 @@
       <span class="mapa-leg__item" id="leg-pref-box" hidden><i class="mapa-leg__novo"></i><span id="leg-pref">Não elege prefeito: Brasília e Fernando de Noronha</span></span>
       <span class="mapa-leg__item" id="leg-sem-box" hidden><i class="mapa-leg__sem"></i><span>Partido que os estudos não medem (<span id="leg-sem"></span>)</span></span>
       <span class="mapa-leg__dica"><span class="so-mouse">Clique num estado, depois numa cidade · Ctrl + rolagem aproxima</span><span class="so-toque">Toque num estado, depois numa cidade · dois dedos aproximam</span></span>
-      <span class="mapa-leg__ler">Como ler: cada cidade tem a cor do partido de quem venceu ali. Quanto mais forte o vermelho, mais à esquerda; quanto mais forte o azul, mais à direita; bege é centro.</span>`;
+      <span class="mapa-leg__ler">${H && H.cargo === "PRES" ? "Como ler: cada cidade tem a cor de quem venceu nela; vermelho é esquerda, azul é direita. Cor clara: venceu por pouco. Cor forte: venceu por muito." : "Como ler: cada cidade tem a cor do partido de quem venceu ali. Quanto mais forte o vermelho, mais à esquerda; quanto mais forte o azul, mais à direita; bege é centro."}</span>`;
   const MET = {
     abst: { cores: ["#f7f1e6", "#ecd2a4", "#d49a4a", "#9c5d16", "#58320a"], valor: (t) => (t[0] ? (100 * t[2]) / t[0] : null), rot: "eleitores que não foram votar" },
     bn: { cores: ["#f4f1f8", "#d3c7e6", "#a48ccb", "#6d51a3", "#3b2766"], valor: (t) => (t[1] ? (100 * (t[3] + t[4])) / t[1] : null), rot: "votos brancos e nulos" },
@@ -663,6 +707,7 @@
         </div></div>
         <aside class="home__lado"><div id="lado" class="lado"></div></aside>
       </div>
+      <div id="mapa-mais" class="mapa-mais"></div>
       <section class="regua-bloco" id="reguas">
         <h2 class="secao__titulo" id="regua-tit">Onde fica cada partido</h2>
         <details class="mais regua-mais"><summary>Ver a régua dos partidos e escolher a medida que pinta o mapa</summary>
@@ -696,7 +741,7 @@
     };
     ligar(".ranking li[data-sg]", (el) => (id) => { const w = venc()[id]; return w && w[9] && w[2] === el.dataset.sg && (!H.uf || BR.porIbge.get(id).uf === H.uf); });
     ligar(".placar:not(.placar--cidade) .placar__fatia[data-f]", (el) => (id) => { const w = venc()[id]; return w && w[9] && V.faixa(w[8]) === el.dataset.f && (!H.uf || BR.porIbge.get(id).uf === H.uf); });
-    ligar(".estados-lista a[data-uf]", (el) => (id) => { const c = BR.porIbge.get(id); return c && c.uf === el.dataset.uf; });
+    ligar(".uf-casa[data-uf]", (el) => (id) => { const c = BR.porIbge.get(id); return c && c.uf === el.dataset.uf; });
     H = { M, cargo: null, ano: null, uf: undefined, ib: undefined, cam: null };
     document.querySelectorAll("[data-regua]").forEach((b) => (b.onclick = () => trocarRegua(b.dataset.regua)));
     document.getElementById("controles").addEventListener("click", (e) => { if (e.target.closest("#tocar")) tocar(); else if (tocando && e.target.closest("a")) tocar(); });
@@ -705,9 +750,50 @@
     const blocoReguas = document.getElementById("reguas");
     if ("IntersectionObserver" in window) { const io = new IntersectionObserver((es) => { if (es.some((e) => e.isIntersecting)) { io.disconnect(); grafGoverno(); } }, { rootMargin: "600px" }); io.observe(blocoReguas); } else grafGoverno();
   }
+  /* "Cidade não vota, gente vota" e "Quem virou": o mesmo resultado pelo tamanho da gente, e as cidades que mudaram de lado */
+  async function secoesPresidente(ano, vt) {
+    const el = document.getElementById("mapa-mais"); if (!el) return;
+    const meu = V.pedido, G = BR.geo, venc = BR.venc, [g, s2] = vt.l;
+    const raio = (c) => Math.max(0.6, Math.sqrt(c.pop || 0) / 55);
+    const bolas = (lista, cor) => lista.map((c) => { const f = G.porId.get(c.ibge); return f ? `<circle cx="${f.c[0]}" cy="${f.c[1]}" r="${raio(c).toFixed(2)}" fill="${cor(c)}" fill-opacity=".85" stroke="#FFFFFF" stroke-width=".3"/>` : ""; }).join("");
+    const caixa = (g2, rot) => `<svg class="mapa-mais__svg" viewBox="0 0 ${G.W} ${G.H}" role="img" aria-label="${V.esc(rot)}">${G.ufs.map((u) => `<path d="${u.d}" fill="#ECE8DF" stroke="#FFFFFF" stroke-width="1"/>`).join("")}${g2}</svg>`;
+    const com = BR.lista.filter((c) => venc[c.ibge] && venc[c.ibge][9]).sort((a, b) => (b.pop || 0) - (a.pop || 0));
+    const de = (sg) => com.filter((c) => venc[c.ibge][2] === sg);
+    const A = de(g.k[1]), B = de(s2.k[1]), soma = (xs) => xs.reduce((t, c) => t + (c.pop || 0), 0) / 1e6, fortes = (xs) => xs.filter((c) => venc[c.ibge][3] >= 70).length;
+    const nA = V.titulo(g.k[0]), nB = V.titulo(s2.k[0]), pA = soma(A), pB = soma(B), fA = fortes(A), fB = fortes(B);
+    const N1 = (v) => new Intl.NumberFormat("pt-BR", { minimumFractionDigits: 1, maximumFractionDigits: 1 }).format(v);
+    const comoGanhou = pA < pB ? `<b>Então como ${V.esc(nA)} ganhou?</b> ${V.esc(nB)} venceu em cidades onde moram mais pessoas, mas ${V.esc(nA)} ganhou por muito mais onde ganhou: em ${V.int(fA)} cidades ele teve 70% ou mais; ${V.esc(nB)}, em ${V.int(fB)}.`
+      : `<b>${V.esc(nA)} venceu também onde mora mais gente:</b> ${N1(pA)} milhões de moradores nas cidades dele, contra ${N1(pB)} milhões nas de ${V.esc(nB)}.`;
+    let html = `<section class="mapa-mais__sec" aria-labelledby="mm-gente"><h2 class="secao__titulo" id="mm-gente">Cidade não vota. Gente vota.</h2>
+      <p class="mapa-mais__lead">O mapa pinta o chão: uma cidade grande da Amazônia, com poucos eleitores, ocupa mais espaço que São Paulo. Aqui, cada cidade é uma bolinha do tamanho de quem mora nela.</p>
+      <div class="mapa-mais__duas"><div>${caixa(bolas(com, (c) => corVitoria(venc[c.ibge], "PRES")), "Cada cidade como uma bolinha do tamanho da população, com a cor de quem venceu")}</div>
+      <div class="mapa-mais__placar"><div><small>Cidades vencidas</small><p class="esq">${V.int(A.length)} <span>${V.esc(nA)}</span></p><p class="dir">${V.int(B.length)} <span>${V.esc(nB)}</span></p></div>
+        <div><small>Moradores dessas cidades</small><p class="esq">${N1(pA)} mi <span>${V.esc(nA)}</span></p><p class="dir">${N1(pB)} mi <span>${V.esc(nB)}</span></p></div>
+        <div><small>Vitórias com 70% ou mais</small><p class="esq">${V.int(fA)} <span>cidades de ${V.esc(nA)}</span></p><p class="dir">${V.int(fB)} <span>cidades de ${V.esc(nB)}</span></p></div>
+        ${V.rPostit(comoGanhou, -1.5).replace("<aside", "<div").replace("</aside>", "</div>")}</div></div></section>`;
+    // quem virou: a eleição para presidente de 4 anos antes, cidade por cidade, pelo lado do partido de quem venceu
+    const ant = ano - 4;
+    if (ELEICOES.PRES && ELEICOES.PRES.prontos.includes(ant)) {
+      let V0 = null; try { V0 = await V.dados("br/venc/PRES" + ant); } catch (e) {}
+      if (meu !== V.pedido) return;
+      if (V0) {
+        const notasA = BR.ideo.anos[ant] || {}, notasN = BR.ideo.anos[ano] || {}, ladoDe = (w, notas) => { if (!w || !w[9]) return null; const n = notas[w[2]] ? notas[w[2]][0] : w[8]; return V.faixa(n); };
+        const paraDir = [], paraEsq = [];
+        for (const c of com) { const a0 = ladoDe(V0[c.ibge], notasA), a1 = ladoDe(venc[c.ibge], notasN); if (a0 === "esquerda" && a1 === "direita") paraDir.push(c); else if (a0 === "direita" && a1 === "esquerda") paraEsq.push(c); }
+        const corF = (c) => corVitoria(venc[c.ibge], "PRES"), lst = (xs) => xs.slice(0, 5).map((c) => `<li><a href="${lk(c.uf, c.ibge)}"><i style="background:${corF(c)}"></i><span>${V.esc(c.nome)} (${c.uf})</span><b>${V.int(Math.round((c.pop || 0) / 1e3))} mil</b></a></li>`).join("");
+        const mais = paraEsq.length && paraDir.length ? (soma(paraEsq.slice(0, 1)) > soma(paraDir) ? `Uma cidade só, ${paraEsq[0].nome}, tem mais moradores que as ${V.int(paraDir.length)} que foram para a direita, juntas` : soma(paraDir.slice(0, 1)) > soma(paraEsq) ? `Uma cidade só, ${paraDir[0].nome}, tem mais moradores que as ${V.int(paraEsq.length)} que foram para a esquerda, juntas` : "") : "";
+        html += `<section class="mapa-mais__sec" aria-labelledby="mm-virou"><h2 class="secao__titulo" id="mm-virou">Quem virou de ${ant} para ${ano}</h2>
+          <p class="mapa-mais__lead">${V.rCirculo(V.int(paraDir.length))} cidades passaram da esquerda para a direita. ${V.int(paraEsq.length)} fizeram o contrário. Cada bolinha é uma cidade que mudou, do tamanho de quem mora nela; as outras ${V.int(com.length - paraDir.length - paraEsq.length)} votaram no mesmo lado das duas vezes.</p>
+          <div class="mapa-mais__duas"><div>${caixa(bolas([...paraDir, ...paraEsq].sort((a, b) => (b.pop || 0) - (a.pop || 0)), corF).replace(/r="([\d.]+)"/g, (m0, r0) => `r="${Math.max(2.2, +r0).toFixed(2)}"`), "Cidades que mudaram de lado para presidente")}</div>
+          <div class="mapa-mais__listas"><h3>As maiores que foram para a direita</h3><ul class="maiores">${lst(paraDir)}</ul><h3>As maiores que foram para a esquerda</h3><ul class="maiores">${lst(paraEsq)}</ul>${mais ? `<p class="manchete__nota">${V.rNota(mais, -2)}</p>` : ""}</div></div></section>`;
+      }
+    }
+    if (meu === V.pedido && el.isConnected) el.innerHTML = html;
+  }
   async function atualizar(uf, ib, cargo, ano, cam) {
     const M = H.M, trocouEl = H.cargo !== cargo || H.ano !== ano, trocou = trocouEl || H.cam !== cam;
     H.cargo = cargo; H.ano = ano; H.uf = uf; H.ib = ib; H.cam = cam;
+    { const mm = document.getElementById("mapa-mais"); if (mm) mm.innerHTML = ""; }
     const RES = cargo === "PREF" || PROP[cargo] ? null : await V.dados("br/resumo/" + cargo + ano);
     if (trocouEl) { document.getElementById("regua-box").innerHTML = regua(String(ano), cargo, RES); document.getElementById("regua-tit").textContent = `Onde fica cada partido em ${ano}`; textosRegua(); }
     document.getElementById("controles").innerHTML = controlesHtml(cargo, ano);
@@ -726,6 +812,15 @@
         <div class="placar__fatia" style="flex-basis:${(100 * m.v1) / m.tot}%;background:${V.parNota(nt(m.k1[1]))[0]};color:${V.parNota(nt(m.k1[1]))[1]}">${cabe(m.v1 / m.tot) ? `<b>${V.pct((100 * m.v1) / m.tot)}</b><span>${V.esc(m.rot1 || V.titulo(m.k1[0]))}</span>` : ""}</div>
         <div class="placar__fatia placar__resto" style="flex-basis:${(100 * (m.tot - m.v1 - m.v2)) / m.tot}%"></div>
         <div class="placar__fatia placar__fatia--fim" style="flex-basis:${(100 * m.v2) / m.tot}%;background:${V.parNota(nt(m.k2[1]))[0]};color:${V.parNota(nt(m.k2[1]))[1]}">${cabe(m.v2 / m.tot) ? `<b>${V.pct((100 * m.v2) / m.tot)}</b><span>${V.esc(m.rot2 || V.titulo(m.k2[0]))}</span>` : ""}</div></div>` : "";
+    let barraBrasil = "";
+    if (cid && cargo === "PRES" && RES && m.k1) {
+      const vb = votosDe(RES, null);
+      if (vb) {
+        const pc = m.tot ? (100 * m.v1) / m.tot : 0, noBR = vb.l.find((x) => x.k[1] === m.k1[1]);
+        const frase = noBR ? (pc > noBR.p + 2 ? `${V.esc(cid.nome)} votou mais em ${V.esc(V.titulo(m.k1[0]))} que o Brasil` : pc < noBR.p - 2 ? `${V.esc(cid.nome)} votou menos em ${V.esc(V.titulo(m.k1[0]))} que o Brasil` : `${V.esc(cid.nome)} votou quase igual ao Brasil`) : "";
+        barraBrasil = barraVoto(vb, "Brasil", true) + (frase ? `<p class="manchete__nota">${V.rNota(frase, -2)}</p>` : "");
+      }
+    }
     const cab = document.getElementById("manchete"); PLW = cab.clientWidth || PLW;
     // guarda os números de antes para a troca de estado contar de um valor para o outro
     const antes = {}; cab.querySelectorAll(".conta").forEach((el) => (antes[el.dataset.f] = +el.textContent.replace(/\D/g, "")));
@@ -733,8 +828,8 @@
     cab.innerHTML = `<p class="manchete__onde"><a href="${lk()}">Brasil</a>${uf ? ` › ${cid ? `<a href="${lk(uf)}">${UFN[uf]}</a> › ${V.esc(cid.nome)}` : UFN[uf]}` : ""} · ${V.CARGOS[cargo]} ${ano}</p>
         <h1 class="manchete__titulo">${m.tit}</h1>
         ${m.sub ? `<p class="manchete__sub">${/</.test(m.sub) ? m.sub : V.rMarcarNumero(m.sub, V.rMarca)}</p>` : ""}
-        ${!cid && !uf ? `<p class="manchete__nota">${V.rNota("clique na sua cidade!", -2)}</p>` : ""}
-        ${cid ? barraCidade : apuracaoHtml(true) + placar(r, rotulosPlacar(cargo, BR.venc, uf)) + legendaPlacar(r, rotulosPlacar(cargo, BR.venc, uf))}`;
+        ${!cid && !uf ? `<p class="manchete__nota">${V.rNota("clique na sua cidade!", -2)}</p>` : ""}${cid && barraBrasil ? `<p class="voto2__rot">${V.esc(cid.nome)}</p>` : ""}
+        ${cid ? barraCidade + barraBrasil : (m.vt ? barraVoto(m.vt, `Votos válidos${m.vt.t === "t2" ? " no 2º turno" : ""}`) + '<p class="voto2__rot">Cidades vencidas</p>' : "") + apuracaoHtml(true) + placar(r, rotulosPlacar(cargo, BR.venc, uf)) + legendaPlacar(r, rotulosPlacar(cargo, BR.venc, uf))}`;
     cab.querySelectorAll(".conta").forEach((el) => { if (antes[el.dataset.f] != null && !trocou) tween(el, antes[el.dataset.f], r[el.dataset.f]); });
     const fats = cab.querySelectorAll(".placar__fatia[data-f]");
     if (Object.keys(fatAntes).length) { const novo = []; fats.forEach((el) => { novo.push(el.style.flexBasis); el.style.flexBasis = fatAntes[el.dataset.f]; }); requestAnimationFrame(() => requestAnimationFrame(() => fats.forEach((el, i) => (el.style.flexBasis = novo[i])))); }
@@ -747,6 +842,7 @@
     M.realcar(null); M.foco(uf || null);
     if (ib) { M.destacar(ib); M.cidade(ib); painelCidade(lado, ib, ano, cargo); }
     else { M.destacar(null); if (uf) M.estado(uf); else M.brasil(); novaVez(lado); lado.innerHTML = ranking(r, ano, cargo, uf, RES) + porEstado(BR.venc, uf, cargo); }
+    if (cargo === "PRES" && !uf && !ib && m.vt) secoesPresidente(ano, m.vt);
     // no celular, depois de tocar no mapa, o título com a resposta volta para a vista
     if (cab.getBoundingClientRect().top < 0) cab.scrollIntoView({ behavior: matchMedia("(prefers-reduced-motion: reduce)").matches ? "auto" : "smooth", block: "start" });
     const rever = document.getElementById("apu-rever");

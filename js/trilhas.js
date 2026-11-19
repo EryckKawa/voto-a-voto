@@ -105,22 +105,20 @@
       ${chip ? `<span class="tr-cartao__d"><b>Nos números</b>${chip}</span>` : ""}<span class="tr-cartao__ir">Ler a resposta →</span></a>`;
   }
 
-  V.rota(/^\/trilhas\/?$/, async function (main) {
-    V.marcarNav("perguntas");
-    document.title = "Uma pergunta puxa a outra · Voto a voto";
+  /* as 6 histórias dentro de um lugar da página (a primeira página das Perguntas) */
+  V.trilhasMontar = async function (host) {
+    if (!host) return;
     const [{ C, temas }, ex] = await Promise.all([V.pqCarregar(), extras()]);
+    if (!host.isConnected) return;
     const porId = Object.fromEntries(temas.map((t) => [t.id, t])), num = numeros(C, ex);
-    const nav = HIST.map((h, k) => `<a href="#/trilhas" data-tr="${k}" style="border-top-color:${h.cor}"><b style="color:${h.cor}">${k + 1}</b><span>${h.t}</span><small>${h.ids.length} perguntas</small></a>`).join("");
+    const nav = HIST.map((h, k) => `<a href="#/perguntas" data-tr="${k}" style="border-top-color:${h.cor}"><b style="color:${h.cor}">${k + 1}</b><span>${h.t}</span><small>${h.ids.length} perguntas</small></a>`).join("");
     const caps = HIST.map((h, k) => `<section class="tr-cap" id="trilha-${k + 1}" aria-labelledby="tr-t${k}">
         <div class="tr-cap__cab"><span class="tr-cap__n" style="color:${h.cor}" aria-hidden="true">${k + 1}</span><div><h2 id="tr-t${k}">${h.t}</h2><span>${h.ids.length} perguntas, da esquerda para a direita</span></div></div>
         <div class="tr-fila">${h.ids.map((id, j) => (j ? `<div class="tr-liga" aria-hidden="true"><span>${PQ[id][1] || ""}</span>${SETA[j % 2]}</div>` : "") + cartao(id, porId[id] || { grupo: "" }, num[id], j, ex[id])).join("")}</div>
-        <div class="tr-moral">${V.rPostit(`<b>A moral da história:</b> ${h.moral}`, k % 2 ? -1.5 : 1.2)}</div></section>`).join("");
-    main.innerHTML = `<div class="pagina tr-pagina">
-      <header class="tr-cab"><p class="pq-migalha"><a href="#/perguntas">Todas as perguntas</a></p><h1 class="titulo-grande">Uma pergunta puxa a outra</h1>
-        <p class="tr-lead">As 25 perguntas do trabalho contam 6 histórias. Escolha uma e leia da esquerda para a direita: a resposta de cada pergunta leva à próxima.</p>
-        <nav class="tr-mapa" aria-label="As 6 histórias">${nav}</nav></header>
-      ${caps}
-      <p class="tr-fim">${V.rNota("cada cartão leva para a resposta completa, com os gráficos", -1.5)}</p></div>`;
-    main.querySelectorAll("[data-tr]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("trilha-" + (+a.dataset.tr + 1)).scrollIntoView({ behavior: "smooth", block: "start" }); }));
-  });
+        <div class="tr-moral">${V.rPostit(`<b>A moral da história:</b> ${h.moral}`, k % 2 ? -1.5 : 1.2).replace("<aside", "<div").replace("</aside>", "</div>")}</div></section>`).join("");
+    host.innerHTML = `<nav class="tr-mapa" aria-label="As 6 histórias">${nav}</nav>${caps}`;
+    host.querySelectorAll("[data-tr]").forEach((a) => a.addEventListener("click", (e) => { e.preventDefault(); document.getElementById("trilha-" + (+a.dataset.tr + 1)).scrollIntoView({ behavior: "smooth", block: "start" }); }));
+  };
+  // o endereço antigo leva à primeira página das Perguntas, que agora abre com as histórias
+  V.rota(/^\/trilhas\/?$/, async function () { location.replace("#/perguntas"); });
 })();
