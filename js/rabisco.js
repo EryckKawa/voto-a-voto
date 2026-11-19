@@ -34,14 +34,14 @@
   const NUMS = [new RegExp("R\\$\\s?[\\d.]+(?:,\\d+)?" + ESC), /\d[\d.]*(?:,\d+)?\s(?:milhões|milhão|bilhões|bilhão|mil)/, /\d[\d.]*(?:,\d+)?\s?%/,
     /(?<![\d.,])(?!(?:19|20)\d\d(?!\d|[.,]\d))\d[\d.]*(?:,\d+)?/];
   /* o mesmo, mas com a marca escolhida (V.rSublinha, V.rMarca...) */
+  /* a pontuação logo depois da marca fica colada nela: a vírgula não desce sozinha para a outra linha */
+  const colar = (frase, m, marca) => { const resto = frase.slice(m.index + m[0].length), p = /^[,.;:!?)]+/.exec(resto);
+    return frase.slice(0, m.index) + (p ? `<span class="rb-cola">${marca(m[0])}${p[0]}</span>${resto.slice(p[0].length)}` : marca(m[0]) + resto); };
   V.rMarcarNumero = (frase, marca) => {
-    for (const re of NUMS) { const m = re.exec(frase); if (m) return frase.slice(0, m.index) + marca(m[0]) + frase.slice(m.index + m[0].length); }
+    for (const re of NUMS) { const m = re.exec(frase); if (m) return colar(frase, m, marca); }
     return frase;
   };
-  V.rCircularNumero = (frase) => {
-    for (const re of NUMS) { const m = re.exec(frase); if (m) return frase.slice(0, m.index) + V.rCirculo(m[0]) + frase.slice(m.index + m[0].length); }
-    return frase;
-  };
+  V.rCircularNumero = (frase) => V.rMarcarNumero(frase, V.rCirculo);
 
   /* ---------- desenhar conforme rola ---------- */
   const SEL = ".rb, .rb-marca, .rb-nota, .rb-carimbo, .rb-postit";

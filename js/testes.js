@@ -62,7 +62,7 @@
 
   // VELOCIDADE (a primeira visita a cada página: os dados ainda não estão na memória)
   teste("Velocidade", "Página inicial (Ninguém) abre", () => medirPagina("#/", () => /Ninguém/.test(txt("main h1")), 1500, 300));
-  teste("Velocidade", "O que o voto revela abre", () => medirPagina("#/revela", () => qq(".achado").length >= 5, 1200, 300));
+  teste("Velocidade", "O que o voto revela abre", () => medirPagina("#/revela", () => qq(".rv-indice a").length >= 8, 1200, 300));
   teste("Velocidade", "Mapa do Brasil abre", () => medirPagina("#/mapa", () => qq("#mapa-br path.mun").length > 5000 && /2026.*cidades/.test(txt("#manchete")), 2000, 600));
   teste("Velocidade", "Cidade abre com o histórico (São Paulo)", () => medirPagina("#/mapa/br/SP/c/3550308", () => qq("#hist .linha-tempo").length >= 3, 2000, 600));
   teste("Velocidade", "Eleição antiga abre (presidente 1994)", () => medirPagina("#/mapa/e/PRES1994", () => /1994/.test(txt("#manchete")), 1500, 500));
@@ -197,7 +197,7 @@
   });
 
   // ACESSIBILIDADE
-  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/perguntas", "Perguntas do trabalho"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
+  const PAGS_A11Y = [["#/", "Página inicial"], ["#/mapa", "Mapa"], ["#/mapa/br/SP/c/3550308", "Cidade"], ["#/revela", "O que o voto revela"], ["#/revela/virada", "Um achado aberto"], ["#/perguntas", "Perguntas do trabalho"], ["#/perguntas/t3", "Um tema (3)"], ["#/perguntas/t13", "Mapa de calor (tema 13)"], ["#/formularios", "Formulários"], ["#/partidos", "Partidos"], ["#/politicos", "Busca de políticos"]];
   for (const [h, nome] of PAGS_A11Y) {
     teste("Acessibilidade", `${nome}: regras de acessibilidade (axe)`, async () => {
       await carregarAxe(); await irPara(h); await quadros(3);
@@ -544,7 +544,7 @@
     return R(/Presidente 2026/.test(txt(".manchete__onde")) && /Lula/.test(txt(".manchete__titulo")), `${txt(".manchete__onde")} · ${txt(".manchete__titulo").slice(0, 60)} · botões: ${ativo}`, "Presidente 2026, com Lula na manchete");
   });
   teste("Jornal e diferenciais", "Caneta e marca-texto nas páginas principais", async () => {
-    const pags = [["#/", "h1"], ["#/mapa", "#manchete"], ["#/revela", ".achado"], ["#/partidos", ".pt-kpis"], ["#/perguntas/t1", ".pq-parte__a"], ["#/edicao/2211001", ".dif-jornal h1"]], poucas = [], cont = [];
+    const pags = [["#/", "h1"], ["#/mapa", "#manchete"], ["#/revela", ".rv-capa__lead h2"], ["#/partidos", ".pt-kpis"], ["#/perguntas/t1", ".pq-parte__a"], ["#/edicao/2211001", ".dif-jornal h1"]], poucas = [], cont = [];
     for (const [h, sel] of pags) {
       await irPara(h, 25000).catch(() => {}); await ate(() => q(sel), 12000).catch(() => {}); await quadros(2);
       const n = qq("#conteudo .rb-alvo, #conteudo .rb-marca, #conteudo .rb-nota, #conteudo .rb-carimbo, #conteudo .rb-postit").length;
@@ -581,9 +581,20 @@
     const ok = /eleito com .*% dos votos válidos/.test(tit) && barra.length === 2 && casas === 27 && secs === 2 && bolas > 5000 && /\d+ cidades passaram/.test(virou) && maiores === 6 && /Teresina, .* teve .*%/.test(cid) && brasil && semMais && !/(NaN|undefined|Infinity)/.test(t);
     return R(ok, `${tit.slice(0, 50)} · barra ${barra.join(" × ")} · ${casas} casas · ${secs} seções (${bolas} bolinhas) · ${virou.slice(0, 40)} · ${maiores} maiores cidades · cidade: ${cid.slice(0, 40)}${brasil ? " com a barra do Brasil" : ""}`, "manchete pelo voto, barra dos dois, 27 casas, gente × chão e quem virou no Brasil; na cidade, o percentual e a barra do Brasil");
   });
+  teste("Jornal e diferenciais", "Revela: capa de jornal, achado aberto e seis achados novos", async () => {
+    await irPara("#/revela"); await ate(() => qq(".rv-novo").length === 6, 20000).catch(() => {});
+    const ind = qq(".rv-indice a").length, lead = txt(".rv-capa__lead h2"), novos = qq(".rv-novo h3").map((h) => h.innerText.replace(/\s+/g, " ")), t = q("main").innerText;
+    const A = await V.dados("br/achados"), r = A.pt_renda.filter((x) => x.turno === "t2").pop();
+    await irPara("#/revela/virada"); await ate(() => q(".rv-tres") && q(".rv-veja"), 10000).catch(() => {});
+    const tres = qq(".rv-tres b").map((b) => b.textContent.trim()), migalha = txt(".rv-migalha"), veja = qq(".rv-veja a").length, t2 = q("main").innerText;
+    await irPara("#/revela/nao-existe"); await ate(() => location.hash === "#/revela", 5000).catch(() => {});
+    const volta = location.hash === "#/revela";
+    const ok = ind === 8 && /Desde 2006/.test(lead) && novos.length === 6 && /cidades foram da esquerda para a direita/.test(novos[0]) && tres.length === 3 && tres[0].endsWith(Math.round(r.pt[0]) + "%") && /Achado 1 de 8/.test(migalha) && veja === 3 && volta && !/(NaN|undefined|Infinity)/.test(t + t2);
+    return R(ok, `${ind} no índice · ${lead.slice(0, 40)} · ${novos.length} novos (${(novos[0] || "").slice(0, 40)}) · achado aberto: ${tres.join(" | ")} · ${veja} links · ${volta ? "endereço errado volta à capa" : "não voltou"}`, "índice dos 8, manchete, 6 achados novos, achado aberto com 3 números e Veja também");
+  });
   teste("Jornal e diferenciais", "As páginas novas não passam da largura da tela", async () => {
     const largas = [];
-    for (const h of ["#/perguntas", "#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
+    for (const h of ["#/perguntas", "#/revela", "#/revela/dividido", "#/edicao/2211001", "#/tira-teima", "#/dinheiro", "#/cem", "#/respostas/e6", "#/perguntas", "#/perguntas/e6"]) {
       await irPara(h, 25000).catch(() => {}); await quadros(3);
       if (document.documentElement.scrollWidth > innerWidth + 1) largas.push(`${h} (${document.documentElement.scrollWidth}px)`);
     }
